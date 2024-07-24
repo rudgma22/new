@@ -89,3 +89,4 @@ def reject_leave(request_id):
         return redirect(url_for('views.teacher_manage'))
     else:
         return redirect(url_for('auth.index'))
+

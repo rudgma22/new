@@ -7,8 +7,6 @@
     <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        /* 기존 스타일 */
-
         /* 모달 스타일 */
         .modal {
             display: none;
@@ -54,6 +52,14 @@
         .button_normal:hover {
             background-color: #45a049;
         }
+        .green {
+            background-color: #8BC34A;
+        }
+        .green:hover {
+            background-color: #6b8e23;
+        }
+
+
     </style>
 </head>
 <body>
@@ -62,7 +68,7 @@
         <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
     </header>
     <div class="contents">
-        <div class="logout-container">
+        <div class="logout-container-teacher">
             <a href="{{ url_for('auth.logout') }}">로그아웃</a>
         </div>
         <table>
@@ -78,7 +84,7 @@
             </thead>
             <tbody>
                 {% for request in requests %}
-                {% if request['status'] != '승인됨' %}
+                {% if request['status'] != '승인됨' and request['status'] != '거절됨' %}
                 <tr>
                     <td>{{ request['student_name'] }}</td>
                     <td>{{ request['start_time'] }}</td>
@@ -86,11 +92,11 @@
                     <td>{{ request['reason'] }}</td>
                     <td>
                         <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
-                            <button type="submit" class="button_normal">승인</button>
+                            <button type="submit" class="button_normal green">승인</button>
                         </form>
                     </td>
                     <td>
-                        <button class="button_normal" onclick="openModal({{ request['id'] }})">거절</button>
+                        <button class="button_normal green" onclick="openModal({{ request['id'] }})">거절</button>
                     </td>
                 </tr>
                 {% endif %}
@@ -107,8 +113,8 @@
                 <label for="rejection_reason">거절 사유:</label>
                 <textarea id="rejection_reason" name="rejection_reason" rows="4" style="width: 100%;" required></textarea>
                 <div style="margin-top: 20px; text-align: right;">
-                    <button type="button" class="button_normal" onclick="closeModal()">취소</button>
-                    <button type="submit" class="button_normal">거절</button>
+                    <button type="button" class="button_normal green" onclick="closeModal()">취소</button>
+                    <button type="submit" class="button_normal green">거절</button>
                 </div>
             </form>
         </div>
