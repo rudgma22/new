@@ -1,33 +1,56 @@
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+class Student(db.Model):
+    __tablename__ = 'students'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    grade = db.Column(db.String(80), nullable=False)
+    student_class = db.Column(db.String(80), nullable=False)
+    number = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    barcode = db.Column(db.String(80), unique=True, nullable=False)
+
+class Teacher(db.Model):
+    __tablename__ = 'teachers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    grade = db.Column(db.String(80), nullable=False)
+    teacher_class = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+
+class OutingRequest(db.Model):
+    __tablename__ = 'outing_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    student_name = db.Column(db.String(80), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    reason = db.Column(db.String(200), nullable=False)
+    status = db.Column(db.String(80), default='pending', nullable=False)
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    return db.session
 
 def add_student(name, grade, student_class, number, username, password, barcode):
-    conn = get_db_connection()
-    conn.execute('INSERT INTO students (name, grade, class, number, username, password, barcode) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                 (name, grade, student_class, number, username, password, barcode))
-    conn.commit()
-    conn.close()
+    new_student = Student(name=name, grade=grade, student_class=student_class, number=number, username=username, password=password, barcode=barcode)
+    db.session.add(new_student)
+    db.session.commit()
 
 def add_teacher(name, grade, teacher_class, username, password):
-    conn = get_db_connection()
-    conn.execute('INSERT INTO teachers (name, grade, class, username, password) VALUES (?, ?, ?, ?, ?)',
-                 (name, grade, teacher_class, username, password))
-    conn.commit()
-    conn.close()
+    new_teacher = Teacher(name=name, grade=grade, teacher_class=teacher_class, username=username, password=password)
+    db.session.add(new_teacher)
+    db.session.commit()
 
 def add_outing_request(student_name, start_time, end_time, reason):
-    conn = get_db_connection()
-    conn.execute('INSERT INTO outing_requests (student_name, start_time, end_time, reason, status) VALUES (?, ?, ?, ?, ?)',
-                 (student_name, start_time, end_time, reason, '대기'))
-    conn.commit()
-    conn.close()
+    new_request = OutingRequest(student_name=student_name, start_time=start_time, end_time=end_time, reason=reason)
+    db.session.add(new_request)
+    db.session.commit()
 
 def approve_outing_request(request_id):
-    conn = get_db_connection()
-    conn.execute('UPDATE outing_requests SET status = ? WHERE id = ?', ('승인', request_id))
-    conn.commit()
-    conn.close()
+    request = OutingRequest.query.get(request_id)
+    if request:
+        request.status = 'approved'
+        db.session.commit()

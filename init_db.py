@@ -1,47 +1,20 @@
-import sqlite3
+from flask import Flask
+from models import db
+import os
 
-def init_db():
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
+app = Flask(__name__)
 
-    # 테이블 생성
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS students (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        grade TEXT NOT NULL,
-        class TEXT NOT NULL,
-        number TEXT NOT NULL,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        barcode TEXT NOT NULL
-    )
-    ''')
+# 프로젝트 루트 디렉토리 경로를 가져옵니다.
+project_root = os.path.dirname(os.path.abspath(__file__))
 
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS teachers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        grade TEXT NOT NULL,
-        class TEXT NOT NULL,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
-    )
-    ''')
+# 데이터베이스 파일 경로를 설정합니다.
+database_path = os.path.join(project_root, 'database.db')
 
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS outing_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        student_name TEXT NOT NULL,
-        start_time TEXT NOT NULL,
-        end_time TEXT NOT NULL,
-        reason TEXT NOT NULL,
-        status TEXT NOT NULL
-    )
-    ''')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 
-    conn.commit()
-    conn.close()
-
-if __name__ == '__main__':
-    init_db()
+with app.app_context():
+    print("Initializing the database...")
+    db.create_all()
+    print("Database initialized.")

@@ -67,7 +67,7 @@
 
             const gradeSelectStudent = document.getElementById('grade');
             gradeSelectStudent.addEventListener('change', function () {
-                updateClassOptions('grade', 'class');
+                updateClassOptions('grade', 'student_class');
             });
 
             const gradeSelectTeacher = document.getElementById('teacher_grade');
@@ -104,7 +104,7 @@
 
         <div id="student-fields">
             <div class="input_field">
-                <input class="input_normal" type="text" id="student_name" name="student_name" placeholder="이름을 입력하세요">
+                <input class="input_normal" type="text" id="student_name" name="name" placeholder="이름을 입력하세요">
             </div>
             <div class="input_field">
                 <select class="input_select" id="grade" name="grade">
@@ -115,12 +115,12 @@
                 </select>
             </div>
             <div class="input_field" id="class-container">
-                <select class="input_select" id="class" name="class">
+                <select class="input_select" id="student_class" name="student_class">
                     <option value="" disabled selected>반을 선택하세요</option>
                 </select>
             </div>
             <div class="input_field">
-                <input class="input_normal" type="text" id="student_id" name="student_id" placeholder="번호를 입력하세요">
+                <input class="input_normal" type="text" id="number" name="number" placeholder="번호를 입력하세요">
             </div>
             <div class="input_field">
                 <input class="input_normal" type="text" id="barcode" name="barcode" placeholder="바코드를 입력하세요">
@@ -129,10 +129,10 @@
 
         <div id="teacher-fields" style="display: none;">
             <div class="input_field">
-                <input class="input_normal" type="text" id="teacher_name" name="teacher_name" placeholder="이름을 입력하세요">
+                <input class="input_normal" type="text" id="teacher_name" name="name" placeholder="이름을 입력하세요">
             </div>
             <div class="input_field">
-                <select class="input_select" id="teacher_grade" name="teacher_grade">
+                <select class="input_select" id="teacher_grade" name="grade">
                     <option value="" disabled selected>담당 학년을 선택하세요</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
