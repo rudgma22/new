@@ -58,87 +58,89 @@
         .green:hover {
             background-color: #6b8e23;
         }
-
-
     </style>
 </head>
 <body>
-    <header>
-        <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-        <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
-    </header>
-    <div class="contents">
-        <div class="logout-container-teacher">
-            <a href="{{ url_for('auth.logout') }}">로그아웃</a>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>이름</th>
-                    <th>외출 시작 시간</th>
-                    <th>외출 종료 시간</th>
-                    <th>외출 사유</th>
-                    <th>승인</th>
-                    <th>거절</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for request in requests %}
-                {% if request['status'] != '승인됨' and request['status'] != '거절됨' %}
-                <tr>
-                    <td>{{ request['student_name'] }}</td>
-                    <td>{{ request['start_time'] }}</td>
-                    <td>{{ request['end_time'] }}</td>
-                    <td>{{ request['reason'] }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
-                            <button type="submit" class="button_normal green">승인</button>
-                        </form>
-                    </td>
-                    <td>
-                        <button class="button_normal green" onclick="openModal({{ request['id'] }})">거절</button>
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- 거절 사유 입력 모달 -->
-    <div id="rejectionModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <form id="rejectionForm" method="POST">
-                <label for="rejection_reason">거절 사유:</label>
-                <textarea id="rejection_reason" name="rejection_reason" rows="4" style="width: 100%;" required></textarea>
-                <div style="margin-top: 20px; text-align: right;">
-                    <button type="button" class="button_normal green" onclick="closeModal()">취소</button>
-                    <button type="submit" class="button_normal green">거절</button>
-                </div>
-            </form>
+<div class="login-container">
+    <div class="login-box">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
+        </header>
+        <div class="contents">
+            <div class="logout-container-teacher">
+                <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>이름</th>
+                        <th>외출 시작 시간</th>
+                        <th>외출 종료 시간</th>
+                        <th>외출 사유</th>
+                        <th>승인</th>
+                        <th>거절</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    {% if request['status'] != '승인됨' and request['status'] != '거절됨' %}
+                    <tr>
+                        <td>{{ request['student_name'] }}</td>
+                        <td>{{ request['start_time'] }}</td>
+                        <td>{{ request['end_time'] }}</td>
+                        <td>{{ request['reason'] }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
+                                <button type="submit" class="button_normal green">승인</button>
+                            </form>
+                        </td>
+                        <td>
+                            <button class="button_normal green" onclick="openModal({{ request['id'] }})">거절</button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    <script>
-        function openModal(requestId) {
-            const modal = document.getElementById('rejectionModal');
-            const form = document.getElementById('rejectionForm');
-            form.action = `{{ url_for('views.reject_leave', request_id=0) }}`.replace('0', requestId);
-            modal.style.display = "block";
-        }
+<!-- 거절 사유 입력 모달 -->
+<div id="rejectionModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <form id="rejectionForm" method="POST">
+            <label for="rejection_reason">거절 사유:</label>
+            <textarea id="rejection_reason" name="rejection_reason" rows="4" style="width: 100%;" required></textarea>
+            <div style="margin-top: 20px; text-align: right;">
+                <button type="button" class="button_normal green" onclick="closeModal()">취소</button>
+                <button type="submit" class="button_normal green">거절</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        function closeModal() {
-            const modal = document.getElementById('rejectionModal');
+<script>
+    function openModal(requestId) {
+        const modal = document.getElementById('rejectionModal');
+        const form = document.getElementById('rejectionForm');
+        form.action = `{{ url_for('views.reject_leave', request_id=0) }}`.replace('0', requestId);
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('rejectionModal');
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('rejectionModal');
+        if (event.target == modal) {
             modal.style.display = "none";
         }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('rejectionModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

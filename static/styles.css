@@ -3,18 +3,16 @@ body, h1, h2, ul, li, input, button, form, div, select, table, th, td {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
 }
 
 /* Overall page styling */
 body {
+    font-family: 'Arial', sans-serif;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     height: 100vh;
-    background-color: #ffffff;
-    padding-top: 50px;
+    background-color: #f0f0f0; /* 약간 어두운 흰색 */
 }
 
 /* Header styling */
@@ -31,19 +29,27 @@ header img {
 
 header h1 {
     margin-top: 10px;
-    font-size: 24px;
+    font-size: 20px; /* 글씨 크기 조정 */
     color: #333;
+    white-space: nowrap; /* 텍스트가 잘리지 않도록 */
 }
 
 /* Content container styling */
-.contents {
-    width: 80%;
-    max-width: 400px;
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 500px;
     background: #fff;
-    padding: 20px;
+    padding: 40px;
     border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 16px; /* 모서리 라운딩 */
     text-align: center;
     position: relative;
 }
@@ -114,32 +120,67 @@ header h1 {
     margin-bottom: 15px;
 }
 
-.input_normal, .input_select {
+.input-box {
+    position: relative;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.input-box input,
+.input-box select {
     width: 100%;
     padding: 10px;
-    font-size: 16px;
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
-}
-
-.input_normal:focus, .input_select:focus {
-    border-color: #007bff;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #333;
     outline: none;
+    color: #333;
+    font-size: 16px;
+    appearance: none; /* Remove default arrow in select */
 }
 
-.green .input_normal:focus, .green .input_select:focus {
-    border-color: #8BC34A; /* 밝은 연두색 */
+.input-box input::-webkit-calendar-picker-indicator {
+    display: none; /* Remove calendar icon from datetime-local input */
+}
+
+.input-box label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 10px 0;
+    pointer-events: none;
+    transition: 0.5s;
+    color: #aaa;
+    font-size: 16px;
+}
+
+.input-box input:focus ~ label,
+.input-box input:valid ~ label,
+.input-box select:focus ~ label,
+.input-box select:valid ~ label {
+    top: -20px;
+    left: 0;
+    color: #007bff;
+    font-size: 12px;
+}
+
+.green .input-box input:focus ~ label,
+.green .input-box input:valid ~ label,
+.green .input-box select:focus ~ label,
+.green .input-box select:valid ~ label {
+    color: #8BC34A; /* 밝은 연두색 */
 }
 
 .button_normal {
     width: 100%;
-    padding: 10px;
+    padding: 15px; /* 버튼 크기 확대 */
     background-color: #007bff;
     color: #fff;
     font-size: 16px;
     border: none;
-    border-radius: 4px;
+    border-radius: 25px; /* 모서리 라운딩 */
     cursor: pointer;
+    transition: background 0.5s;
 }
 
 .button_normal:hover {
@@ -154,182 +195,57 @@ header h1 {
     background-color: #6b8e23; /* 연두색 */
 }
 
-/* Student info styling */
-#student-info {
-    margin-bottom: 20px;
-    text-align: center;
-    font-size: 18px;
-    line-height: 1.6;
-}
-
-#student-info p {
-    margin: 10px 0;
-}
-
-/* Outing request form styling */
-#outing-request form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#outing-request label {
-    margin-top: 10px;
-    font-size: 16px;
-}
-
-#outing-request input, #outing-request select {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
-    margin-top: 5px;
-}
-
-#outing-request input:focus, #outing-request select:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-#outing-request button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.signup-link {
     margin-top: 20px;
 }
 
-#outing-request button:hover {
-    background-color: #0056b3;
-}
-
-/* Logout button styling */
-.logout-container {
-    position: absolute;
-    bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.logout-container a {
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    font-size: 16px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
+.signup-link p {
+    color: #000000;
     cursor: pointer;
+    transition: color 0.5s;
 }
 
-.logout-container a:hover {
-    background-color: #0056b3;
-}
-
-.logout-container-teacher {
-    position: absolute;
-    bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.logout-container-teacher a {
-    background-color: #8BC34A;
-    color: white;
-    text-decoration: none;
-    font-size: 16px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.logout-container-teacher a:hover{
-    background-color: #6b8e23;
-}
-
-/* Outing request list styling */
-#outing-list {
-    margin-top: 30px;
-    text-align: left;
-}
-
-#outing-list h2 {
-    font-size: 20px;
-    color: #333;
-    margin-bottom: 10px;
-}
-
-#outing-list ul {
-    list-style: none;
-}
-
-#outing-list li {
-    padding: 10px;
-    border-bottom: 1px solid #e5e5e5;
-}
-
-#outing-list li:last-child {
-    border-bottom: none;
-}
-
-.outing-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.outing-time {
-    font-size: 14px;
-    color: #555;
-}
-
-.outing-status {
-    font-size: 14px;
+.signup-link p:hover {
     color: #007bff;
 }
 
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 10px 10px; /* 간격 충분히 늘림 */
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #8BC34A;
+    color: white;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
 .outing-status.approved {
-    color: #28a745;
+    color: #28a745; /* 초록색 */
 }
 
 .outing-status.pending {
-    color: #ffc107;
+    color: #ffc107; /* 주황색 */
 }
 
 .outing-status.rejected {
-    color: #E83323;
+    color: #E83323; /* 빨간색 */
 }
 
-.rejected {
-    color: red;
-    cursor: pointer;
-    position: relative;
-}
-
-.rejection-reason {
-    display: none;
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    z-index: 10;
-    width: 200px;
-    text-align: center;
-    color: #A0A0A0;
-}
-
+/* Modal styling */
 .modal {
-    display: none;
+    display: none;333
     position: fixed;
     z-index: 1;
     left: 0;

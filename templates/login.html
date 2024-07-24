@@ -8,41 +8,49 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-<header>
-    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-    <h1>김천고등학교 외출 관리 시스템</h1>
-</header>
-<div class="contents">
-    <ul class="tabs">
-        <li class="tab on" data-color="blue" id="student-tab">
-            <div class="check_text">학생 로그인</div>
-        </li>
-        <div class="tab-divider"></div>
-        <li class="tab" data-color="green" id="teacher-tab">
-            <div class="check_text">교사 로그인</div>
-        </li>
-    </ul>
-    <form id="student-form" class="login_form" method="post" action="{{ url_for('auth.login') }}">
-        <input type="hidden" name="role" value="student">
-        <div class="id_input">
-            <input class="input_normal" type="text" name="username" placeholder="아이디를 입력하세요" required>
+<div class="login-container">
+    <div class="login-box">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>김천고등학교 외출 관리 시스템</h1>
+        </header>
+        <ul class="tabs">
+            <li class="tab on" data-color="blue" id="student-tab">
+                <div class="check_text">학생 로그인</div>
+            </li>
+            <div class="tab-divider"></div>
+            <li class="tab green" data-color="green" id="teacher-tab">
+                <div class="check_text">교사 로그인</div>
+            </li>
+        </ul>
+        <form id="student-form" class="login_form" method="post" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="role" value="student">
+            <div class="id_input input-box">
+                <input class="input_normal" type="text" name="username" required>
+                <label>아이디를 입력하세요</label>
+            </div>
+            <div class="password_input input-box">
+                <input class="input_normal" type="password" name="password" required>
+                <label>비밀번호를 입력하세요</label>
+            </div>
+            <button class="button_normal login-button" type="submit">로그인</button>
+        </form>
+        <form id="teacher-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
+            <input type="hidden" name="role" value="teacher">
+            <div class="id_input input-box">
+                <input class="input_normal" type="text" name="username" required>
+                <label>아이디를 입력하세요</label>
+            </div>
+            <div class="password_input input-box">
+                <input class="input_normal" type="password" name="password" required>
+                <label>비밀번호를 입력하세요</label>
+            </div>
+            <button class="button_normal login-button green" type="submit">로그인</button>
+        </form>
+        <div class="signup-link">
+            <p>계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
         </div>
-        <div class="password_input">
-            <input class="input_normal" type="password" name="password" placeholder="비밀번호를 입력하세요" required>
-        </div>
-        <button class="button_normal" type="submit">로그인</button>
-    </form>
-    <form id="teacher-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
-        <input type="hidden" name="role" value="teacher">
-        <div class="id_input">
-            <input class="input_normal" type="text" name="username" placeholder="아이디를 입력하세요" required>
-        </div>
-        <div class="password_input">
-            <input class="input_normal" type="password" name="password" placeholder="비밀번호를 입력하세요" required>
-        </div>
-        <button class="button_normal" type="submit">로그인</button>
-    </form>
-    <p>계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
+    </div>
 </div>
 
 <script>
@@ -51,14 +59,14 @@
         const teacherTab = document.getElementById('teacher-tab');
         const studentForm = document.getElementById('student-form');
         const teacherForm = document.getElementById('teacher-form');
-        const contents = document.querySelector('.contents');
+        const loginBox = document.querySelector('.login-box');
 
         studentTab.addEventListener('click', function () {
             studentTab.classList.add('on');
             teacherTab.classList.remove('on');
             studentForm.style.display = 'block';
             teacherForm.style.display = 'none';
-            contents.classList.remove('green');
+            loginBox.classList.remove('green');
         });
 
         teacherTab.addEventListener('click', function () {
@@ -66,7 +74,7 @@
             studentTab.classList.remove('on');
             teacherForm.style.display = 'block';
             studentForm.style.display = 'none';
-            contents.classList.add('green');
+            loginBox.classList.add('green');
         });
     });
 </script>
