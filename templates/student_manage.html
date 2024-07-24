@@ -3,76 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학생 홈 - 김천고등학교 외출 관리 시스템</title>
+    <title>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리 - 김천고등학교 외출 관리 시스템</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body, h1, h2, ul, li, input, button, form, div, select {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            background-color: #ffffff;
+            padding-top: 50px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header img {
+            width: 100px;
+            height: auto;
+        }
+        header h1 {
+            margin-top: 10px;
+            font-size: 24px;
+            color: #333;
+        }
+        .contents {
+            width: 80%;
+            max-width: 1000px;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .button_normal {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button_normal:hover {
+            background-color: #45a049;
+        }
+        .logout-container {
+            margin-top: 20px;
+            text-align: right;
+            width: 100%;
+        }
+        .logout-container a {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .logout-container a:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-<header>
-    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-    <h1>{{ student.name }}님, 환영합니다!</h1>
-</header>
-<div class="contents">
-    <div id="student-info">
-        <p>이름: {{ student.name }}</p>
-        <p>학년: {{ student.grade }}학년</p>
-        <p>반: {{ student.class }}반</p>
-        <p>번호: {{ student.number }}</p>
-        <p>바코드: {{ student.id }}</p>
+    <header>
+        <img src="{{ url_for('static', filename='KakaoTalk_20240524_192806365.png') }}" alt="김천고등학교 로고">
+        <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
+    </header>
+    <div class="contents">
+        <div class="logout-container">
+            <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>이름</th>
+                    <th>외출 시작 시간</th>
+                    <th>외출 종료 시간</th>
+                    <th>외출 사유</th>
+                    <th>승인</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                {% if request['status'] != '승인됨' %}
+                <tr>
+                    <td>{{ request['student_name'] }}</td>
+                    <td>{{ request['start_time'] }}</td>
+                    <td>{{ request['end_time'] }}</td>
+                    <td>{{ request['reason'] }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
+                            <button type="submit" class="button_normal">승인</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    <div id="outing-request">
-        <form method="POST" action="{{ url_for('views.apply_leave') }}">
-            <label for="out_time">외출 시작 시간:</label>
-            <input type="datetime-local" id="out_time" name="out_time" required>
-            <label for="in_time">외출 종료 시간:</label>
-            <input type="datetime-local" id="in_time" name="in_time" required>
-            <label for="reason">외출 사유:</label>
-            <select id="reason" name="reason" required>
-                <option value="학원">학원</option>
-                <option value="병원">병원</option>
-                <option value="기타">기타</option>
-            </select>
-            <input type="text" id="other_reason" name="other_reason" placeholder="기타 사유 입력" style="display:none;">
-            <button type="submit">신청</button>
-        </form>
-    </div>
-    <div id="outing-list">
-        <h2>최근 외출 신청 내역</h2>
-        <ul>
-            {% for request in outing_requests %}
-            <li class="outing-item">
-                <div>
-                    <div class="outing-time">시작: {{ request.start_time }}</div>
-                    <div class="outing-time">종료: {{ request.end_time }}</div>
-                </div>
-                <div class="outing-status {% if request.status == '승인' %}approved{% else %}pending{% endif %}">
-                    {% if request.status == '승인' %}승인됨{% else %}대기중{% endif %}
-                </div>
-            </li>
-            {% else %}
-            <li class="outing-item">외출 신청 내역이 없습니다.</li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="logout-container">
-        <a href="{{ url_for('auth.logout') }}">로그아웃</a>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const reasonSelect = document.getElementById('reason');
-        const otherReasonInput = document.getElementById('other_reason');
-
-        reasonSelect.addEventListener('change', function() {
-            if (reasonSelect.value === '기타') {
-                otherReasonInput.style.display = 'block';
-                otherReasonInput.required = true;
-            } else {
-                otherReasonInput.style.display = 'none';
-                otherReasonInput.required = false;
-            }
-        });
-    });
-</script>
 </body>
 </html>

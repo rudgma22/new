@@ -2,10 +2,18 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from auth import auth_bp
 from views import views_bp
 from models import db, Student, Teacher, OutingRequest
+import os
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+
+# 프로젝트 루트 디렉토리 경로를 가져옵니다.
+project_root = os.path.dirname(os.path.abspath(__file__))
+
+# 데이터베이스 파일 경로를 설정합니다.
+database_path = os.path.join(project_root, 'database.db')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -16,6 +24,12 @@ app.register_blueprint(views_bp, url_prefix='/views')
 @app.route('/')
 def index():
     return render_template('login.html')
+
+# 데이터베이스 초기화
+with app.app_context():
+    print("Initializing the database...")
+    db.create_all()
+    print("Database initialized.")
 
 if __name__ == '__main__':
     app.run(debug=True)

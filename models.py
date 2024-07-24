@@ -29,28 +29,48 @@ class OutingRequest(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.String(200), nullable=False)
-    status = db.Column(db.String(80), default='pending', nullable=False)
+    status = db.Column(db.String(80), default='대기중', nullable=False)
 
 def get_db_connection():
     return db.session
 
 def add_student(name, grade, student_class, number, username, password, barcode):
-    new_student = Student(name=name, grade=grade, student_class=student_class, number=number, username=username, password=password, barcode=barcode)
+    new_student = Student(
+        name=name,
+        grade=grade,
+        student_class=student_class,
+        number=number,
+        username=username,
+        password=password,
+        barcode=barcode
+    )
     db.session.add(new_student)
     db.session.commit()
 
 def add_teacher(name, grade, teacher_class, username, password):
-    new_teacher = Teacher(name=name, grade=grade, teacher_class=teacher_class, username=username, password=password)
+    new_teacher = Teacher(
+        name=name,
+        grade=grade,
+        teacher_class=teacher_class,
+        username=username,
+        password=password
+    )
     db.session.add(new_teacher)
     db.session.commit()
 
 def add_outing_request(student_name, start_time, end_time, reason):
-    new_request = OutingRequest(student_name=student_name, start_time=start_time, end_time=end_time, reason=reason)
+    new_request = OutingRequest(
+        student_name=student_name,
+        start_time=start_time,
+        end_time=end_time,
+        reason=reason,
+        status='대기중'
+    )
     db.session.add(new_request)
     db.session.commit()
 
 def approve_outing_request(request_id):
     request = OutingRequest.query.get(request_id)
     if request:
-        request.status = 'approved'
+        request.status = '승인됨'
         db.session.commit()
