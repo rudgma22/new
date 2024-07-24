@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         /* 기존 스타일 */
@@ -57,7 +58,7 @@
 </head>
 <body>
     <header>
-        <img src="{{ url_for('static', filename='KakaoTalk_20240524_192806365.png') }}" alt="김천고등학교 로고">
+        <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
         <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
     </header>
     <div class="contents">
