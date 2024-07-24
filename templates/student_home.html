@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 홈 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<header>
+    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+    <h1>{{ student.name }}님, 환영합니다!</h1>
+</header>
+<div class="contents">
+    <div id="student-info">
+        <p>이름: {{ student.name }}</p>
+        <p>학년: {{ student.grade }}학년</p>
+        <p>반: {{ student.class }}반</p>
+        <p>번호: {{ student.number }}</p>
+        <p>바코드: {{ student.id }}</p>
+    </div>
+    <div id="outing-request">
+        <form method="POST" action="{{ url_for('views.apply_leave') }}">
+            <label for="out_time">외출 시작 시간:</label>
+            <input type="datetime-local" id="out_time" name="out_time" required>
+            <label for="in_time">외출 종료 시간:</label>
+            <input type="datetime-local" id="in_time" name="in_time" required>
+            <label for="reason">외출 사유:</label>
+            <select id="reason" name="reason" required>
+                <option value="학원">학원</option>
+                <option value="병원">병원</option>
+                <option value="기타">기타</option>
+            </select>
+            <input type="text" id="other_reason" name="other_reason" placeholder="기타 사유 입력" style="display:none;">
+            <button type="submit">신청</button>
+        </form>
+    </div>
+    <div id="outing-list">
+        <h2>최근 외출 신청 내역</h2>
+        <ul>
+            {% for request in outing_requests %}
+            <li class="outing-item">
+                <div>
+                    <div class="outing-time">시작: {{ request.start_time }}</div>
+                    <div class="outing-time">종료: {{ request.end_time }}</div>
+                </div>
+                <div class="outing-status {% if request.status == '승인' %}approved{% else %}pending{% endif %}">
+                    {% if request.status == '승인' %}승인됨{% else %}대기중{% endif %}
+                </div>
+            </li>
+            {% else %}
+            <li class="outing-item">외출 신청 내역이 없습니다.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="logout-container">
+        <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const reasonSelect = document.getElementById('reason');
+        const otherReasonInput = document.getElementById('other_reason');
+
+        reasonSelect.addEventListener('change', function() {
+            if (reasonSelect.value === '기타') {
+                otherReasonInput.style.display = 'block';
+                otherReasonInput.required = true;
+            } else {
+                otherReasonInput.style.display = 'none';
+                otherReasonInput.required = false;
+            }
+        });
+    });
+</script>
+</body>
+</html>

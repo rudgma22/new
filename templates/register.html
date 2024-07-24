@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function showRegister(role) {
+            document.getElementById('student-fields').style.display = role === 'student' ? 'block' : 'none';
+            document.getElementById('teacher-fields').style.display = role === 'teacher' ? 'block' : 'none';
+            document.getElementById('role').value = role;
+
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelector('.contents');
+            tabs.forEach(t => t.classList.remove('on', 'green'));
+
+            if (role === 'student') {
+                document.querySelector('.tab[data-role="student"]').classList.add('on');
+                contents.classList.remove('green');
+            } else {
+                document.querySelector('.tab[data-role="teacher"]').classList.add('on', 'green');
+                contents.classList.add('green');
+            }
+        }
+
+        function updateClassOptions(gradeSelectId, classSelectId) {
+            const gradeSelect = document.getElementById(gradeSelectId);
+            const classSelect = document.getElementById(classSelectId);
+            const selectedGrade = gradeSelect.value;
+
+            // Clear existing options
+            classSelect.innerHTML = '<option value="" disabled selected>반을 선택하세요</option>';
+
+            if (selectedGrade === '기타') {
+                classSelect.style.display = 'none';
+                return;
+            } else {
+                classSelect.style.display = 'block';
+            }
+
+            let numberOfClasses = 0;
+            if (selectedGrade === '1') {
+                numberOfClasses = 8;
+            } else if (selectedGrade === '2') {
+                numberOfClasses = 10;
+            } else if (selectedGrade === '3') {
+                numberOfClasses = 7;
+            }
+
+            for (let i = 1; i <= numberOfClasses; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                classSelect.appendChild(option);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    showRegister(tab.getAttribute('data-role'));
+                });
+            });
+
+            const gradeSelectStudent = document.getElementById('grade');
+            gradeSelectStudent.addEventListener('change', function () {
+                updateClassOptions('grade', 'class');
+            });
+
+            const gradeSelectTeacher = document.getElementById('teacher_grade');
+            gradeSelectTeacher.addEventListener('change', function () {
+                updateClassOptions('teacher_grade', 'teacher_class');
+            });
+        });
+    </script>
+</head>
+<body>
+<header>
+    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+    <h1>김천고등학교 외출 관리 시스템</h1>
+</header>
+<div class="contents">
+    <ul class="tabs">
+        <li class="tab on" data-role="student">
+            <div class="check_text">학생 회원가입</div>
+        </li>
+        <div class="tab-divider"></div>
+        <li class="tab" data-role="teacher">
+            <div class="check_text">교사 회원가입</div>
+        </li>
+    </ul>
+    <form class="register_form" method="POST" action="{{ url_for('auth.register') }}">
+        <input type="hidden" id="role" name="role" value="student">
+
+        <div class="input_field">
+            <input class="input_normal" type="text" id="username" name="username" placeholder="아이디를 입력하세요" required>
+        </div>
+        <div class="input_field">
+            <input class="input_normal" type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+        </div>
+
+        <div id="student-fields">
+            <div class="input_field">
+                <input class="input_normal" type="text" id="student_name" name="student_name" placeholder="이름을 입력하세요">
+            </div>
+            <div class="input_field">
+                <select class="input_select" id="grade" name="grade">
+                    <option value="" disabled selected>학년을 선택하세요</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            <div class="input_field" id="class-container">
+                <select class="input_select" id="class" name="class">
+                    <option value="" disabled selected>반을 선택하세요</option>
+                </select>
+            </div>
+            <div class="input_field">
+                <input class="input_normal" type="text" id="student_id" name="student_id" placeholder="번호를 입력하세요">
+            </div>
+            <div class="input_field">
+                <input class="input_normal" type="text" id="barcode" name="barcode" placeholder="바코드를 입력하세요">
+            </div>
+        </div>
+
+        <div id="teacher-fields" style="display: none;">
+            <div class="input_field">
+                <input class="input_normal" type="text" id="teacher_name" name="teacher_name" placeholder="이름을 입력하세요">
+            </div>
+            <div class="input_field">
+                <select class="input_select" id="teacher_grade" name="teacher_grade">
+                    <option value="" disabled selected>담당 학년을 선택하세요</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="input_field" id="teacher-class-container">
+                <select class="input_select" id="teacher_class" name="teacher_class">
+                    <option value="" disabled selected>담당 반을 선택하세요</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="button_normal" type="submit">회원가입</button>
+    </form>
+</div>
+</body>
+</html>

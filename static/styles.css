@@ -1,0 +1,281 @@
+/* Reset some default browser styles */
+body, h1, h2, ul, li, input, button, form, div, select, table, th, td {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Overall page styling */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #ffffff;
+    padding-top: 50px;
+}
+
+/* Header styling */
+header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header img {
+    width: 100px;
+    height: auto;
+}
+
+header h1 {
+    margin-top: 10px;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Content container styling */
+.contents {
+    width: 80%;
+    max-width: 400px;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+    position: relative;
+}
+
+/* Tabs styling */
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+    position: relative;
+}
+
+.tab {
+    cursor: pointer;
+    padding: 10px 20px;
+    text-align: center;
+    transition: color 0.3s;
+    position: relative;
+    color: #ccc;
+}
+
+.tab.on {
+    color: #007bff;
+}
+
+.tab.green.on {
+    color: #8BC34A; /* 밝은 연두색 */
+}
+
+.tab::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #007bff;
+    transition: width 0.3s;
+}
+
+.tab.on::after {
+    width: 100%;
+}
+
+.tab.green.on::after {
+    background-color: #8BC34A; /* 밝은 연두색 */
+}
+
+.tab-divider {
+    width: 1px;
+    background-color: #ccc;
+    height: 16px;
+    margin: auto 10px;
+}
+
+.check_text {
+    font-size: 16px;
+}
+
+/* Form styling */
+.login_form, .register_form {
+    margin-bottom: 20px;
+}
+
+.id_input, .password_input, .input_field, .input_select {
+    margin-bottom: 15px;
+}
+
+.input_normal, .input_select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.input_normal:focus, .input_select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.green .input_normal:focus, .green .input_select:focus {
+    border-color: #8BC34A; /* 밝은 연두색 */
+}
+
+.button_normal {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button_normal:hover {
+    background-color: #0056b3;
+}
+
+.green .button_normal {
+    background-color: #8BC34A; /* 밝은 연두색 */
+}
+
+.green .button_normal:hover {
+    background-color: #6b8e23; /* 연두색 */
+}
+
+/* Student info styling */
+#student-info {
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+#student-info p {
+    margin: 10px 0;
+}
+
+/* Outing request form styling */
+#outing-request form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#outing-request label {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+#outing-request input, #outing-request select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+#outing-request input:focus, #outing-request select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+#outing-request button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#outing-request button:hover {
+    background-color: #0056b3;
+}
+
+/* Logout button styling */
+.logout-container {
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.logout-container a {
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.logout-container a:hover {
+    background-color: #0056b3;
+}
+
+/* Outing request list styling */
+#outing-list {
+    margin-top: 30px;
+    text-align: left;
+}
+
+#outing-list h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+#outing-list ul {
+    list-style: none;
+}
+
+#outing-list li {
+    padding: 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+#outing-list li:last-child {
+    border-bottom: none;
+}
+
+.outing-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.outing-time {
+    font-size: 14px;
+    color: #555;
+}
+
+.outing-status {
+    font-size: 14px;
+    color: #007bff;
+}
+
+.outing-status.approved {
+    color: #28a745;
+}
+
+.outing-status.pending {
+    color: #ffc107;
+}
