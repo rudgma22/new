@@ -30,6 +30,7 @@ class OutingRequest(db.Model):
     end_time = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(80), default='대기중', nullable=False)
+    rejection_reason = db.Column(db.String(200), nullable=True)  # 새로운 필드 추가
 
 def get_db_connection():
     return db.session
@@ -74,3 +75,19 @@ def approve_outing_request(request_id):
     if request:
         request.status = '승인됨'
         db.session.commit()
+
+def reject_outing_request(request_id, rejection_reason):
+    request = OutingRequest.query.get(request_id)
+    if request:
+        request.status = '거절됨'
+        request.rejection_reason = rejection_reason
+        db.session.commit()
+
+def initialize_database():
+    db.drop_all()
+    db.create_all()
+
+if __name__ == '__main__':
+    from app import app
+    with app.app_context():
+        initialize_database()

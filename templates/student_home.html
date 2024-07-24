@@ -44,8 +44,16 @@
                     <div class="outing-time">시작: {{ request['start_time'] }}</div>
                     <div class="outing-time">종료: {{ request['end_time'] }}</div>
                 </div>
-                <div class="outing-status {% if request['status'] == '승인됨' %}approved{% else %}pending{% endif %}">
-                    {% if request['status'] == '승인됨' %}승인됨{% else %}대기중{% endif %}
+                <div class="outing-status {% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
+                    {% if request['status'] == '승인됨' %}
+                        승인됨
+                    {% elif request['status'] == '거절됨' %}
+                        <span class="rejected">거절됨
+                        <div class="rejection-reason">사유: {{ request['rejection_reason'] }}</div>
+                        </span>
+                    {% else %}
+                        대기중
+                    {% endif %}
                 </div>
             </li>
             {% else %}
@@ -71,6 +79,23 @@
                 otherReasonInput.style.display = 'none';
                 otherReasonInput.required = false;
             }
+        });
+
+        const rejectedItems = document.querySelectorAll('.rejected');
+        rejectedItems.forEach(item => {
+            item.addEventListener('mouseover', function() {
+                const reason = this.querySelector('.rejection-reason');
+                if (reason) {
+                    reason.style.display = 'block';
+                }
+            });
+
+            item.addEventListener('mouseout', function() {
+                const reason = this.querySelector('.rejection-reason');
+                if (reason) {
+                    reason.style.display = 'none';
+                }
+            });
         });
     });
 </script>

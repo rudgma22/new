@@ -6,60 +6,41 @@
     <title>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리 - 김천고등학교 외출 관리 시스템</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        body, h1, h2, ul, li, input, button, form, div, select {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            height: 100vh;
-            background-color: #ffffff;
-            padding-top: 50px;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        header img {
-            width: 100px;
-            height: auto;
-        }
-        header h1 {
-            margin-top: 10px;
-            font-size: 24px;
-            color: #333;
-        }
-        .contents {
-            width: 80%;
-            max-width: 1000px;
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            text-align: center;
-        }
-        table {
+        /* 기존 스타일 */
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
         }
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
         }
-        th {
-            background-color: #4CAF50;
-            color: white;
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
         }
-        tr:hover {
-            background-color: #f1f1f1;
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
         .button_normal {
             background-color: #4CAF50;
@@ -70,23 +51,6 @@
             border-radius: 4px;
         }
         .button_normal:hover {
-            background-color: #45a049;
-        }
-        .logout-container {
-            margin-top: 20px;
-            text-align: right;
-            width: 100%;
-        }
-        .logout-container a {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 16px;
-        }
-        .logout-container a:hover {
             background-color: #45a049;
         }
     </style>
@@ -108,6 +72,7 @@
                     <th>외출 종료 시간</th>
                     <th>외출 사유</th>
                     <th>승인</th>
+                    <th>거절</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,11 +88,50 @@
                             <button type="submit" class="button_normal">승인</button>
                         </form>
                     </td>
+                    <td>
+                        <button class="button_normal" onclick="openModal({{ request['id'] }})">거절</button>
+                    </td>
                 </tr>
                 {% endif %}
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- 거절 사유 입력 모달 -->
+    <div id="rejectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <form id="rejectionForm" method="POST">
+                <label for="rejection_reason">거절 사유:</label>
+                <textarea id="rejection_reason" name="rejection_reason" rows="4" style="width: 100%;" required></textarea>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="button" class="button_normal" onclick="closeModal()">취소</button>
+                    <button type="submit" class="button_normal">거절</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(requestId) {
+            const modal = document.getElementById('rejectionModal');
+            const form = document.getElementById('rejectionForm');
+            form.action = `{{ url_for('views.reject_leave', request_id=0) }}`.replace('0', requestId);
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('rejectionModal');
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('rejectionModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
