@@ -9,7 +9,7 @@
 </head>
 <body>
 <div class="login-container">
-    <div class="login-box">
+    <div class="outing-box">
         <header>
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>{{ student.name }}님, 환영합니다!</h1>
@@ -47,42 +47,49 @@
             </form>
         </div>
         <div id="outing-list">
-            <h2 class="section-title">최근 외출 신청 내역</h2>
-            <button class="button_normal" id="toggle-outing-list">목록 접기/펼치기</button>
-            <table id="outing-list-items" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>시작 시간</th>
-                        <th>종료 시간</th>
-                        <th>상태</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for request in outing_requests %}
-                    <tr>
-                        <td>{{ request['start_time'] }}</td>
-                        <td>{{ request['end_time'] }}</td>
-                        <td class="{% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
-                            {% if request['status'] == '승인됨' %}
-                                승인됨
-                            {% elif request['status'] == '거절됨' %}
-                                <span class="rejected">거절됨
-                                <div class="rejection-reason">사유: {{ request['rejection_reason'] }}</div>
-                                </span>
-                            {% else %}
-                                대기중
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="3">외출 신청 내역이 없습니다.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <button class="button_normal_b" id="toggle-outing-list">최근 외출 신청 내역</button>
         </div>
         <div class="logout-container">
             <a href="{{ url_for('auth.logout') }}">로그아웃</a>
         </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="outing-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>최근 외출 신청 내역</h2>
+        <table id="outing-list-items" class="student_table">
+            <thead>
+                <tr>
+                    <th>시작 시간</th>
+                    <th>종료 시간</th>
+                    <th>상태</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in outing_requests %}
+                <tr>
+                    <td>{{ request['start_time'] }}</td>
+                    <td>{{ request['end_time'] }}</td>
+                    <td class="{% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
+                        {% if request['status'] == '승인됨' %}
+                            승인됨
+                        {% elif request['status'] == '거절됨' %}
+                            <span class="rejected">거절됨
+                            <div class="rejection-reason">사유: {{ request['rejection_reason'] }}</div>
+                            </span>
+                        {% else %}
+                            대기중
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">외출 신청 내역이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -91,7 +98,8 @@
         const reasonSelect = document.getElementById('reason');
         const otherReasonInput = document.getElementById('other-reason-container');
         const toggleButton = document.getElementById('toggle-outing-list');
-        const outingList = document.getElementById('outing-list-items');
+        const modal = document.getElementById('outing-modal');
+        const closeModal = document.querySelector('.modal .close');
 
         reasonSelect.addEventListener('change', function() {
             if (reasonSelect.value === '기타') {
@@ -104,13 +112,16 @@
         });
 
         toggleButton.addEventListener('click', function() {
-            if (outingList.style.display === 'none') {
-                outingList.style.display = 'table';
-                outingList.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
-            } else {
-                outingList.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500 }).onfinish = () => {
-                    outingList.style.display = 'none';
-                };
+            modal.style.display = 'block';
+        });
+
+        closeModal.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
             }
         });
 
@@ -132,5 +143,58 @@
         });
     });
 </script>
+
+<style>
+    /* 기존 스타일 */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        padding-top: 60px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    /* 거절 사유 숨김 스타일 */
+    .rejection-reason {
+        display: none;
+        background-color: #fff;
+        color: #A0A0A0;
+        border: 1px solid #A0A0A0;
+        padding: 5px;
+        border-radius: 5px;
+        position: absolute;
+        z-index: 10;
+    }
+
+    /* 마우스 오버 시 거절 사유 표시 */
+    .rejected:hover .rejection-reason {
+        display: block;
+    }
+</style>
 </body>
 </html>

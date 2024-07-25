@@ -54,6 +54,30 @@ header h1 {
     position: relative;
 }
 
+.outing-box {
+    width: 100%;
+    max-width: 500px;
+    background: #fff;
+    padding: 100px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 16px; /* 모서리 라운딩 */
+    text-align: center;
+    position: relative;
+}
+
+.manage-box {
+    width: 100%;
+    max-width: 1500px;
+    background: #fff;
+    padding: 100px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 16px; /* 모서리 라운딩 */
+    text-align: center;
+    position: relative;
+}
+
 /* Tabs styling */
 .tabs {
     display: flex;
@@ -187,6 +211,23 @@ header h1 {
     background-color: #0056b3;
 }
 
+.button_normal_b {
+    margin-top: 15px;
+    width: 100%;
+    padding: 15px; /* 버튼 크기 확대 */
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px; /* 모서리 라운딩 */
+    cursor: pointer;
+    transition: background 0.5s;
+}
+
+.button_normal_b:hover {
+    background-color: #0056b3;
+}
+
 .green .button_normal {
     background-color: #8BC34A; /* 밝은 연두색 */
 }
@@ -210,16 +251,32 @@ header h1 {
 }
 
 /* Table styling */
+.table-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate; /* border-collapse를 separate로 설정 */
+    border-spacing: 0; /* 셀 간 간격을 0으로 설정 */
     margin-top: 10px;
+    max-width: 1200px; /* 테이블 최대 너비 설정 */
+    justify-content: center;
+    border-radius: 10px; /* 테이블 전체의 모서리를 둥글게 설정 */
+    overflow: hidden; /* 모서리 둥글게 적용을 위해 필요 */
 }
 
 th, td {
     padding: 10px 10px; /* 간격 충분히 늘림 */
     text-align: center;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #A0A0A0;
+}
+
+.student_table th{
+    background-color: #007bff;
+    color: white;
 }
 
 th {
@@ -231,15 +288,15 @@ tr:hover {
     background-color: #f1f1f1;
 }
 
-.outing-status.approved {
+.approved {
     color: #28a745; /* 초록색 */
 }
 
-.outing-status.pending {
+.pending {
     color: #ffc107; /* 주황색 */
 }
 
-.outing-status.rejected {
+.rejected {
     color: #E83323; /* 빨간색 */
 }
 
@@ -278,4 +335,19 @@ tr:hover {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+
+.rejection-reason {
+    display: none;
+    background-color: #fff;
+    color: #A0A0A0;
+    padding: 5px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 10;
+}
+
+/* 마우스 오버 시 거절 사유 표시 */
+.rejected:hover .rejection-reason {
+    display: block;
 }

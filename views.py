@@ -21,6 +21,12 @@ def student_home():
         outing_requests = conn.execute(text('SELECT * FROM outing_requests WHERE student_name = :name'),
                                        {'name': student['name']}).fetchall()
         outing_requests = [row_to_dict(request) for request in outing_requests]
+
+        # 포맷팅
+        for request in outing_requests:
+            request['start_time'] = datetime.fromisoformat(request['start_time']).strftime('%Y-%m-%d %H:%M:%S')
+            request['end_time'] = datetime.fromisoformat(request['end_time']).strftime('%Y-%m-%d %H:%M:%S')
+
         conn.close()
         return render_template('student_home.html', student=student, outing_requests=outing_requests)
     else:
@@ -35,8 +41,14 @@ def teacher_manage():
         teacher = row_to_dict(teacher)
         requests = conn.execute(text(
             'SELECT * FROM outing_requests WHERE student_name IN (SELECT name FROM students WHERE grade = :grade AND student_class = :class)'),
-                                {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
+            {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
         requests = [row_to_dict(request) for request in requests]
+
+        # 포맷팅
+        for request in requests:
+            request['start_time'] = datetime.fromisoformat(request['start_time']).strftime('%Y-%m-%d %H:%M:%S')
+            request['end_time'] = datetime.fromisoformat(request['end_time']).strftime('%Y-%m-%d %H:%M:%S')
+
         conn.close()
         return render_template('student_manage.html', teacher=teacher, requests=requests)
     else:
@@ -89,4 +101,3 @@ def reject_leave(request_id):
         return redirect(url_for('views.teacher_manage'))
     else:
         return redirect(url_for('auth.index'))
-
