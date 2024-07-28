@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>관리자 페이지</h1>
+        </header>
+        <div class="signup-link">
+            <p>관리자 계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
