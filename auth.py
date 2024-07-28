@@ -78,3 +78,5 @@ def register():
         return redirect(url_for('auth.index'))
 
     return render_template('register.html')
+
+#commit용 주석
