@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, add_student, add_teacher, Student, Teacher
+from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin
 import bcrypt
 
 auth_bp = Blueprint('auth', __name__)
@@ -19,14 +19,18 @@ def login():
         user = Student.query.filter_by(username=username).first()
     elif role == 'teacher':
         user = Teacher.query.filter_by(username=username).first()
+    elif role == 'admin':
+        user = Admin.query.filter_by(username=username).first()
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         session['user_id'] = user.id
         session['role'] = role
         if role == 'student':
             return redirect(url_for('views.student_home'))
-        else:
+        elif role == 'teacher':
             return redirect(url_for('views.teacher_manage'))
+        elif role == 'admin':
+            return redirect(url_for('views.admin_page'))
     else:
         flash('Invalid credentials')
         return redirect(url_for('auth.index'))
@@ -63,6 +67,10 @@ def register():
             grade = request.form['grade']
             teacher_class = request.form['teacher_class']
             add_teacher(name, grade, teacher_class, username, password)
+
+        elif role == 'admin':
+            name = request.form['name']
+            add_admin(name, username, password)
 
         return redirect(url_for('auth.index'))
 

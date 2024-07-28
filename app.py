@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from auth import auth_bp
 from views import views_bp
 from models import db, Student, Teacher, OutingRequest

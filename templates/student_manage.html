@@ -58,12 +58,11 @@
         .green:hover {
             background-color: #6b8e23;
         }
-
     </style>
 </head>
 <body>
-<div">
-    <div class="manage-box">
+<div class="login-container">
+    <div class="login-box">
         <header>
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
@@ -72,40 +71,38 @@
             <div class="logout-container-teacher">
                 <a href="{{ url_for('auth.logout') }}">로그아웃</a>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>이름</th>
-                            <th>외출 시작 시간</th>
-                            <th>외출 종료 시간</th>
-                            <th>외출 사유</th>
-                            <th>승인</th>
-                            <th>거절</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for request in requests %}
-                        {% if request['status'] != '승인됨' and request['status'] != '거절됨' %}
-                        <tr>
-                            <td>{{ request['student_name'] }}</td>
-                            <td>{{ request['start_time'] }}</td>
-                            <td>{{ request['end_time'] }}</td>
-                            <td>{{ request['reason'] }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
-                                    <button type="submit" class="button_normal green">승인</button>
-                                </form>
-                            </td>
-                            <td>
-                                <button class="button_normal green" onclick="openModal({{ request['id'] }})">거절</button>
-                            </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>이름</th>
+                        <th>외출 시작 시간</th>
+                        <th>외출 종료 시간</th>
+                        <th>외출 사유</th>
+                        <th>승인</th>
+                        <th>거절</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    {% if request['status'] != '승인됨' and request['status'] != '거절됨' %}
+                    <tr>
+                        <td>{{ request['student_name'] }}</td>
+                        <td>{{ request['start_time'] }}</td>
+                        <td>{{ request['end_time'] }}</td>
+                        <td>{{ request['reason'] }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('views.approve_leave', request_id=request['id']) }}">
+                                <button type="submit" class="button_normal green">승인</button>
+                            </form>
+                        </td>
+                        <td>
+                            <button class="button_normal green" onclick="openModal({{ request['id'] }})">거절</button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

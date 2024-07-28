@@ -22,6 +22,13 @@ class Teacher(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+
 class OutingRequest(db.Model):
     __tablename__ = 'outing_requests'
     id = db.Column(db.Integer, primary_key=True)
@@ -57,6 +64,15 @@ def add_teacher(name, grade, teacher_class, username, password):
         password=password
     )
     db.session.add(new_teacher)
+    db.session.commit()
+
+def add_admin(name, username, password):
+    new_admin = Admin(
+        name=name,
+        username=username,
+        password=password
+    )
+    db.session.add(new_admin)
     db.session.commit()
 
 def add_outing_request(student_name, start_time, end_time, reason):

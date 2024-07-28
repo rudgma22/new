@@ -6,91 +6,25 @@
     <title>회원가입 - 김천고등학교 외출 관리 시스템</title>
     <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script>
-        function showRegister(role) {
-            document.getElementById('student-fields').style.display = role === 'student' ? 'block' : 'none';
-            document.getElementById('teacher-fields').style.display = role === 'teacher' ? 'block' : 'none';
-            document.getElementById('role').value = role;
-
-            const tabs = document.querySelectorAll('.tab');
-            const contents = document.querySelector('.contents');
-            tabs.forEach(t => t.classList.remove('on', 'green'));
-
-            if (role === 'student') {
-                document.querySelector('.tab[data-role="student"]').classList.add('on');
-                contents.classList.remove('green');
-            } else {
-                document.querySelector('.tab[data-role="teacher"]').classList.add('on', 'green');
-                contents.classList.add('green');
-            }
-        }
-
-        function updateClassOptions(gradeSelectId, classSelectId) {
-            const gradeSelect = document.getElementById(gradeSelectId);
-            const classSelect = document.getElementById(classSelectId);
-            const selectedGrade = gradeSelect.value;
-
-            // Clear existing options
-            classSelect.innerHTML = '<option value="" disabled selected>반을 선택하세요</option>';
-
-            if (selectedGrade === '기타') {
-                classSelect.style.display = 'none';
-                return;
-            } else {
-                classSelect.style.display = 'block';
-            }
-
-            let numberOfClasses = 0;
-            if (selectedGrade === '1') {
-                numberOfClasses = 8;
-            } else if (selectedGrade === '2') {
-                numberOfClasses = 10;
-            } else if (selectedGrade === '3') {
-                numberOfClasses = 7;
-            }
-
-            for (let i = 1; i <= numberOfClasses; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = i;
-                classSelect.appendChild(option);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function () {
-                    showRegister(tab.getAttribute('data-role'));
-                });
-            });
-
-            const gradeSelectStudent = document.getElementById('grade');
-            gradeSelectStudent.addEventListener('change', function () {
-                updateClassOptions('grade', 'student_class');
-            });
-
-            const gradeSelectTeacher = document.getElementById('teacher_grade');
-            gradeSelectTeacher.addEventListener('change', function () {
-                updateClassOptions('teacher_grade', 'teacher_class');
-            });
-        });
-    </script>
 </head>
 <body>
 <div class="login-container">
-    <div class="login-box">
+    <div class="login-box blue">
         <header>
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>김천고등학교 외출 관리 시스템</h1>
         </header>
         <ul class="tabs">
-            <li class="tab on" data-role="student">
+            <li class="tab on blue" data-role="student" id="student-tab">
                 <div class="check_text">학생 회원가입</div>
             </li>
             <div class="tab-divider"></div>
-            <li class="tab" data-role="teacher">
+            <li class="tab green" data-role="teacher" id="teacher-tab">
                 <div class="check_text">교사 회원가입</div>
+            </li>
+            <div class="tab-divider"></div>
+            <li class="tab red" data-role="admin" id="admin-tab">
+                <div class="check_text">관리자 회원가입</div>
             </li>
         </ul>
         <form class="register_form" method="POST" action="{{ url_for('auth.register') }}">
@@ -107,11 +41,11 @@
 
             <div id="student-fields">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="student_name" name="name" required>
+                    <input class="input_normal" type="text" id="student_name" name="name">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="grade" name="grade" required>
+                    <select class="input_select" id="grade" name="grade">
                         <option value="" disabled selected>학년을 선택하세요</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -119,27 +53,27 @@
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="student_class" name="student_class" required>
+                    <select class="input_select" id="student_class" name="student_class">
                         <option value="" disabled selected>반을 선택하세요</option>
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="number" name="number" required>
+                    <input class="input_normal" type="text" id="number" name="number">
                     <label>번호를 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="barcode" name="barcode" required>
+                    <input class="input_normal" type="text" id="barcode" name="barcode">
                     <label>바코드를 입력하세요</label>
                 </div>
             </div>
 
             <div id="teacher-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="teacher_name" name="name" required>
+                    <input class="input_normal" type="text" id="teacher_name" name="name">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="teacher_grade" name="grade" required>
+                    <select class="input_select" id="teacher_grade" name="grade">
                         <option value="" disabled selected>담당 학년을 선택하세요</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -148,15 +82,114 @@
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="teacher_class" name="teacher_class" required>
+                    <select class="input_select" id="teacher_class" name="teacher_class">
                         <option value="" disabled selected>담당 반을 선택하세요</option>
                     </select>
                 </div>
+            </div>
+
+            <div id="admin-fields" style="display: none;">
+                <div class="input_field input-box">
+                    <input class="input_normal" type="text" id="admin_name" name="name">
+                    <label>이름을 입력하세요</label>
+                </div>
+                <!-- 추가적인 관리자 필드가 필요하다면 여기에 추가합니다. -->
             </div>
 
             <button class="button_normal" type="submit">회원가입</button>
         </form>
     </div>
 </div>
+<script>
+    function showRegister(role) {
+        const studentFields = document.getElementById('student-fields');
+        const teacherFields = document.getElementById('teacher-fields');
+        const adminFields = document.getElementById('admin-fields');
+        const loginBox = document.querySelector('.login-box');
+        const studentTab = document.getElementById('student-tab');
+        const teacherTab = document.getElementById('teacher-tab');
+        const adminTab = document.getElementById('admin-tab');
+
+        studentFields.style.display = role === 'student' ? 'block' : 'none';
+        teacherFields.style.display = role === 'teacher' ? 'block' : 'none';
+        adminFields.style.display = role === 'admin' ? 'block' : 'none';
+        document.getElementById('role').value = role;
+
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(t => t.classList.remove('on'));
+
+        if (role === 'student') {
+            studentFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
+            teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            loginBox.classList.remove('green', 'red');
+            loginBox.classList.add('blue');
+            studentTab.classList.add('on');
+        } else if (role === 'teacher') {
+            teacherFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
+            studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            loginBox.classList.add('green');
+            loginBox.classList.remove('red', 'blue');
+            teacherTab.classList.add('on', 'green');
+        } else if (role === 'admin') {
+            adminFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
+            studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            loginBox.classList.add('red');
+            loginBox.classList.remove('green', 'blue');
+            adminTab.classList.add('on', 'red');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                showRegister(tab.getAttribute('data-role'));
+            });
+        });
+    });
+
+    // HTML5 기본 폼 유효성 검사를 막고 JavaScript로 유효성 검사 수행
+    document.querySelector('.register_form').addEventListener('submit', function (e) {
+        const role = document.getElementById('role').value;
+        const studentFields = document.getElementById('student-fields');
+        const teacherFields = document.getElementById('teacher-fields');
+        const adminFields = document.getElementById('admin-fields');
+
+        let isValid = true;
+        if (role === 'student') {
+            const requiredFields = studentFields.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.focus();
+                }
+            });
+        } else if (role === 'teacher') {
+            const requiredFields = teacherFields.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.focus();
+                }
+            });
+        } else if (role === 'admin') {
+            const requiredFields = adminFields.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    field.focus();
+                }
+            });
+        }
+
+        if (!isValid) {
+            e.preventDefault(); // 폼 제출 중단
+            alert('모든 필수 필드를 채워주세요.');
+        }
+    });
+</script>
 </body>
 </html>
