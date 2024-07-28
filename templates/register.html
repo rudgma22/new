@@ -31,17 +31,17 @@
             <input type="hidden" id="role" name="role" value="student">
 
             <div class="input_field input-box">
-                <input class="input_normal" type="text" id="username" name="username" required>
+                <input class="input_normal" type="text" id="username" name="username" required placeholder=" ">
                 <label>아이디를 입력하세요</label>
             </div>
             <div class="input_field input-box">
-                <input class="input_normal" type="password" id="password" name="password" required>
+                <input class="input_normal" type="password" id="password" name="password" required placeholder=" ">
                 <label>비밀번호를 입력하세요</label>
             </div>
 
             <div id="student-fields">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="student_name" name="name">
+                    <input class="input_normal" type="text" id="student_name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
@@ -58,18 +58,18 @@
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="number" name="number">
+                    <input class="input_normal" type="text" id="number" name="number" placeholder=" ">
                     <label>번호를 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="barcode" name="barcode">
+                    <input class="input_normal" type="text" id="barcode" name="barcode" placeholder=" ">
                     <label>바코드를 입력하세요</label>
                 </div>
             </div>
 
             <div id="teacher-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="teacher_name" name="name">
+                    <input class="input_normal" type="text" id="teacher_name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
@@ -90,7 +90,7 @@
 
             <div id="admin-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="admin_name" name="name">
+                    <input class="input_normal" type="text" id="admin_name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <!-- 추가적인 관리자 필드가 필요하다면 여기에 추가합니다. -->
@@ -142,12 +142,44 @@
         }
     }
 
+    function updateClassOptions(grade) {
+        const studentClass = document.getElementById('student_class');
+        studentClass.innerHTML = '<option value="" disabled selected>반을 선택하세요</option>';
+
+        let classCount;
+        switch (grade) {
+            case '1':
+                classCount = 9;
+                break;
+            case '2':
+                classCount = 10;
+                break;
+            case '3':
+                classCount = 7;
+                break;
+            default:
+                classCount = 0;
+        }
+
+        for (let i = 1; i <= classCount; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}`;
+            studentClass.appendChild(option);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', function () {
                 showRegister(tab.getAttribute('data-role'));
             });
+        });
+
+        const gradeSelect = document.getElementById('grade');
+        gradeSelect.addEventListener('change', function () {
+            updateClassOptions(this.value);
         });
     });
 

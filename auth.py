@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin
+from models import db, add_student, add_teacher, Student, Teacher
 import bcrypt
 
 auth_bp = Blueprint('auth', __name__)
@@ -19,18 +19,14 @@ def login():
         user = Student.query.filter_by(username=username).first()
     elif role == 'teacher':
         user = Teacher.query.filter_by(username=username).first()
-    elif role == 'admin':
-        user = Admin.query.filter_by(username=username).first()
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         session['user_id'] = user.id
         session['role'] = role
         if role == 'student':
             return redirect(url_for('views.student_home'))
-        elif role == 'teacher':
+        else:
             return redirect(url_for('views.teacher_manage'))
-        elif role == 'admin':
-            return redirect(url_for('views.admin_page'))
     else:
         flash('Invalid credentials')
         return redirect(url_for('auth.index'))
@@ -46,6 +42,11 @@ def register():
         role = request.form['role']
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        # Check if username already exists
+        if Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first():
+            flash('The username already exists. Please use a different username.')
+            return redirect(url_for('auth.register'))
 
         if role == 'student':
             name = request.form['name']
@@ -70,7 +71,8 @@ def register():
 
         elif role == 'admin':
             name = request.form['name']
-            add_admin(name, username, password)
+            # 필요한 추가 필드 처리
+            add_teacher(name, "", "", username, password)  # 예시로, 추가 필드를 처리하지 않음
 
         return redirect(url_for('auth.index'))
 
