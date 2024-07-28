@@ -41,7 +41,7 @@
 
             <div id="student-fields">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="student_name" name="name" placeholder=" ">
+                    <input class="input_normal" type="text" id="name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
@@ -69,7 +69,7 @@
 
             <div id="teacher-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="teacher_name" name="name" placeholder=" ">
+                    <input class="input_normal" type="text" id="name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
@@ -90,7 +90,7 @@
 
             <div id="admin-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="admin_name" name="name" placeholder=" ">
+                    <input class="input_normal" type="text" id="name" name="name" placeholder=" ">
                     <label>이름을 입력하세요</label>
                 </div>
                 <!-- 추가적인 관리자 필드가 필요하다면 여기에 추가합니다. -->
@@ -142,30 +142,38 @@
         }
     }
 
-    function updateClassOptions(grade) {
-        const studentClass = document.getElementById('student_class');
-        studentClass.innerHTML = '<option value="" disabled selected>반을 선택하세요</option>';
-
-        let classCount;
-        switch (grade) {
-            case '1':
-                classCount = 9;
-                break;
-            case '2':
-                classCount = 10;
-                break;
-            case '3':
-                classCount = 7;
-                break;
-            default:
-                classCount = 0;
+    function updateClassOptions(grade, role) {
+        let classSelect;
+        if (role === 'student') {
+            classSelect = document.getElementById('student_class');
+        } else if (role === 'teacher') {
+            classSelect = document.getElementById('teacher_class');
         }
 
-        for (let i = 1; i <= classCount; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = `${i}`;
-            studentClass.appendChild(option);
+        if (classSelect) {
+            classSelect.innerHTML = '<option value="" disabled selected>반을 선택하세요</option>';
+
+            let classCount;
+            switch (grade) {
+                case '1':
+                    classCount = 9;
+                    break;
+                case '2':
+                    classCount = 10;
+                    break;
+                case '3':
+                    classCount = 7;
+                    break;
+                default:
+                    classCount = 0;
+            }
+
+            for (let i = 1; i <= classCount; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i}`;
+                classSelect.appendChild(option);
+            }
         }
     }
 
@@ -177,9 +185,14 @@
             });
         });
 
-        const gradeSelect = document.getElementById('grade');
-        gradeSelect.addEventListener('change', function () {
-            updateClassOptions(this.value);
+        const studentGradeSelect = document.getElementById('grade');
+        studentGradeSelect.addEventListener('change', function () {
+            updateClassOptions(this.value, 'student');
+        });
+
+        const teacherGradeSelect = document.getElementById('teacher_grade');
+        teacherGradeSelect.addEventListener('change', function () {
+            updateClassOptions(this.value, 'teacher');
         });
     });
 
