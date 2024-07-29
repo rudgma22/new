@@ -30,7 +30,7 @@ def login():
         elif role == 'teacher':
             return redirect(url_for('views.teacher_manage'))
         elif role == 'admin':
-            return redirect(url_for('views.admin_home'))
+            return redirect(url_for('views.admin_page'))
     else:
         flash('Invalid credentials')
         return redirect(url_for('auth.index'))
@@ -46,7 +46,14 @@ def register():
         role = request.form['role']
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        name = request.form['name']
+
+        # role에 따라 다른 name 필드 사용
+        if role == 'student':
+            name = request.form['student_name']
+        elif role == 'teacher':
+            name = request.form['teacher_name']
+        elif role == 'admin':
+            name = request.form['admin_name']
 
         # Check if username already exists
         if Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first():
@@ -78,5 +85,3 @@ def register():
         return redirect(url_for('auth.index'))
 
     return render_template('register.html')
-
-#commit용 주석

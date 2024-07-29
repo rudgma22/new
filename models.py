@@ -107,5 +107,3 @@ if __name__ == '__main__':
     from app import app
     with app.app_context():
         initialize_database()
-
-#commit용 주석
