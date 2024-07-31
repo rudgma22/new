@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인증 코드 입력 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box green">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>인증 코드 입력</h1>
+        </header>
+        <form class="login_form" method="post" action="{{ url_for('auth.verify_code') }}">
+            <div class="input-box">
+                <input class="input_normal" type="text" name="verification_code" required>
+                <label>이메일로 전송된 인증 코드를 입력하세요</label>
+            </div>
+            <button class="button_normal login-button green" type="submit">확인</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

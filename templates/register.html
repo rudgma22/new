@@ -65,6 +65,10 @@
                     <input class="input_normal" type="text" id="barcode" name="barcode" placeholder=" ">
                     <label for="barcode">바코드를 입력하세요</label>
                 </div>
+                <div class="input_field input-box email-field student-teacher-email">
+                    <input class="input_normal" type="email" id="email" name="email" required placeholder=" " autocomplete="email">
+                    <label for="email">이메일을 입력하세요</label>
+                </div>
             </div>
 
             <div id="teacher-fields" style="display: none;">
@@ -85,6 +89,10 @@
                     <select class="input_select" id="teacher_class" name="teacher_class">
                         <option value="" disabled selected>담당 반을 선택하세요</option>
                     </select>
+                </div>
+                <div class="input_field input-box email-field student-teacher-email">
+                    <input class="input_normal" type="email" id="email" name="email" required placeholder=" " autocomplete="email">
+                    <label for="email">이메일을 입력하세요</label>
                 </div>
             </div>
 
@@ -109,6 +117,7 @@
         const studentTab = document.getElementById('student-tab');
         const teacherTab = document.getElementById('teacher-tab');
         const adminTab = document.getElementById('admin-tab');
+        const emailFields = document.querySelectorAll('.student-teacher-email');
 
         studentFields.style.display = role === 'student' ? 'block' : 'none';
         teacherFields.style.display = role === 'teacher' ? 'block' : 'none';
@@ -122,6 +131,10 @@
             studentFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
             teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
             adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            emailFields.forEach(field => {
+                field.style.display = 'block';
+                field.querySelector('input').setAttribute('required', 'true');
+            });
             loginBox.classList.remove('green', 'red');
             loginBox.classList.add('blue');
             studentTab.classList.add('on');
@@ -129,6 +142,10 @@
             teacherFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
             studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
             adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            emailFields.forEach(field => {
+                field.style.display = 'block';
+                field.querySelector('input').setAttribute('required', 'true');
+            });
             loginBox.classList.add('green');
             loginBox.classList.remove('red', 'blue');
             teacherTab.classList.add('on', 'green');
@@ -136,6 +153,10 @@
             adminFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
             studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
             teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            emailFields.forEach(field => {
+                field.style.display = 'none';
+                field.querySelector('input').removeAttribute('required');
+            });
             loginBox.classList.add('red');
             loginBox.classList.remove('green', 'blue');
             adminTab.classList.add('on', 'red');
