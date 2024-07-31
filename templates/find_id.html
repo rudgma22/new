@@ -14,7 +14,7 @@
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>아이디 찾기 결과</h1>
         </header>
-        <p>{{ username }}님의 아이디는 <strong>{{ username }}</strong>입니다.</p>
+        <p>{{ name }}님의 아이디는 <strong>{{ username }}</strong>입니다.</p>
         <button class="button_normal" onclick="location.href='{{ url_for('auth.index') }}'">로그인하기</button>
     </div>
 </div>

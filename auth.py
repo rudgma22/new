@@ -99,10 +99,10 @@ def find_id():
         barcode = request.form['barcode']
         user = Student.query.filter_by(name=name, grade=grade, student_class=student_class, number=number, barcode=barcode).first()
     else:
-        user = Teacher.query.filter_by(name=name, grade=grade, teacher_class=student_class, number=number).first()
+        user = Teacher.query.filter_by(name=name, grade=grade, teacher_class=student_class).first()
 
     if user:
-        return render_template('find_id.html', username=user.username)
+        return render_template('find_id.html', name=name, username=user.username)
     else:
         flash('해당 정보로 아이디를 찾을 수 없습니다.')
         return redirect(url_for('auth.find_id_reset_password'))
@@ -120,7 +120,7 @@ def reset_password():
         barcode = request.form['barcode']
         user = Student.query.filter_by(username=username, name=name, grade=grade, student_class=student_class, number=number, barcode=barcode).first()
     else:
-        user = Teacher.query.filter_by(username=username, name=name, grade=grade, teacher_class=student_class, number=number).first()
+        user = Teacher.query.filter_by(username=username, name=name, grade=grade, teacher_class=student_class).first()
 
     if user:
         return render_template('reset_password.html', username=username)

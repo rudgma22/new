@@ -63,11 +63,8 @@
             </div>
             <button class="button_normal login-button red" type="submit">로그인</button>
         </form>
-        <div class="signup-link">
-            <p>계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
-        </div>
         <div class="forgot-link">
-            <p>아이디 또는 비밀번호를 잊으셨나요? <a href="{{ url_for('auth.find_id_reset_password') }}">아이디/비밀번호 찾기</a></p>
+            <p>아이디 또는 비밀번호를 잊으셨나요? <a href="{{ url_for('auth.find_id_reset_password') }}">찾기</a></p>
         </div>
     </div>
 </div>
