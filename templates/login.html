@@ -30,11 +30,11 @@
         <form id="student-form" class="login_form" method="post" action="{{ url_for('auth.login') }}">
             <input type="hidden" name="role" value="student">
             <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required>
+                <input class="input_normal" type="text" name="username" required autocomplete="username">
                 <label>아이디를 입력하세요</label>
             </div>
             <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required>
+                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
                 <label>비밀번호를 입력하세요</label>
             </div>
             <button class="button_normal login-button" type="submit">로그인</button>
@@ -42,11 +42,11 @@
         <form id="teacher-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
             <input type="hidden" name="role" value="teacher">
             <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required>
+                <input class="input_normal" type="text" name="username" required autocomplete="username">
                 <label>아이디를 입력하세요</label>
             </div>
             <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required>
+                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
                 <label>비밀번호를 입력하세요</label>
             </div>
             <button class="button_normal login-button green" type="submit">로그인</button>
@@ -54,17 +54,20 @@
         <form id="admin-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
             <input type="hidden" name="role" value="admin">
             <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required>
+                <input class="input_normal" type="text" name="username" required autocomplete="username">
                 <label>아이디를 입력하세요</label>
             </div>
             <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required>
+                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
                 <label>비밀번호를 입력하세요</label>
             </div>
             <button class="button_normal login-button red" type="submit">로그인</button>
         </form>
         <div class="signup-link">
             <p>계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
+        </div>
+        <div class="forgot-link">
+            <p>아이디 또는 비밀번호를 잊으셨나요? <a href="{{ url_for('auth.find_id_reset_password') }}">아이디/비밀번호 찾기</a></p>
         </div>
     </div>
 </div>

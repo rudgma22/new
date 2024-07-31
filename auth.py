@@ -47,7 +47,6 @@ def register():
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # role에 따라 다른 name 필드 사용
         if role == 'student':
             name = request.form['student_name']
         elif role == 'teacher':
@@ -55,7 +54,6 @@ def register():
         elif role == 'admin':
             name = request.form['admin_name']
 
-        # Check if username already exists
         if Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first():
             flash('The username already exists. Please use a different username.')
             return redirect(url_for('auth.register'))
@@ -66,7 +64,6 @@ def register():
             number = request.form['number']
             barcode = request.form['barcode']
 
-            # 바코드 중복 확인
             existing_student = Student.query.filter_by(barcode=barcode).first()
             if existing_student:
                 flash('The barcode already exists. Please use a different barcode.')
@@ -85,3 +82,68 @@ def register():
         return redirect(url_for('auth.index'))
 
     return render_template('register.html')
+
+@auth_bp.route('/find_id_reset_password')
+def find_id_reset_password():
+    return render_template('find_id_reset_password.html')
+
+@auth_bp.route('/find_id', methods=['POST'])
+def find_id():
+    role = request.form['role']
+    name = request.form['name']
+    grade = request.form['grade']
+    student_class = request.form['class']
+    number = request.form['number']
+
+    if role == 'student':
+        barcode = request.form['barcode']
+        user = Student.query.filter_by(name=name, grade=grade, student_class=student_class, number=number, barcode=barcode).first()
+    else:
+        user = Teacher.query.filter_by(name=name, grade=grade, teacher_class=student_class, number=number).first()
+
+    if user:
+        return render_template('find_id.html', username=user.username)
+    else:
+        flash('해당 정보로 아이디를 찾을 수 없습니다.')
+        return redirect(url_for('auth.find_id_reset_password'))
+
+@auth_bp.route('/reset_password', methods=['POST'])
+def reset_password():
+    role = request.form['role']
+    username = request.form['username']
+    name = request.form['name']
+    grade = request.form['grade']
+    student_class = request.form['class']
+    number = request.form['number']
+
+    if role == 'student':
+        barcode = request.form['barcode']
+        user = Student.query.filter_by(username=username, name=name, grade=grade, student_class=student_class, number=number, barcode=barcode).first()
+    else:
+        user = Teacher.query.filter_by(username=username, name=name, grade=grade, teacher_class=student_class, number=number).first()
+
+    if user:
+        return render_template('reset_password.html', username=username)
+    else:
+        flash('해당 정보로 계정을 찾을 수 없습니다.')
+        return redirect(url_for('auth.find_id_reset_password'))
+
+@auth_bp.route('/reset_password_confirm', methods=['POST'])
+def reset_password_confirm():
+    username = request.form['username']
+    new_password = request.form['new_password']
+    confirm_password = request.form['confirm_password']
+
+    if new_password != confirm_password:
+        flash('비밀번호가 일치하지 않습니다.')
+        return redirect(url_for('auth.find_id_reset_password'))
+
+    user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first()
+
+    if user:
+        user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        db.session.commit()
+        return render_template('reset_result.html')
+    else:
+        flash('해당 아이디를 찾을 수 없습니다.')
+        return redirect(url_for('auth.find_id_reset_password'))

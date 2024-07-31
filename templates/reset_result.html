@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비밀번호 재설정 완료 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box green">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>비밀번호 재설정 완료</h1>
+        </header>
+        <p>비밀번호가 성공적으로 재설정되었습니다.</p>
+        <button class="button_normal" onclick="location.href='{{ url_for('auth.index') }}'">로그인하기</button>
+    </div>
+</div>
+</body>
+</html>
