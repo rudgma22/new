@@ -12,7 +12,6 @@ class Student(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     barcode = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)  # 이메일 필드 추가
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
@@ -22,7 +21,6 @@ class Teacher(db.Model):
     teacher_class = db.Column(db.String(80), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)  # 이메일 필드 추가
 
 class Admin(db.Model):
     __tablename__ = 'admins'
@@ -44,7 +42,7 @@ class OutingRequest(db.Model):
 def get_db_connection():
     return db.session
 
-def add_student(name, grade, student_class, number, username, password, barcode, email):
+def add_student(name, grade, student_class, number, username, password, barcode):
     new_student = Student(
         name=name,
         grade=grade,
@@ -52,20 +50,18 @@ def add_student(name, grade, student_class, number, username, password, barcode,
         number=number,
         username=username,
         password=password,
-        barcode=barcode,
-        email=email
+        barcode=barcode
     )
     db.session.add(new_student)
     db.session.commit()
 
-def add_teacher(name, grade, teacher_class, username, password, email):
+def add_teacher(name, grade, teacher_class, username, password):
     new_teacher = Teacher(
         name=name,
         grade=grade,
         teacher_class=teacher_class,
         username=username,
-        password=password,
-        email=email
+        password=password
     )
     db.session.add(new_teacher)
     db.session.commit()
