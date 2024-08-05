@@ -26,10 +26,11 @@ def index():
     return render_template('login.html')
 
 # 데이터베이스 초기화
-with app.app_context():
+with app.app_context(
+):
     print("Initializing the database...")
     db.create_all()
     print("Database initialized.")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

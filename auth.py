@@ -77,7 +77,7 @@ def register():
             add_teacher(name, grade, teacher_class, username, password)
 
         elif role == 'admin':
-            add_admin(name, username, password)
+            add_admin(username, password)
 
         return redirect(url_for('auth.index'))
 
@@ -91,9 +91,9 @@ def find_id_reset_password():
 def find_id():
     role = request.form['role']
     name = request.form['name']
-    grade = request.form['grade']
-    student_class = request.form['class']
-    number = request.form['number']
+    grade = request.form.get('grade')
+    student_class = request.form.get('class')
+    number = request.form.get('number')
 
     if role == 'student':
         barcode = request.form['barcode']
@@ -112,9 +112,9 @@ def reset_password():
     role = request.form['role']
     username = request.form['username']
     name = request.form['name']
-    grade = request.form['grade']
-    student_class = request.form['class']
-    number = request.form['number']
+    grade = request.form.get('grade')
+    student_class = request.form.get('class')
+    number = request.form.get('number')
 
     if role == 'student':
         barcode = request.form['barcode']
@@ -138,7 +138,7 @@ def reset_password_confirm():
         flash('비밀번호가 일치하지 않습니다.')
         return redirect(url_for('auth.find_id_reset_password'))
 
-    user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first()
+    user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
 
     if user:
         user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')

@@ -1,7 +1,8 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from sqlalchemy.sql import text
-from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db
+from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Teacher, \
+    Admin
 
 views_bp = Blueprint('views', __name__)
 
@@ -35,7 +36,7 @@ def teacher_manage():
         teacher = row_to_dict(teacher)
         requests = conn.execute(text(
             'SELECT * FROM outing_requests WHERE student_name IN (SELECT name FROM students WHERE grade = :grade AND student_class = :class)'),
-                                {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
+            {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
         requests = [row_to_dict(request) for request in requests]
         conn.close()
         return render_template('student_manage.html', teacher=teacher, requests=requests)
@@ -46,8 +47,34 @@ def teacher_manage():
 @views_bp.route('/admin_page')
 def admin_page():
     if 'user_id' in session and session['role'] == 'admin':
-        return render_template('admin_page.html')
+        students = Student.query.all()
+        teachers = Teacher.query.all()
+        admins = Admin.query.all()
+        return render_template('admin_page.html', students=students, teachers=teachers, admins=admins)
     else:
+        return redirect(url_for('auth.index'))
+
+
+@views_bp.route('/delete_user/<string:user_type>/<int:user_id>', methods=['POST'])
+def delete_user(user_type, user_id):
+    if 'user_id' in session and session['role'] == 'admin':
+        if user_type == 'student':
+            user = Student.query.get(user_id)
+        elif user_type == 'teacher':
+            user = Teacher.query.get(user_id)
+        elif user_type == 'admin':
+            user = Admin.query.get(user_id)
+
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            flash(f'{user_type.capitalize()} with ID {user_id} has been deleted.')
+        else:
+            flash(f'{user_type.capitalize()} not found.')
+
+        return redirect(url_for('views.admin_page'))
+    else:
+        flash('Access denied. Admins only.')
         return redirect(url_for('auth.index'))
 
 

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 페이지 - 김천고등학교 외출 관리 시스템</title>
-    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -14,9 +13,96 @@
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>관리자 페이지</h1>
         </header>
+
         <div class="signup-link">
-            <p>관리자 계정이 없으신가요? <a href="{{ url_for('auth.register') }}">회원가입</a></p>
+            <p><a href="{{ url_for('auth.register') }}" class="button_normal">회원 추가</a></p>
         </div>
+
+        <h2>학생 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>이름</th>
+                    <th>학년</th>
+                    <th>반</th>
+                    <th>번호</th>
+                    <th>아이디</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.grade }}</td>
+                    <td>{{ student.student_class }}</td>
+                    <td>{{ student.number }}</td>
+                    <td>{{ student.username }}</td>
+                    <td>
+                        <form action="{{ url_for('views.delete_user', user_type='student', user_id=student.id) }}" method="POST">
+                            <button type="submit" class="button_normal">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>교사 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>이름</th>
+                    <th>학년</th>
+                    <th>반</th>
+                    <th>아이디</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>{{ teacher.id }}</td>
+                    <td>{{ teacher.name }}</td>
+                    <td>{{ teacher.grade }}</td>
+                    <td>{{ teacher.teacher_class }}</td>
+                    <td>{{ teacher.username }}</td>
+                    <td>
+                        <form action="{{ url_for('views.delete_user', user_type='teacher', user_id=teacher.id) }}" method="POST">
+                            <button type="submit" class="button_normal">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>관리자 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>아이디</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for admin in admins %}
+                <tr>
+                    <td>{{ admin.id }}</td>
+                    <td>{{ admin.username }}</td>
+                    <td>
+                        <form action="{{ url_for('views.delete_user', user_type='admin', user_id=admin.id) }}" method="POST">
+                            <button type="submit" class="button_normal">삭제</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 </body>
