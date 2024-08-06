@@ -1,8 +1,7 @@
-from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from sqlalchemy.sql import text
-from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Teacher, \
-    Admin
+from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Admin
+import bcrypt
 
 views_bp = Blueprint('views', __name__)
 
@@ -47,34 +46,20 @@ def teacher_manage():
 @views_bp.route('/admin_page')
 def admin_page():
     if 'user_id' in session and session['role'] == 'admin':
-        students = Student.query.all()
-        teachers = Teacher.query.all()
-        admins = Admin.query.all()
-        return render_template('admin_page.html', students=students, teachers=teachers, admins=admins)
+        page = request.args.get('page', 1, type=int)
+        grade = request.args.get('grade', 'all')
+        student_class = request.args.get('student_class', 'all')
+
+        students_query = Student.query
+
+        if grade != 'all':
+            students_query = students_query.filter_by(grade=grade)
+        if student_class != 'all':
+            students_query = students_query.filter_by(student_class=student_class)
+
+        students = students_query.paginate(page=page, per_page=10)
+        return render_template('admin_page.html', students=students, grade=grade, student_class=student_class)
     else:
-        return redirect(url_for('auth.index'))
-
-
-@views_bp.route('/delete_user/<string:user_type>/<int:user_id>', methods=['POST'])
-def delete_user(user_type, user_id):
-    if 'user_id' in session and session['role'] == 'admin':
-        if user_type == 'student':
-            user = Student.query.get(user_id)
-        elif user_type == 'teacher':
-            user = Teacher.query.get(user_id)
-        elif user_type == 'admin':
-            user = Admin.query.get(user_id)
-
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            flash(f'{user_type.capitalize()} with ID {user_id} has been deleted.')
-        else:
-            flash(f'{user_type.capitalize()} not found.')
-
-        return redirect(url_for('views.admin_page'))
-    else:
-        flash('Access denied. Admins only.')
         return redirect(url_for('auth.index'))
 
 
@@ -123,4 +108,30 @@ def reject_leave(request_id):
             db.session.commit()
         return redirect(url_for('views.teacher_manage'))
     else:
+        return redirect(url_for('auth.index'))
+
+
+@views_bp.route('/delete_user/<string:user_type>/<int:user_id>', methods=['POST'])
+def delete_user(user_type, user_id):
+    if 'user_id' in session and session['role'] == 'admin':
+        admin_password = request.form.get('admin_password')
+        admin = Admin.query.get(session['user_id'])
+
+        if not bcrypt.checkpw(admin_password.encode('utf-8'), admin.password.encode('utf-8')):
+            flash('비밀번호가 틀렸습니다.')
+            return redirect(url_for('views.admin_page'))
+
+        if user_type == 'student':
+            user = Student.query.get(user_id)
+
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            flash(f'{user_type.capitalize()} with ID {user_id} has been deleted.')
+        else:
+            flash(f'{user_type.capitalize()} not found.')
+
+        return redirect(url_for('views.admin_page'))
+    else:
+        flash('Access denied. Admins only.')
         return redirect(url_for('auth.index'))

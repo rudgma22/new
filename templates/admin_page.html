@@ -15,7 +15,19 @@
         </header>
 
         <div class="signup-link">
-            <p><a href="{{ url_for('auth.register') }}" class="button_normal">회원 추가</a></p>
+            <p><a href="{{ url_for('auth.register') }}" class="button_normal" style="text-decoration: none;">회원 추가</a></p>
+        </div>
+
+        <div class="filter-container">
+            <select id="grade-filter" class="input_select" onchange="updateClassOptions()">
+                <option value="all" selected>전체 학년</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+            </select>
+            <select id="class-filter" class="input_select" onchange="filterStudents()">
+                <option value="all" selected>전체 반</option>
+            </select>
         </div>
 
         <h2>학생 목록</h2>
@@ -31,8 +43,13 @@
                     <th>삭제</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for student in students %}
+            <tbody id="student-table-body">
+                {% if students.items|length == 0 %}
+                <tr>
+                    <td colspan="7">학생이 존재하지 않습니다</td>
+                </tr>
+                {% else %}
+                {% for student in students.items %}
                 <tr>
                     <td>{{ student.id }}</td>
                     <td>{{ student.name }}</td>
@@ -41,69 +58,103 @@
                     <td>{{ student.number }}</td>
                     <td>{{ student.username }}</td>
                     <td>
-                        <form action="{{ url_for('views.delete_user', user_type='student', user_id=student.id) }}" method="POST">
-                            <button type="submit" class="button_normal">삭제</button>
-                        </form>
+                        <button class="button_normal" onclick="confirmDelete('{{ url_for('views.delete_user', user_type='student', user_id=student.id) }}')">삭제</button>
                     </td>
                 </tr>
                 {% endfor %}
+                {% endif %}
             </tbody>
         </table>
 
-        <h2>교사 목록</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>이름</th>
-                    <th>학년</th>
-                    <th>반</th>
-                    <th>아이디</th>
-                    <th>삭제</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for teacher in teachers %}
-                <tr>
-                    <td>{{ teacher.id }}</td>
-                    <td>{{ teacher.name }}</td>
-                    <td>{{ teacher.grade }}</td>
-                    <td>{{ teacher.teacher_class }}</td>
-                    <td>{{ teacher.username }}</td>
-                    <td>
-                        <form action="{{ url_for('views.delete_user', user_type='teacher', user_id=teacher.id) }}" method="POST">
-                            <button type="submit" class="button_normal">삭제</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <h2>관리자 목록</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>아이디</th>
-                    <th>삭제</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for admin in admins %}
-                <tr>
-                    <td>{{ admin.id }}</td>
-                    <td>{{ admin.username }}</td>
-                    <td>
-                        <form action="{{ url_for('views.delete_user', user_type='admin', user_id=admin.id) }}" method="POST">
-                            <button type="submit" class="button_normal">삭제</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="pagination">
+            {% for page_num in students.iter_pages() %}
+                {% if page_num %}
+                    <a href="{{ url_for('views.admin_page', page=page_num) }}" class="pagination-link">{{ page_num }}</a>
+                {% else %}
+                    <span class="pagination-ellipsis">&hellip;</span>
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const gradeFilter = document.getElementById('grade-filter');
+        const classFilter = document.getElementById('class-filter');
+
+        gradeFilter.addEventListener('change', function() {
+            updateClassOptions();
+            filterStudents();
+        });
+
+        classFilter.addEventListener('change', filterStudents);
+    });
+
+    function updateClassOptions() {
+        const grade = document.getElementById('grade-filter').value;
+        const classFilter = document.getElementById('class-filter');
+        classFilter.innerHTML = '<option value="all" selected>전체 반</option>';
+
+        if (grade === 'all') return;
+
+        let numberOfClasses = 0;
+        if (grade === '1') numberOfClasses = 8;
+        if (grade === '2') numberOfClasses = 10;
+        if (grade === '3') numberOfClasses = 7;
+
+        for (let i = 1; i <= numberOfClasses; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = `${i}반`;
+            classFilter.appendChild(option);
+        }
+    }
+
+    function filterStudents() {
+        const grade = document.getElementById('grade-filter').value;
+        const studentClass = document.getElementById('class-filter').value;
+        const rows = document.querySelectorAll('#student-table-body tr');
+        let hasVisibleRow = false;
+
+        rows.forEach(row => {
+            const gradeText = row.children[2] ? row.children[2].textContent : '';
+            const classText = row.children[3] ? row.children[3].textContent : '';
+
+            if ((grade === 'all' || grade === gradeText) && (studentClass === 'all' || studentClass === classText)) {
+                row.style.display = '';
+                hasVisibleRow = true;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // "학생이 존재하지 않습니다" 문구 추가
+        const noStudentsRow = document.createElement('tr');
+        noStudentsRow.innerHTML = '<td colspan="7">학생이 존재하지 않습니다</td>';
+        if (!hasVisibleRow) {
+            document.getElementById('student-table-body').appendChild(noStudentsRow);
+        } else {
+            const existingNoStudentsRow = document.querySelector('#student-table-body tr td[colspan="7"]');
+            if (existingNoStudentsRow) existingNoStudentsRow.parentNode.remove();
+        }
+    }
+
+    function confirmDelete(url) {
+        const adminPassword = prompt("정말로 삭제하시겠습니까? 계속하려면 관리자 비밀번호를 입력하세요:");
+        if (adminPassword !== null) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'hidden';
+            passwordInput.name = 'admin_password';
+            passwordInput.value = adminPassword;
+            form.appendChild(passwordInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
 </body>
 </html>
