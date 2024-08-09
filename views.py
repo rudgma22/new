@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy.sql import text
 from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Admin
 import bcrypt
+from datetime import datetime
 
 views_bp = Blueprint('views', __name__)
 
