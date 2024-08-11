@@ -364,3 +364,19 @@ tr:hover {
     text-decoration: none;
     cursor: pointer;
 }
+
+/* 로그아웃 버튼 스타일링 추가 */
+.logout-container {
+    margin-bottom: 20px;
+}
+
+.logout-container .button_normal {
+    width: auto;
+    padding: 10px 20px;
+    background-color: #dc3545; /* 빨간색 */
+    background-image: linear-gradient(to right, #dc3545 50%, #c82333 50%);
+}
+
+.logout-container .button_normal:hover {
+    background-position: 100% 0%;
+}

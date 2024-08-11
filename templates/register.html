@@ -39,7 +39,12 @@
                 <label for="password">비밀번호를 입력하세요</label>
             </div>
 
+            <!-- 학생용 이메일 입력 필드 -->
             <div id="student-fields">
+                <div class="input_field input-box">
+                    <input class="input_normal" type="email" id="student_email" name="email" required placeholder=" " autocomplete="email">
+                    <label for="student_email">이메일을 입력하세요</label>
+                </div>
                 <div class="input_field input-box">
                     <input class="input_normal" type="text" id="student_name" name="student_name" placeholder=" ">
                     <label for="student_name">이름을 입력하세요</label>
@@ -67,7 +72,12 @@
                 </div>
             </div>
 
+            <!-- 교사용 이메일 입력 필드 -->
             <div id="teacher-fields" style="display: none;">
+                <div class="input_field input-box">
+                    <input class="input_normal" type="email" id="teacher_email" name="email" required placeholder=" " autocomplete="email">
+                    <label for="teacher_email">이메일을 입력하세요</label>
+                </div>
                 <div class="input_field input-box">
                     <input class="input_normal" type="text" id="teacher_name" name="teacher_name" placeholder=" ">
                     <label for="teacher_name">이름을 입력하세요</label>
@@ -88,6 +98,7 @@
                 </div>
             </div>
 
+            <!-- 관리자 필드 -->
             <div id="admin-fields" style="display: none;">
                 <div class="input_field input-box">
                     <input class="input_normal" type="text" id="admin_name" name="admin_name" placeholder=" ">
@@ -100,6 +111,7 @@
         </form>
     </div>
 </div>
+
 <script>
     function showRegister(role) {
         const studentFields = document.getElementById('student-fields');
