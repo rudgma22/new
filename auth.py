@@ -10,8 +10,8 @@ auth_bp = Blueprint('auth', __name__)
 def send_verification_email(email, code):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    smtp_user = "mmaqhg1065@gmail.com"  # 사용자의 Gmail 주소
-    smtp_password = "tmrbifmoytxpsxxe"  # 생성한 앱 비밀번호
+    smtp_user = "mmaqhg1065@gmail.com"
+    smtp_password = "tmrbifmoytxpsxxe"
 
     subject = "김천고등학교 외출 관리 시스템 - 이메일 인증 코드"
     body = f"인증 코드는 {code} 입니다. 이 코드를 입력해 인증을 완료해주세요."
@@ -185,6 +185,9 @@ def verify_code():
                 user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(session['user_id'])
                 return render_template('find_id.html', name=user.name, username=user.username)
             elif action == 'reset_password':
+                # 세션에 username 추가
+                user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(session['user_id'])
+                session['username'] = user.username
                 return redirect(url_for('auth.reset_password_form'))
         else:
             flash('인증 코드가 올바르지 않습니다.')
