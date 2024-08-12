@@ -185,14 +185,21 @@ def verify_code():
                 user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(session['user_id'])
                 return render_template('find_id.html', name=user.name, username=user.username)
             elif action == 'reset_password':
-                session['username'] = Student.query.get(session['user_id']).username if session['role'] == 'student' else Teacher.query.get(session['user_id']).username
-                return redirect(url_for('auth.reset_password_confirm'))
+                return redirect(url_for('auth.reset_password_form'))
         else:
             flash('인증 코드가 올바르지 않습니다.')
             return redirect(url_for('auth.verify_code', action=request.args.get('action')))
     return render_template('verify_code.html')
 
-@auth_bp.route('/reset_password', methods=['POST'])
+@auth_bp.route('/reset_password_form', methods=['GET'])
+def reset_password_form():
+    username = session.get('username')
+    if not username:
+        flash('잘못된 접근입니다.')
+        return redirect(url_for('auth.find_id_reset_password'))
+    return render_template('reset_password.html', username=username)
+
+@auth_bp.route('/reset_password_confirm', methods=['POST'])
 def reset_password_confirm():
     username = request.form['username']
     new_password = request.form['new_password']
@@ -200,7 +207,7 @@ def reset_password_confirm():
 
     if new_password != confirm_password:
         flash('비밀번호가 일치하지 않습니다.')
-        return redirect(url_for('auth.find_id_reset_password'))
+        return redirect(url_for('auth.reset_password_form'))
 
     user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
 
