@@ -59,7 +59,7 @@ def login():
         elif role == 'admin':
             return redirect(url_for('views.admin_page'))
     else:
-        flash('Invalid credentials')
+        flash('Invalid credentials', 'danger')
         return redirect(url_for('auth.index'))
 
 @auth_bp.route('/logout')
@@ -73,20 +73,29 @@ def register():
         role = request.form['role']
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        email = request.form['email']
+        email = request.form['email'].strip()
 
-        if role == 'student':
-            name = request.form['student_name']
-        elif role == 'teacher':
-            name = request.form['teacher_name']
-        elif role == 'admin':
-            name = request.form['admin_name']
-
-        if Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first():
-            flash('The username already exists. Please use a different username.')
+        # 이메일 유효성 검사
+        if role != 'admin' and not email:
+            flash('이메일은 필수 입력 항목입니다.', 'danger')
             return redirect(url_for('auth.register'))
 
+        # 이메일 중복 확인 (관리자는 이메일 확인을 생략)
+        if role != 'admin':
+            existing_email = Student.query.filter_by(email=email).first() or Teacher.query.filter_by(email=email).first()
+            if existing_email:
+                flash('이미 사용 중인 이메일입니다. 다른 이메일을 사용하세요.', 'danger')
+                return redirect(url_for('auth.register'))
+
+        # 아이디 중복 확인
+        existing_user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
+        if existing_user:
+            flash('이미 사용 중인 아이디입니다. 다른 아이디를 사용하세요.', 'danger')
+            return redirect(url_for('auth.register'))
+
+        # 학생 회원가입
         if role == 'student':
+            name = request.form['student_name']
             grade = request.form['grade']
             student_class = request.form['student_class']
             number = request.form['number']
@@ -94,19 +103,35 @@ def register():
 
             existing_student = Student.query.filter_by(barcode=barcode).first()
             if existing_student:
-                flash('The barcode already exists. Please use a different barcode.')
+                flash('이미 사용 중인 바코드입니다. 다른 바코드를 사용하세요.', 'danger')
                 return redirect(url_for('auth.register'))
 
             add_student(name, grade, student_class, number, username, password, barcode, email)
 
+        # 교사 회원가입
         elif role == 'teacher':
+            name = request.form['teacher_name']
             grade = request.form['grade']
             teacher_class = request.form['teacher_class']
-            add_teacher(name, grade, teacher_class, username, password, email)
 
+            # 추가적인 유효성 검사
+            if not grade or not teacher_class:
+                flash('학년과 반을 모두 선택해야 합니다.', 'danger')
+                return redirect(url_for('auth.register'))
+
+            try:
+                add_teacher(name, grade, teacher_class, username, password, email)
+            except Exception as e:
+                print(f"Error during teacher registration: {e}")
+                flash('교사 회원가입 중 문제가 발생했습니다. 다시 시도하세요.', 'danger')
+                return redirect(url_for('auth.register'))
+
+        # 관리자 회원가입
         elif role == 'admin':
+            name = request.form['admin_name']
             add_admin(name, username, password)
 
+        flash('회원가입이 성공적으로 완료되었습니다!', 'success')
         return redirect(url_for('auth.index'))
 
     return render_template('register.html')
@@ -122,7 +147,7 @@ def find_id():
     grade = request.form.get('grade')
     student_class = request.form.get('class')
     number = request.form.get('number')
-    email = request.form.get('email')
+    email = request.form['email']
 
     if role == 'student':
         barcode = request.form['barcode']
@@ -138,7 +163,7 @@ def find_id():
         send_verification_email(email, verification_code)
         return redirect(url_for('auth.verify_code', action='find_id'))
     else:
-        flash('해당 정보로 아이디를 찾을 수 없습니다.')
+        flash('해당 정보로 아이디를 찾을 수 없습니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
 
 @auth_bp.route('/reset_password', methods=['POST'])
@@ -165,7 +190,7 @@ def reset_password():
         send_verification_email(email, verification_code)
         return redirect(url_for('auth.verify_code', action='reset_password'))
     else:
-        flash('해당 정보로 계정을 찾을 수 없습니다.')
+        flash('해당 정보로 계정을 찾을 수 없습니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
 
 @auth_bp.route('/verify_code', methods=['GET', 'POST'])
@@ -185,12 +210,11 @@ def verify_code():
                 user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(session['user_id'])
                 return render_template('find_id.html', name=user.name, username=user.username)
             elif action == 'reset_password':
-                # 세션에 username 추가
                 user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(session['user_id'])
                 session['username'] = user.username
                 return redirect(url_for('auth.reset_password_form'))
         else:
-            flash('인증 코드가 올바르지 않습니다.')
+            flash('인증 코드가 올바르지 않습니다.', 'danger')
             return redirect(url_for('auth.verify_code', action=request.args.get('action')))
     return render_template('verify_code.html')
 
@@ -198,7 +222,7 @@ def verify_code():
 def reset_password_form():
     username = session.get('username')
     if not username:
-        flash('잘못된 접근입니다.')
+        flash('잘못된 접근입니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
     return render_template('reset_password.html', username=username)
 
@@ -209,7 +233,7 @@ def reset_password_confirm():
     confirm_password = request.form['confirm_password']
 
     if new_password != confirm_password:
-        flash('비밀번호가 일치하지 않습니다.')
+        flash('비밀번호가 일치하지 않습니다.', 'danger')
         return redirect(url_for('auth.reset_password_form'))
 
     user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
@@ -219,5 +243,5 @@ def reset_password_confirm():
         db.session.commit()
         return render_template('reset_result.html')
     else:
-        flash('해당 아이디를 찾을 수 없습니다.')
+        flash('해당 아이디를 찾을 수 없습니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))

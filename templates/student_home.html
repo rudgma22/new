@@ -16,11 +16,18 @@
         </header>
         <div id="student-info">
             <p><strong>이름:</strong> {{ student.name }}</p>
+            <p><strong>아이디:</strong> {{ student.username }}</p>
             <p><strong>학년:</strong> {{ student.grade }}학년</p>
             <p><strong>반:</strong> {{ student.student_class }}반</p>
             <p><strong>번호:</strong> {{ student.number }}</p>
             <p><strong>바코드:</strong> {{ student.barcode }}</p>
         </div>
+
+        <!-- 내 정보 관리 버튼 추가 -->
+        <div id="account-management">
+            <a href="{{ url_for('views.manage_account') }}" class="button_normal">내 정보 관리</a>
+        </div>
+
         <div id="outing-request">
             <form method="POST" action="{{ url_for('views.apply_leave') }}">
                 <div class="input-box">

@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 
 db = SQLAlchemy()
 
@@ -12,7 +13,7 @@ class Student(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     barcode = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)  # 이메일 필드 추가
+    email = db.Column(db.String(120), unique=True, nullable=False)
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
@@ -22,7 +23,7 @@ class Teacher(db.Model):
     teacher_class = db.Column(db.String(80), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)  # 이메일 필드 추가
+    email = db.Column(db.String(120), unique=True, nullable=False)
 
 class Admin(db.Model):
     __tablename__ = 'admins'
@@ -39,7 +40,7 @@ class OutingRequest(db.Model):
     end_time = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(80), default='대기중', nullable=False)
-    rejection_reason = db.Column(db.String(200), nullable=True)  # 새로운 필드 추가
+    rejection_reason = db.Column(db.String(200), nullable=True)
 
 def get_db_connection():
     return db.session
@@ -102,6 +103,13 @@ def reject_outing_request(request_id, rejection_reason):
         request.status = '거절됨'
         request.rejection_reason = rejection_reason
         db.session.commit()
+
+def get_outing_statistics():
+    return db.session.query(
+        Student.grade, Student.student_class, func.count(OutingRequest.id)
+    ).join(OutingRequest, Student.name == OutingRequest.student_name)\
+    .filter(OutingRequest.status == '승인됨')\
+    .group_by(Student.grade, Student.student_class).all()
 
 def initialize_database():
     db.drop_all()

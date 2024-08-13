@@ -23,6 +23,11 @@
             <p><a href="{{ url_for('auth.register') }}" class="button_normal" style="text-decoration: none;">회원 추가</a></p>
         </div>
 
+        <!-- 통계 보기 버튼 추가 -->
+        <div class="statistics-link" style="margin-bottom: 20px;">
+            <p><a href="{{ url_for('views.outing_statistics') }}" class="button_normal" style="text-decoration: none;">통계 보기</a></p>
+        </div>
+
         <div class="filter-container">
             <select id="grade-filter" class="input_select" onchange="updateClassOptions()">
                 <option value="all" selected>전체 학년</option>

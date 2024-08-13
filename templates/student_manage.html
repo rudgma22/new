@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리 - 김천고등학교 외출 관리 시스템</title>
-    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='gimgologo.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         /* 모달 스타일 */
@@ -67,6 +67,12 @@
             <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
             <h1>{{ teacher.grade }}학년 {{ teacher.teacher_class }}반 외출 요청 관리</h1>
         </header>
+
+        <!-- 내 정보 관리 버튼 추가 -->
+        <div id="account-management">
+            <a href="{{ url_for('views.manage_account') }}" class="button_normal">내 정보 관리</a>
+        </div>
+
         <div class="contents">
             <div class="logout-container-teacher">
                 <a href="{{ url_for('auth.logout') }}">로그아웃</a>

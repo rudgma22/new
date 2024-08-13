@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>외출 통계 - 김천고등학교 외출 관리 시스템</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <header>
+            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+            <h1>외출 통계</h1>
+        </header>
+
+        <canvas id="outingChart"></canvas>
+
+        <div id="classTableContainer" style="display:none;">
+            <h2>학생별 외출 통계</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>이름</th>
+                        <th>외출 횟수</th>
+                    </tr>
+                </thead>
+                <tbody id="classTableBody">
+                    <!-- JavaScript로 데이터가 채워질 부분 -->
+                </tbody>
+            </table>
+        </div>
+
+        <button class="button_normal" onclick="confirmDeleteAll()">외출 신청 내역 초기화</button>
+    </div>
+</div>
+
+<script>
+    let currentView = 'grade'; // 현재 보여주고 있는 뷰 상태 (grade or class)
+
+    const gradeStats = {{ stats|tojson }};
+    let classStats = {}; // 학년 클릭 시 로드할 반별 통계 저장소
+
+    const outingChart = new Chart(document.getElementById('outingChart'), {
+        type: 'pie',
+        data: {
+            labels: gradeStats.map(s => `${s.grade}학년`),
+            datasets: [{
+                label: '외출 승인 횟수',
+                data: gradeStats.map(s => s.count),
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            onClick: (e, item) => {
+                if (item.length > 0) {
+                    const index = item[0].index;
+                    const selectedGrade = gradeStats[index].grade;
+                    if (currentView === 'grade') {
+                        loadClassStatistics(selectedGrade);
+                    } else if (currentView === 'class') {
+                        loadStudentStatistics(selectedGrade, gradeStats[index].student_class);
+                    }
+                }
+            }
+        }
+    });
+
+    function loadClassStatistics(grade) {
+        fetch(`/class_statistics?grade=${grade}`)
+            .then(response => response.json())
+            .then(data => {
+                classStats = data;
+                currentView = 'class';
+                outingChart.data.labels = classStats.map(s => `${s.student_class}반`);
+                outingChart.data.datasets[0].data = classStats.map(s => s.count);
+                outingChart.update();
+            });
+    }
+
+    function loadStudentStatistics(grade, studentClass) {
+        fetch(`/student_statistics?grade=${grade}&class=${studentClass}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('classTableBody');
+                tableBody.innerHTML = '';
+                data.forEach(student => {
+                    const row = document.createElement('tr');
+                    const nameCell = document.createElement('td');
+                    const countCell = document.createElement('td');
+                    nameCell.textContent = student.name;
+                    countCell.textContent = student.count;
+                    row.appendChild(nameCell);
+                    row.appendChild(countCell);
+                    tableBody.appendChild(row);
+                });
+                document.getElementById('classTableContainer').style.display = 'block';
+            });
+    }
+
+    function confirmDeleteAll() {
+        const adminPassword = prompt("외출 신청 내역을 초기화하려면 관리자 비밀번호를 입력하세요:");
+        if (adminPassword !== null) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('views.delete_all_outing_requests') }}";
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'hidden';
+            passwordInput.name = 'admin_password';
+            passwordInput.value = adminPassword;
+            form.appendChild(passwordInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+</body>
+</html>
