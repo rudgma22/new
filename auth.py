@@ -1,17 +1,22 @@
+import os
+import random
+import smtplib
+from email.mime.text import MIMEText
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin
 import bcrypt
-import smtplib
-import random
-from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+# .env 파일에서 환경 변수를 로드합니다.
+load_dotenv()
 
 auth_bp = Blueprint('auth', __name__)
 
 def send_verification_email(email, code):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_user = "mmaqhg1065@gmail.com"
-    smtp_password = "tmrbifmoytxpsxxe"
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
 
     subject = "김천고등학교 외출 관리 시스템 - 이메일 인증 코드"
     body = f"인증 코드는 {code} 입니다. 이 코드를 입력해 인증을 완료해주세요."
@@ -22,8 +27,7 @@ def send_verification_email(email, code):
     msg['To'] = email
 
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)  # SMTP_SSL 사용
         server.login(smtp_user, smtp_password)
         server.sendmail(smtp_user, email, msg.as_string())
         server.quit()

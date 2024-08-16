@@ -15,7 +15,16 @@
             <h1>외출 통계</h1>
         </header>
 
-        <canvas id="outingChart"></canvas>
+        <!-- 뒤로가기 버튼 -->
+        <button class="button_normal" onclick="goBack()">뒤로가기</button>
+
+        <!-- 외출 통계 표시 -->
+        <canvas id="outingChart" style="display:none;"></canvas>
+
+        <!-- 통계가 없을 경우 메시지 -->
+        <div id="noDataMessage" style="display:none;">
+            <h2>통계가 없습니다</h2>
+        </div>
 
         <div id="classTableContainer" style="display:none;">
             <h2>학생별 외출 통계</h2>
@@ -37,67 +46,99 @@
 </div>
 
 <script>
+    function goBack() {
+        window.location.href = "{{ url_for('views.admin_page') }}";  // 관리자 페이지로 이동
+    }
+
     let currentView = 'grade'; // 현재 보여주고 있는 뷰 상태 (grade or class)
 
     const gradeStats = {{ stats|tojson }};
     let classStats = {}; // 학년 클릭 시 로드할 반별 통계 저장소
 
-    const outingChart = new Chart(document.getElementById('outingChart'), {
-        type: 'pie',
-        data: {
-            labels: gradeStats.map(s => `${s.grade}학년`),
-            datasets: [{
-                label: '외출 승인 횟수',
-                data: gradeStats.map(s => s.count),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            onClick: (e, item) => {
-                if (item.length > 0) {
-                    const index = item[0].index;
-                    const selectedGrade = gradeStats[index].grade;
-                    if (currentView === 'grade') {
-                        loadClassStatistics(selectedGrade);
-                    } else if (currentView === 'class') {
-                        loadStudentStatistics(selectedGrade, gradeStats[index].student_class);
+    const outingChart = document.getElementById('outingChart');
+    const noDataMessage = document.getElementById('noDataMessage');
+
+    if (gradeStats.length > 0) {
+        outingChart.style.display = 'block';
+
+        const chart = new Chart(outingChart, {
+            type: 'pie',
+            data: {
+                labels: gradeStats.map(s => `${s.grade}학년`),
+                datasets: [{
+                    label: '외출 승인 횟수',
+                    data: gradeStats.map(s => s.count),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                onClick: (e, item) => {
+                    if (item.length > 0) {
+                        const index = item[0].index;
+                        const selectedGrade = gradeStats[index].grade;
+                        if (currentView === 'grade') {
+                            loadClassStatistics(selectedGrade);
+                        } else if (currentView === 'class') {
+                            loadStudentStatistics(selectedGrade, classStats[index].student_class);
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } else {
+        noDataMessage.style.display = 'block';
+    }
 
     function loadClassStatistics(grade) {
-        fetch(`/class_statistics?grade=${grade}`)
-            .then(response => response.json())
+        fetch(`/views/class_statistics?grade=${grade}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 classStats = data;
                 currentView = 'class';
-                outingChart.data.labels = classStats.map(s => `${s.student_class}반`);
-                outingChart.data.datasets[0].data = classStats.map(s => s.count);
-                outingChart.update();
-            });
+
+                if (classStats.length > 0) {
+                    chart.data.labels = classStats.map(s => `${s.student_class}반`);
+                    chart.data.datasets[0].data = classStats.map(s => s.count);
+                    chart.update();
+                } else {
+                    noDataMessage.style.display = 'block';
+                    outingChart.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error loading class statistics:', error));
     }
 
     function loadStudentStatistics(grade, studentClass) {
-        fetch(`/student_statistics?grade=${grade}&class=${studentClass}`)
+        fetch(`/views/student_statistics?grade=${grade}&class=${studentClass}`)
             .then(response => response.json())
             .then(data => {
                 const tableBody = document.getElementById('classTableBody');
                 tableBody.innerHTML = '';
-                data.forEach(student => {
-                    const row = document.createElement('tr');
-                    const nameCell = document.createElement('td');
-                    const countCell = document.createElement('td');
-                    nameCell.textContent = student.name;
-                    countCell.textContent = student.count;
-                    row.appendChild(nameCell);
-                    row.appendChild(countCell);
-                    tableBody.appendChild(row);
-                });
-                document.getElementById('classTableContainer').style.display = 'block';
-            });
+
+                if (data.length > 0) {
+                    data.forEach(student => {
+                        const row = document.createElement('tr');
+                        const nameCell = document.createElement('td');
+                        const countCell = document.createElement('td');
+                        nameCell.textContent = student.name;
+                        countCell.textContent = student.count;
+                        row.appendChild(nameCell);
+                        row.appendChild(countCell);
+                        tableBody.appendChild(row);
+                    });
+                    document.getElementById('classTableContainer').style.display = 'block';
+                } else {
+                    noDataMessage.style.display = 'block';
+                    outingChart.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error loading student statistics:', error));
     }
 
     function confirmDeleteAll() {

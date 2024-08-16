@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from sqlalchemy.sql import text
+from sqlalchemy import func  # 여기 추가
 from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Admin, get_outing_statistics
 import bcrypt
 from datetime import datetime
+
 
 views_bp = Blueprint('views', __name__)
 
