@@ -1,19 +1,16 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from sqlalchemy.sql import text
 from sqlalchemy import func
-from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Admin, \
-    get_outing_statistics
+from models import get_db_connection, add_outing_request, approve_outing_request, OutingRequest, db, Student, Admin, get_outing_statistics
 import bcrypt
 from datetime import datetime
 
 views_bp = Blueprint('views', __name__)
 
-
 def row_to_dict(row):
     if row is None:
         return None
     return dict(row._mapping)
-
 
 @views_bp.route('/student_home')
 def student_home():
@@ -29,7 +26,6 @@ def student_home():
     else:
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/teacher_manage')
 def teacher_manage():
     if 'user_id' in session and session['role'] == 'teacher':
@@ -44,7 +40,6 @@ def teacher_manage():
         return render_template('student_manage.html', teacher=teacher, requests=requests)
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/admin_page')
 def admin_page():
@@ -65,7 +60,6 @@ def admin_page():
     else:
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/apply_leave', methods=['POST'])
 def apply_leave():
     if 'user_id' in session and session['role'] == 'student':
@@ -78,19 +72,21 @@ def apply_leave():
             reason = f'기타({other_reason})'
 
         conn = get_db_connection()
-        student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': student_id}).fetchone()
+        student = conn.execute(text('SELECT name, barcode FROM students WHERE id = :id'), {'id': student_id}).fetchone()
         student = row_to_dict(student)
 
         # 최신 외출 신청을 조회하여 중복 방지
         existing_request = conn.execute(text(
-            'SELECT * FROM outing_requests WHERE barcode = :barcode ORDER BY start_time DESC LIMIT 1'),
+            'SELECT end_time FROM outing_requests WHERE barcode = :barcode ORDER BY start_time DESC LIMIT 1'),
             {'barcode': student['barcode']}).fetchone()
         existing_request = row_to_dict(existing_request)
 
-        if existing_request and start_time <= existing_request['end_time']:
-            flash('이미 존재하는 외출 신청이 있습니다.', 'danger')
-            conn.close()
-            return redirect(url_for('views.student_home'))
+        if existing_request:
+            existing_end_time = datetime.fromisoformat(existing_request['end_time'])
+            if start_time <= existing_end_time:
+                flash('이미 존재하는 외출 신청이 있습니다.', 'danger')
+                conn.close()
+                return redirect(url_for('views.student_home'))
 
         add_outing_request(student['name'], student['barcode'], start_time, end_time, reason)
         conn.close()
@@ -99,7 +95,6 @@ def apply_leave():
     else:
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/approve_leave/<int:request_id>', methods=['POST'])
 def approve_leave(request_id):
     if 'user_id' in session and session['role'] == 'teacher':
@@ -107,7 +102,6 @@ def approve_leave(request_id):
         return redirect(url_for('views.teacher_manage'))
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/reject_leave/<int:request_id>', methods=['POST'])
 def reject_leave(request_id):
@@ -125,7 +119,6 @@ def reject_leave(request_id):
         return redirect(url_for('views.teacher_manage'))
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/delete_user/<string:user_type>/<int:user_id>', methods=['POST'])
 def delete_user(user_type, user_id):
@@ -154,7 +147,6 @@ def delete_user(user_type, user_id):
         flash('Access denied. Admins only.')
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/outing_statistics')
 def outing_statistics():
     if 'user_id' in session and session['role'] == 'admin':
@@ -167,7 +159,6 @@ def outing_statistics():
     else:
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/class_statistics')
 def class_statistics():
     grade = request.args.get('grade')
@@ -179,7 +170,6 @@ def class_statistics():
 
     stats = [{'student_class': r[0], 'count': r[1]} for r in results]
     return jsonify(stats)
-
 
 @views_bp.route('/student_statistics')
 def student_statistics():
@@ -194,7 +184,6 @@ def student_statistics():
 
     stats = [{'name': r[0], 'count': r[1]} for r in results]
     return jsonify(stats)
-
 
 @views_bp.route('/delete_all_outing_requests', methods=['POST'])
 def delete_all_outing_requests():
@@ -214,7 +203,6 @@ def delete_all_outing_requests():
         flash('Access denied. Admins only.')
         return redirect(url_for('auth.index'))
 
-
 @views_bp.route('/manage_account', methods=['GET'])
 def manage_account():
     if 'user_id' in session and session['role'] in ['student', 'teacher']:
@@ -229,7 +217,6 @@ def manage_account():
         return render_template('manage_account.html', user=user)
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/change_username', methods=['GET', 'POST'])
 def change_username():
@@ -259,7 +246,6 @@ def change_username():
         return render_template('change_username.html')
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/change_password', methods=['GET', 'POST'])
 def change_password():
