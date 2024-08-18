@@ -69,6 +69,17 @@
         <div class="signup-link">
             <p>테스트용 회원가입 링크 <a href="{{ url_for('auth.register') }}">회원가입</a></p>
         </div>
+        <div class="barcode-link">
+            <button id="barcode-btn" class="button_normal">바코드 인식하기</button>
+        </div>
+    </div>
+</div>
+
+<div id="password-modal" style="display: none;">
+    <div class="modal-content">
+        <h2>비밀번호 입력</h2>
+        <input type="password" id="barcode-password" placeholder="비밀번호를 입력하세요">
+        <button id="barcode-login-btn" class="button_normal">확인</button>
     </div>
 </div>
 
@@ -113,6 +124,19 @@
             teacherForm.style.display = 'none';
             loginBox.classList.add('red');
             loginBox.classList.remove('green', 'blue');
+        });
+
+        document.getElementById('barcode-btn').addEventListener('click', function () {
+            document.getElementById('password-modal').style.display = 'block';
+        });
+
+        document.getElementById('barcode-login-btn').addEventListener('click', function () {
+            const password = document.getElementById('barcode-password').value;
+            if (password === 'songseol2024**') {
+                window.location.href = "{{ url_for('auth.barcode_scan') }}";
+            } else {
+                alert('비밀번호가 틀렸습니다.');
+            }
         });
     });
 </script>

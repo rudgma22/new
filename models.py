@@ -36,6 +36,7 @@ class OutingRequest(db.Model):
     __tablename__ = 'outing_requests'
     id = db.Column(db.Integer, primary_key=True)
     student_name = db.Column(db.String(80), nullable=False)
+    barcode = db.Column(db.String(80), nullable=False)  # 바코드 필드 추가
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.String(200), nullable=False)
@@ -80,9 +81,10 @@ def add_admin(name, username, password):
     db.session.add(new_admin)
     db.session.commit()
 
-def add_outing_request(student_name, start_time, end_time, reason):
+def add_outing_request(student_name, barcode, start_time, end_time, reason):
     new_request = OutingRequest(
         student_name=student_name,
+        barcode=barcode,
         start_time=start_time,
         end_time=end_time,
         reason=reason,

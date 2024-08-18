@@ -39,18 +39,18 @@
                 <label for="password">비밀번호를 입력하세요</label>
             </div>
 
-            <!-- 학생용 이메일 입력 필드 -->
+            <!-- 학생용 필드 -->
             <div id="student-fields">
                 <div class="input_field input-box">
                     <input class="input_normal" type="email" id="student_email" name="email" required placeholder=" " autocomplete="email">
                     <label for="student_email">이메일을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="student_name" name="student_name" placeholder=" ">
+                    <input class="input_normal" type="text" id="student_name" name="student_name" required placeholder=" ">
                     <label for="student_name">이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="grade" name="grade">
+                    <select class="input_select" id="grade" name="grade" required>
                         <option value="" disabled selected>학년을 선택하세요</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -58,32 +58,32 @@
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="student_class" name="student_class">
+                    <select class="input_select" id="student_class" name="student_class" required>
                         <option value="" disabled selected>반을 선택하세요</option>
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="student_number" name="number" placeholder=" ">
+                    <input class="input_normal" type="text" id="student_number" name="number" required placeholder=" ">
                     <label for="student_number">번호를 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="barcode" name="barcode" placeholder=" ">
+                    <input class="input_normal" type="text" id="barcode" name="barcode" required placeholder=" ">
                     <label for="barcode">바코드를 입력하세요</label>
                 </div>
             </div>
 
-            <!-- 교사용 이메일 입력 필드 -->
+            <!-- 교사용 필드 -->
             <div id="teacher-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="email" id="teacher_email" name="email" required placeholder=" " autocomplete="email">
+                    <input class="input_normal" type="email" id="teacher_email" name="email" required placeholder=" " autocomplete="email" disabled>
                     <label for="teacher_email">이메일을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="teacher_name" name="teacher_name" placeholder=" ">
+                    <input class="input_normal" type="text" id="teacher_name" name="teacher_name" required placeholder=" " disabled>
                     <label for="teacher_name">이름을 입력하세요</label>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="teacher_grade" name="grade">
+                    <select class="input_select" id="teacher_grade" name="grade" required disabled>
                         <option value="" disabled selected>담당 학년을 선택하세요</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -92,7 +92,7 @@
                     </select>
                 </div>
                 <div class="input_field input-box">
-                    <select class="input_select" id="teacher_class" name="teacher_class">
+                    <select class="input_select" id="teacher_class" name="teacher_class" required disabled>
                         <option value="" disabled selected>담당 반을 선택하세요</option>
                     </select>
                 </div>
@@ -101,7 +101,7 @@
             <!-- 관리자 필드 -->
             <div id="admin-fields" style="display: none;">
                 <div class="input_field input-box">
-                    <input class="input_normal" type="text" id="admin_name" name="admin_name" placeholder=" ">
+                    <input class="input_normal" type="text" id="admin_name" name="admin_name" required placeholder=" " disabled>
                     <label for="admin_name">이름을 입력하세요</label>
                 </div>
                 <!-- 추가적인 관리자 필드가 필요하다면 여기에 추가합니다. -->
@@ -127,49 +127,59 @@
         teacherFields.style.display = role === 'teacher' ? 'block' : 'none';
         adminFields.style.display = role === 'admin' ? 'block' : 'none';
 
-        // 필드 활성화/비활성화
-        const studentEmail = document.getElementById('student_email');
-        const teacherEmail = document.getElementById('teacher_email');
-
+        // 필드 활성화/비활성화 및 필수 필드 설정
         if (role === 'student') {
-            studentEmail.disabled = false;
-            teacherEmail.disabled = true;
-        } else if (role === 'teacher') {
-            teacherEmail.disabled = false;
-            studentEmail.disabled = true;
-        } else {
-            studentEmail.disabled = true;
-            teacherEmail.disabled = true;
-        }
-
-        // 필수 필드 설정
-        document.getElementById('role').value = role;
-
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(t => t.classList.remove('on'));
-
-        if (role === 'student') {
-            studentFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
-            teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
-            adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            studentFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = false;
+                field.required = true;
+            });
+            teacherFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
+            adminFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
             loginBox.classList.remove('green', 'red');
             loginBox.classList.add('blue');
             studentTab.classList.add('on');
         } else if (role === 'teacher') {
-            teacherFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
-            studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
-            adminFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            teacherFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = false;
+                field.required = true;
+            });
+            studentFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
+            adminFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
             loginBox.classList.add('green');
             loginBox.classList.remove('red', 'blue');
             teacherTab.classList.add('on', 'green');
         } else if (role === 'admin') {
-            adminFields.querySelectorAll('input, select').forEach(field => field.setAttribute('required', 'true'));
-            studentFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
-            teacherFields.querySelectorAll('input, select').forEach(field => field.removeAttribute('required'));
+            adminFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = false;
+                field.required = true;
+            });
+            studentFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
+            teacherFields.querySelectorAll('input, select').forEach(field => {
+                field.disabled = true;
+                field.required = false;
+            });
             loginBox.classList.add('red');
             loginBox.classList.remove('green', 'blue');
             adminTab.classList.add('on', 'red');
         }
+
+        // Hidden input for role
+        document.getElementById('role').value = role;
     }
 
     function updateClassOptions(grade, role) {
@@ -224,9 +234,11 @@
         teacherGradeSelect.addEventListener('change', function () {
             updateClassOptions(this.value, 'teacher');
         });
+
+        // 기본 학생 탭 활성화
+        showRegister('student');
     });
 
-    // HTML5 기본 폼 유효성 검사를 막고 JavaScript로 유효성 검사 수행
     document.querySelector('.register_form').addEventListener('submit', function (e) {
         const role = document.getElementById('role').value;
         const studentFields = document.getElementById('student-fields');

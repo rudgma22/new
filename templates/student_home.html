@@ -30,6 +30,9 @@
 
         <div id="outing-request">
             <form method="POST" action="{{ url_for('views.apply_leave') }}">
+                <!-- Hidden input to include the student's barcode -->
+                <input type="hidden" id="barcode" name="barcode" value="{{ student.barcode }}">
+
                 <div class="input-box">
                     <input type="datetime-local" id="out_time" name="out_time" required>
                     <label for="out_time">외출 시작 시간:</label>

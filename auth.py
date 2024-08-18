@@ -3,10 +3,11 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin
+from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest
 import bcrypt
 from dotenv import load_dotenv
 import logging
+from datetime import datetime
 
 # .env 파일에서 환경 변수를 로드합니다.
 load_dotenv()
@@ -31,7 +32,7 @@ def send_verification_email(email, code):
     msg['To'] = email
 
     try:
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)  # SMTP_SSL 사용
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
         server.login(smtp_user, smtp_password)
         server.sendmail(smtp_user, email, msg.as_string())
         server.quit()
@@ -82,28 +83,23 @@ def register():
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # 이메일을 가져옵니다 (관리자가 아닌 경우만)
         email = request.form.get('email').strip() if role != 'admin' else None
 
-        # 이메일 유효성 검사 (관리자가 아닌 경우만)
         if role != 'admin' and not email:
             flash('이메일은 필수 입력 항목입니다.', 'danger')
             return redirect(url_for('auth.register'))
 
-        # 이메일 중복 확인 (관리자가 아닌 경우만)
         if role != 'admin':
             existing_email = Student.query.filter_by(email=email).first() or Teacher.query.filter_by(email=email).first()
             if existing_email:
                 flash('이미 사용 중인 이메일입니다. 다른 이메일을 사용하세요.', 'danger')
                 return redirect(url_for('auth.register'))
 
-        # 아이디 중복 확인
         existing_user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
         if existing_user:
             flash('이미 사용 중인 아이디입니다. 다른 아이디를 사용하세요.', 'danger')
             return redirect(url_for('auth.register'))
 
-        # 학생 회원가입
         if role == 'student':
             name = request.form['student_name']
             grade = request.form['grade']
@@ -118,13 +114,11 @@ def register():
 
             add_student(name, grade, student_class, number, username, password, barcode, email)
 
-        # 교사 회원가입
         elif role == 'teacher':
             name = request.form['teacher_name']
             grade = request.form['grade']
             teacher_class = request.form['teacher_class']
 
-            # 추가적인 유효성 검사
             if not grade or not teacher_class:
                 flash('학년과 반을 모두 선택해야 합니다.', 'danger')
                 return redirect(url_for('auth.register'))
@@ -132,11 +126,10 @@ def register():
             try:
                 add_teacher(name, grade, teacher_class, username, password, email)
             except Exception as e:
-                logging.error(f"Error during teacher registration: {e}")  # 로그 기록 추가
+                logging.error(f"Error during teacher registration: {e}")
                 flash('교사 회원가입 중 문제가 발생했습니다. 다시 시도하세요.', 'danger')
                 return redirect(url_for('auth.register'))
 
-        # 관리자 회원가입
         elif role == 'admin':
             name = request.form['admin_name']
             add_admin(name, username, password)
@@ -255,3 +248,27 @@ def reset_password_confirm():
     else:
         flash('해당 아이디를 찾을 수 없습니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
+
+@auth_bp.route('/barcode_scan', methods=['GET', 'POST'])
+def barcode_scan():
+    if request.method == 'POST':
+        barcode = request.form['barcode']
+        outing_request = OutingRequest.query.filter_by(barcode=barcode).first()
+
+        if outing_request:
+            current_time = datetime.now()
+            if outing_request.status == '승인됨':
+                if outing_request.start_time <= current_time <= outing_request.end_time:
+                    flash(f"{outing_request.student_name}님은 외출이 가능합니다. 조심히 다녀오세요!", 'success')
+                else:
+                    flash(f"{outing_request.student_name}님은 외출이 불가능합니다. 외출 가능한 시간은 {outing_request.start_time} ~ {outing_request.end_time}입니다.", 'danger')
+            elif outing_request.status == '거절됨':
+                flash(f"외출 신청이 거절되어 외출할 수 없습니다. 사유는 {outing_request.rejection_reason}입니다.", 'danger')
+            elif outing_request.status == '대기중':
+                flash("외출 신청이 대기중입니다. 승인 후 다시 인식해주세요.", 'warning')
+        else:
+            flash('해당 바코드로 외출 요청을 찾을 수 없습니다.', 'danger')
+
+        return redirect(url_for('auth.barcode_scan'))
+
+    return render_template('barcode_scan.html')
