@@ -6,9 +6,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin
 import bcrypt
 from dotenv import load_dotenv
+import logging
 
 # .env 파일에서 환경 변수를 로드합니다.
 load_dotenv()
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -77,14 +81,16 @@ def register():
         role = request.form['role']
         username = request.form['username']
         password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        email = request.form['email'].strip()
 
-        # 이메일 유효성 검사
+        # 이메일을 가져옵니다 (관리자가 아닌 경우만)
+        email = request.form.get('email').strip() if role != 'admin' else None
+
+        # 이메일 유효성 검사 (관리자가 아닌 경우만)
         if role != 'admin' and not email:
             flash('이메일은 필수 입력 항목입니다.', 'danger')
             return redirect(url_for('auth.register'))
 
-        # 이메일 중복 확인 (관리자는 이메일 확인을 생략)
+        # 이메일 중복 확인 (관리자가 아닌 경우만)
         if role != 'admin':
             existing_email = Student.query.filter_by(email=email).first() or Teacher.query.filter_by(email=email).first()
             if existing_email:
@@ -126,7 +132,7 @@ def register():
             try:
                 add_teacher(name, grade, teacher_class, username, password, email)
             except Exception as e:
-                print(f"Error during teacher registration: {e}")
+                logging.error(f"Error during teacher registration: {e}")  # 로그 기록 추가
                 flash('교사 회원가입 중 문제가 발생했습니다. 다시 시도하세요.', 'danger')
                 return redirect(url_for('auth.register'))
 

@@ -122,9 +122,27 @@
         const teacherTab = document.getElementById('teacher-tab');
         const adminTab = document.getElementById('admin-tab');
 
+        // 필드 보이기/숨기기
         studentFields.style.display = role === 'student' ? 'block' : 'none';
         teacherFields.style.display = role === 'teacher' ? 'block' : 'none';
         adminFields.style.display = role === 'admin' ? 'block' : 'none';
+
+        // 필드 활성화/비활성화
+        const studentEmail = document.getElementById('student_email');
+        const teacherEmail = document.getElementById('teacher_email');
+
+        if (role === 'student') {
+            studentEmail.disabled = false;
+            teacherEmail.disabled = true;
+        } else if (role === 'teacher') {
+            teacherEmail.disabled = false;
+            studentEmail.disabled = true;
+        } else {
+            studentEmail.disabled = true;
+            teacherEmail.disabled = true;
+        }
+
+        // 필수 필드 설정
         document.getElementById('role').value = role;
 
         const tabs = document.querySelectorAll('.tab');
