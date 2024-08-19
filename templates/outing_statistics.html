@@ -51,17 +51,18 @@
     }
 
     let currentView = 'grade'; // 현재 보여주고 있는 뷰 상태 (grade or class)
-
+    let selectedGrade = null;  // 선택된 학년
     const gradeStats = {{ stats|tojson }};
     let classStats = {}; // 학년 클릭 시 로드할 반별 통계 저장소
 
     const outingChart = document.getElementById('outingChart');
     const noDataMessage = document.getElementById('noDataMessage');
+    let chart;  // 전역 변수로 정의
 
     if (gradeStats.length > 0) {
         outingChart.style.display = 'block';
 
-        const chart = new Chart(outingChart, {
+        chart = new Chart(outingChart, {
             type: 'pie',
             data: {
                 labels: gradeStats.map(s => `${s.grade}학년`),
@@ -76,11 +77,12 @@
                 onClick: (e, item) => {
                     if (item.length > 0) {
                         const index = item[0].index;
-                        const selectedGrade = gradeStats[index].grade;
                         if (currentView === 'grade') {
+                            selectedGrade = gradeStats[index].grade;
                             loadClassStatistics(selectedGrade);
                         } else if (currentView === 'class') {
-                            loadStudentStatistics(selectedGrade, classStats[index].student_class);
+                            const selectedClass = classStats[index].student_class;
+                            loadStudentStatistics(selectedGrade, selectedClass);
                         }
                     }
                 }
@@ -133,6 +135,7 @@
                         tableBody.appendChild(row);
                     });
                     document.getElementById('classTableContainer').style.display = 'block';
+                    outingChart.style.display = 'none';
                 } else {
                     noDataMessage.style.display = 'block';
                     outingChart.style.display = 'none';
