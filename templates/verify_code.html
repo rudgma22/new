@@ -3,82 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이메일 인증 - 김천고등학교 외출 관리 시스템</title>
     <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        /* From Uiverse.io by Yaya12085 */
-        .form {
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-            justify-content: space-around;
-            width: 300px;
-            background-color: white;
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .title {
-            font-size: 20px;
-            font-weight: bold;
-            color: black;
-        }
-
-        .message {
-            color: #a3a3a3;
-            font-size: 14px;
-            margin-top: 4px;
-            text-align: center;
-        }
-
-        .inputs {
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .inputs input {
-            width: 32px;
-            height: 32px;
-            text-align: center;
-            border: none;
-            border-bottom: 1.5px solid #d2d2d2;
-            margin: 0 5px;
-            font-size: 20px;
-        }
-
-        .inputs input:focus {
-            border-bottom: 1.5px solid royalblue;
-            outline: none;
-        }
-
-        .action {
-            margin-top: 24px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: none;
-            background-color: royalblue;
-            color: white;
-            cursor: pointer;
-            align-self: end;
-        }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 인증번호 입력</title>
 </head>
 <body>
-    <div class="form">
-        <div class="title">이메일 인증</div>
-        <div class="message">이메일로 전송된 6자리 코드를 입력하세요</div>
-        <form method="post" action="{{ url_for('auth.verify_code', action=request.args.get('action')) }}">
+    <div class="verification-container">
+        <h1>인증번호 입력</h1>
+        <hr>
+        <form method="post" action="{{ url_for('auth.verify_code', action=action) }}">
             <div class="inputs">
-                <input type="text" maxlength="1" name="code_digit_1" required>
-                <input type="text" maxlength="1" name="code_digit_2" required>
-                <input type="text" maxlength="1" name="code_digit_3" required>
-                <input type="text" maxlength="1" name="code_digit_4" required>
-                <input type="text" maxlength="1" name="code_digit_5" required>
-                <input type="text" maxlength="1" name="code_digit_6" required>
+                <input type="text" name="verification_code" maxlength="6" placeholder="인증번호 6자리를 입력해주세요." required>
+                <!-- Hidden field to pass the action parameter -->
+                <input type="hidden" name="action" value="{{ action }}">
             </div>
-            <button class="action" type="submit">인증</button>
+            <button type="button" class="resend-button">인증번호 재발송</button>
+            <div class="verification-button-container">
+                <button type="button" class="verification-cancel-button">취소</button>
+                <button type="submit" class="teacher-verification-next-button">다음</button>
+            </div>
         </form>
     </div>
 </body>

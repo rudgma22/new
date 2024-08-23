@@ -1,355 +1,841 @@
-/* Reset some default browser styles */
-body, h1, h2, ul, li, input, button, form, div, select, table, th, td {
-    margin: 0;
+/* 모든 요소에 기본 스타일 초기화 */
+* {
     padding: 0;
+    margin: 0;
     box-sizing: border-box;
 }
 
-/* Overall page styling */
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Noto Sans KR', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f3f3f3;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f0f0f0; /* 약간 어두운 흰색 */
 }
 
-/* Header styling */
-header {
-    width: 100%;
+button {
+    font-family: 'Noto Sans KR', Arial, sans-serif; /* 버튼 폰트 지정 */
+}
+
+/* 로그인 관련 */
+.login-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 360px;
     text-align: center;
+}
+
+.login-container img {
+    width: 100px;
     margin-bottom: 20px;
 }
 
-header img {
-    width: 100px;
-    height: auto;
-}
-
-header h1 {
-    margin-top: 10px;
-    font-size: 20px; /* 글씨 크기 조정 */
-    color: #333;
-    white-space: nowrap; /* 텍스트가 잘리지 않도록 */
-}
-
-/* Content container styling */
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.login-box {
-    width: 100%;
-    max-width: 500px;
-    background: #fff;
-    padding: 40px;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-    border-radius: 16px; /* 모서리 라운딩 */
-    text-align: center;
-    position: relative;
-    transition: background-color 0.3s; /* 애니메이션 추가 */
-}
-
-/* Tabs styling */
+/* 학생 교사 로그인 선택 창 */
 .tabs {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid #e5e5e5;
-    position: relative;
 }
 
-.tab {
-    cursor: pointer;
-    padding: 10px 20px;
-    text-align: center;
-    transition: color 0.3s, border-bottom 0.3s;
-    position: relative;
-    color: #ccc;
-}
-
-.tab.on {
-    color: inherit;
-}
-
-.tab.green.on {
-    color: #8BC34A; /* 밝은 연두색 */
-}
-
-.tab.red.on {
-    color: #E74C3C; /* 빨간색 */
-}
-
-.tab.blue.on {
-    color: #007bff; /* 파란색 */
-}
-
-.tab::after {
-    content: '';
-    display: block;
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: currentColor;
-    transition: width 0.3s;
-}
-
-.tab.on::after {
-    width: 100%;
-}
-
-.tab-divider {
-    width: 1px;
-    background-color: #ccc;
-    height: 16px;
-    margin: auto 10px;
-}
-
-.check_text {
-    font-size: 14px;
-}
-
-/* Form styling */
-.login_form, .register_form {
-    margin-bottom: 20px;
-}
-
-.id_input, .password_input, .input_field, .input_select {
-    margin-bottom: 15px;
-}
-
-.input-box {
-    position: relative;
-    margin-bottom: 30px;
-    width: 100%;
-}
-
-.input-box input,
-.input-box select {
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid #333;
-    outline: none;
-    color: #333;
-    font-size: 16px;
-    appearance: none; /* Remove default arrow in select */
-}
-
-.input-box input::-webkit-calendar-picker-indicator {
-    display: none; /* Remove calendar icon from datetime-local input */
-}
-
-.input-box label {
-    position: absolute;
-    top: 0;
-    left: 0;
+.tabs div {
+    flex: 1;
     padding: 10px 0;
-    pointer-events: none;
-    transition: 0.5s;
-    color: #aaa;
+    cursor: pointer;
     font-size: 16px;
+    font-weight: bold;
+    color: #ccc;
+    border-bottom: 2px solid transparent;
 }
 
-.input-box input:focus ~ label,
-.input-box input:valid ~ label,
-.input-box select:focus ~ label,
-.input-box select:valid ~ label {
-    top: -20px;
-    left: 0;
-    color: #007bff;
-    font-size: 12px;
+/* 학생 탭 활성화 상태 */
+.tabs .active {
+    color: #007BFF;
+    border-bottom: 2px solid #007BFF;
 }
 
-.green .input-box input:focus ~ label,
-.green .input-box input:valid ~ label,
-.green .input-box select:focus ~ label,
-.green .input-box select:valid ~ label {
-    color: #8BC34A; /* 밝은 연두색 */
+/* 교사 탭 활성화 상태 */
+#teacher-tab.active {
+    color: #8BC34A;
+    border-bottom: 2px solid #8BC34A;
 }
 
-.red .input-box input:focus ~ label,
-.red .input-box input:valid ~ label,
-.red .input-box select:focus ~ label,
-.red .input-box select:valid ~ label {
-    color: #E74C3C; /* 빨간색 */
+.login-form {
+    display: none;
 }
 
-.button_normal {
+.login-form.active {
+    display: block;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
     width: 100%;
-    padding: 15px; /* 버튼 크기 확대 */
-    background-color: #007bff;
-    color: #fff;
-    font-size: 16px;
-    border: none;
-    border-radius: 25px; /* 모서리 라운딩 */
-    cursor: pointer;
-    transition: background-color 0.3s; /* 애니메이션 추가 */
-    background-size: 200% 100%; /* 배경 크기 설정 */
-    background-image: linear-gradient(to right, #007bff 50%, #0056b3 50%);
-    background-position: 0% 0%;
-}
-
-.button_normal:hover {
-    background-position: 100% 0%;
-}
-
-.green .button_normal {
-    background-color: #8BC34A; /* 밝은 연두색 */
-    background-image: linear-gradient(to right, #8BC34A 50%, #6b8e23 50%);
-}
-
-.green .button_normal:hover {
-    background-position: 100% 0%;
-}
-
-.red .button_normal {
-    background-color: #E74C3C; /* 빨간색 */
-    background-image: linear-gradient(to right, #E74C3C 50%, #C0392B 50%);
-}
-
-.red .button_normal:hover {
-    background-position: 100% 0%;
-}
-
-.signup-link {
-    margin-top: 20px;
-}
-
-.signup-link p {
-    color: #000000;
-    cursor: pointer;
-    transition: color 0.5s;
-}
-
-.signup-link p:hover {
-    color: #007bff;
-}
-
-.signup-link a {
-    text-decoration: none; /* 링크 밑줄 제거 */
-}
-
-/* Filter container styling */
-.filter-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.input_select {
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid #333;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #fff;
-    color: #333;
-    transition: border-color 0.3s;
+    box-sizing: border-box;
+    font-family: 'Noto Sans KR', Arial, sans-serif; /* 폰트 지정 */
 }
 
-.input_select:focus {
-    border-color: #007bff;
-}
-
-.green .input_select:focus {
-    border-color: #8BC34A;
-}
-
-.red .input_select:focus {
-    border-color: #E74C3C;
-}
-
-/* Table styling */
-table {
+/* 학생 버튼 스타일 */
+#student-form button {
     width: 100%;
-    border-collapse: collapse;
+    padding: 12px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
     margin-top: 10px;
 }
 
-th, td {
-    padding: 10px 10px; /* 간격 충분히 늘림 */
-    text-align: center;
-    border-bottom: 1px solid #ddd;
+#student-form button:hover {
+    background-color: #0900FF;
 }
 
-th {
+/* 교사 버튼 스타일 */
+#teacher-form button {
+    width: 100%;
+    padding: 12px;
     background-color: #8BC34A;
     color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
 }
 
-tr:hover {
-    background-color: #f1f1f1;
+#teacher-form button:hover {
+    background-color: #4AC360;
 }
 
-.outing-status.approved {
-    color: #28a745; /* 초록색 */
+.login-container .links {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #aaa;
 }
 
-.outing-status.pending {
-    color: #ffc107; /* 주황색 */
+.login-container .links a {
+    color: #aaa;
+    margin: 0 10px;
+    text-decoration: none;
 }
 
-.outing-status.rejected {
-    color: #E83323; /* 빨간색 */
-}
 
-/* Pagination styling */
-.pagination {
+/* 아이디 찾기 관련 */
+/* 학생 아이디 찾기 컨테이너 */
+.find-id-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px 20px;
+    text-align: center;
+    width: 546px;
+    height: 660px;
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+}
+
+/* 로고 이미지 */
+.find-id-container img {
+    width: 108px;
+    margin: 0 auto 30px;
+}
+
+/* 버튼 공통 스타일 */
+.find-id-container button {
+    width: 404px;
+    height: 65px;
+    padding: 10px 0;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    color: white;
+    font-family: 'Noto Sans KR', Arial, sans-serif;
+}
+
+/* 학생 아이디 찾기 버튼 스타일 */
+#student-find-button-normal {
+    background-color: #007BFF;
+}
+
+#student-find-button-normal:hover {
+    background-color: #0900FF;
+}
+
+/* 교사 아이디 찾기 버튼 스타일 */
+#teacher-find-button-normal {
+    background-color: #8BC34A;
+}
+
+#teacher-find-button-normal:hover {
+    background-color: #4AC360;
+}
+
+
+/* 학생 및 교사 아이디 찾기 */
+/* 아이디 찾기 폼 컨테이너 */
+.id-form-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+}
+
+/* 폼 제목 스타일 */
+.id-form-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* 구분선 스타일 */
+.id-form-container hr {
+    margin-bottom: 20px;
+    border: none;
+    border-top: 1px solid #000;
+}
+
+/* 입력 필드 및 선택 필드 스타일 */
+.id-form-container input[type="text"],
+.id-form-container input[type="email"],
+.id-form-container select {
+    width: calc(100% - 20px);
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    display: block;
+    margin-left: 10px;
+}
+
+/* 드롭다운 필드 그룹 */
+.select-group {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.select-group select {
+    width: 48%;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* 버튼 컨테이너 */
+.id-form-button-container {
+    display: flex;
+    justify-content: space-between;
     margin-top: 20px;
 }
 
-.pagination-link, .pagination-ellipsis {
-    margin: 0 5px;
-    padding: 10px 15px;
-    text-decoration: none;
-    color: #007bff;
-    border: 1px solid #007bff;
+/* 학생 취소 버튼 */
+.student-id-form-button.cancel-button {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+    padding: 15px 0;
+    width: 45%;
     border-radius: 5px;
-    transition: background-color 0.3s, color 0.3s;
+    cursor: pointer;
+    font-size: 16px;
 }
 
-.pagination-link:hover {
-    background-color: #007bff;
-    color: #fff;
+/* 학생 다음 버튼 */
+.student-id-form-button.next-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
 }
 
-.pagination-ellipsis {
-    pointer-events: none;
+.student-id-form-button.next-button:hover {
+    background-color: #0056b3;
 }
 
-/* Modal styling */
-.modal {
-    display: none;
+.student-id-form-button.cancel-button:hover {
+    background-color: #f0f0f0;
+}
+
+/*교사 취소 버튼*/
+.teacher-id-form-button.cancel-button {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.teacher-id-form-button.cancel-button:hover {
+    background-color: #f0f0f0;
+}
+
+/* 교사 다음 버튼 */
+.teacher-id-form-button.next-button {
+    background-color: #8BC34A;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.teacher-id-form-button.next-button:hover {
+    background-color: #4AC360;
+}
+
+/* 인증번호 입력 폼 컨테이너 */
+.verification-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+}
+
+/* 폼 제목 스타일 */
+.verification-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* 구분선 스타일 */
+.verification-container hr {
+    margin-bottom: 20px;
+    border: none;
+    border-top: 1px solid #000;
+}
+
+/* 입력 필드 스타일 */
+.verification-container input[type="text"] {
+    width: calc(100% - 20px);
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    display: block;
+    margin-left: 10px;
+}
+
+/* 인증번호 재발송 버튼 */
+.resend-button {
+    background-color: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    text-decoration: underline;
+}
+
+.resend-button:hover {
+    color: #888;
+}
+
+/* 버튼 컨테이너 */
+.verification-button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+/* 취소 버튼 스타일 */
+.verification-cancel-button {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.verification-cancel-button:hover {
+    background-color: #f0f0f0;
+}
+
+/* 학생 다음 버튼 스타일 */
+.student-verification-next-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.student-verification-next-button:hover {
+    background-color: #0056b3;
+}
+
+/* 교사 다음 버튼 스타일 */
+.teacher-verification-next-button {
+    background-color: #8BC34A;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.teacher-verification-next-button:hover {
+    background-color: #4AC360;
+}
+
+/* 아이디 찾기 결과 */
+/* 아이디 찾기 결과 컨테이너 */
+.result-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 546px;
+    height: 397px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 제목 스타일 */
+.result-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* 구분선 스타일 */
+.result-container .result-line {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+/* 결과 텍스트 스타일 */
+.result-container p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+/* 학생 로그인 버튼 스타일 */
+.student-id-result-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.student-id-result-button:hover {
+    background-color: #0056b3;
+}
+
+/* 교사 로그인 버튼 스타일 */
+.teacher-id-result-button {
+    background-color: #8BC34A;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.teacher-id-result-button:hover {
+    background-color: #4AC360;
+}
+
+/* 비밀번호 변경 관련 */
+/* 비밀번호 변경 폼 컨테이너 */
+.password-change-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 제목 스타일 */
+.password-change-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* 구분선 스타일 */
+.password-change-container .password-change-line {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+/* 입력 필드 스타일 */
+.password-change-container input[type="password"] {
+    width: 350px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    display: block;
+    margin-left: 10px;
+}
+
+/* 버튼 컨테이너 */
+.password-change-button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+/* 취소 버튼 스타일 */
+.password-change-cancel-button {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.password-change-cancel-button:hover {
+    background-color: #f0f0f0;
+}
+
+
+/* 학생 다음 버튼 스타일 */
+.student-password-change-next-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.student-password-change-next-button:hover {
+    background-color: #0056b3;
+}
+
+/* 교사 다음 버튼 스타일 */
+.teacher-password-change-next-button {
+    background-color: #8BC34A;
+    color: white;
+    padding: 15px 0;
+    width: 45%;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.teacher-password-change-next-button:hover {
+    background-color: #4AC360;
+}
+
+/* 학생 홈 */
+/* 헤더 스타일 */
+header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: fixed;
-    z-index: 1;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    height: 40px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+}
+
+.header-link {
+    text-decoration: none;
+    color: #d9d9d9;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.header-link:hover {
+    color: #a9a9a9;
+}
+
+/* 외출 신청 폼 컨테이너 */
+.application-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 900px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 120px;
+}
+
+/* 외출 신청 제목 스타일 */
+.application-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* 외출 신청 확인 링크 컨테이너 */
+.check-link-container {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-bottom: -10px;
+    padding-right: 60px;
+}
+
+/* 외출 신청 확인 링크 */
+.check-link {
+    text-decoration: none;
+    color: #d9d9d9;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.check-link:hover {
+    color: #a9a9a9;
+}
+
+/* 구분선 스타일 */
+.application-container .application-line {
+    width: 700px;
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+/* 날짜 및 시간 입력 필드 스타일 */
+.date-time-group {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.date-time-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.date-time-group input[type="datetime-local"] {
+    width: 48%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* 외출 사유 드롭다운 스타일 */
+#reason {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+/* 기타 사유 입력 필드 스타일 */
+#other-reason {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    display: none;
+    margin-top: 15px;
+}
+
+/* 외출 신청 버튼 스타일 */
+.student-submit-button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.student-submit-button:hover {
+    background-color: #0056b3;
+}
+
+/* 외출 신청 확인 */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0,0.4);
-    padding-top: 60px;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.4); 
 }
 
-.modal_content {
+#infoModal .modal-content {
     background-color: #fefefe;
-    margin: 5% auto;
+    margin: auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
     max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#infoModal .modal-content h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#infoModal .modal-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+#infoModal .modal-content form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#infoModal .modal-content form label {
+    margin-top: 10px;
+    font-size: 14px;
+    display: block;
+}
+
+#infoModal .modal-content form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+#infoModal .modal-content form .readonly-field {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 8px;
+    font-size: 14px;
+}
+
+#infoModal .modal-content form button {
+    padding: 10px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    align-items: center;
+}
+
+#infoModal .button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+#infoModal .button-group button {
+    width: 120px;
+    padding: 10px 0;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    text-align: center;
+}
+
+.student-submit-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.student-submit-button:hover {
+    background-color: #0069d9;
+}
+
+#cancelModal {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelModal:hover {
+    background-color: #bbb;
 }
 
 .close {
@@ -357,26 +843,164 @@ tr:hover {
     float: right;
     font-size: 28px;
     font-weight: bold;
-}
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
     cursor: pointer;
 }
 
-/* 로그아웃 버튼 스타일링 추가 */
-.logout-container {
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* 외출 신청 확인 모달 */
+#checkModal .modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+}
+
+#checkModal h2 {
+    margin-bottom: 10px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#checkModal .modal-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+#checkModal .modal-body {
+    height: 300px; /* Adjust this height based on your content */
+    overflow-y: auto;
     margin-bottom: 20px;
 }
 
-.logout-container .button_normal {
-    width: auto;
-    padding: 10px 20px;
-    background-color: #dc3545; /* 빨간색 */
-    background-image: linear-gradient(to right, #dc3545 50%, #c82333 50%);
+#checkModal .button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-.logout-container .button_normal:hover {
-    background-position: 100% 0%;
+#checkModal .button-group button {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+#checkModal .button-group button:hover {
+    background-color: #0056b3;
+}
+
+#checkModal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+#checkModal .close:hover, #checkModal .close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* 비밀번호 입력 모달 */
+#passwordModal .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    text-align: center;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#passwordModal h2 {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#passwordModal p {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+#passwordModal input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#passwordModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#passwordModal .button-group button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+}
+
+#cancelPassword {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelPassword:hover {
+    background-color: #bbb;
+}
+
+#confirmPassword {
+    background-color: #007bff;
+    color: white;
+}
+
+#confirmPassword:hover {
+    background-color: #0069d9;
+}
+
+#passwordModal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+#passwordModal .close:hover, #passwordModal .close:focus {
+    color: black;
+    text-decoration: none;
 }

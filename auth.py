@@ -17,7 +17,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 auth_bp = Blueprint('auth', __name__)
 
-
 def send_verification_email(email, code):
     smtp_server = os.getenv("SMTP_SERVER")
     smtp_port = int(os.getenv("SMTP_PORT"))
@@ -41,11 +40,9 @@ def send_verification_email(email, code):
     except Exception as e:
         print(f"이메일 전송 중 오류 발생: {e}")
 
-
 @auth_bp.route('/')
 def index():
     return render_template('login.html')
-
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -58,8 +55,6 @@ def login():
         user = Student.query.filter_by(username=username).first()
     elif role == 'teacher':
         user = Teacher.query.filter_by(username=username).first()
-    elif role == 'admin':
-        user = Admin.query.filter_by(username=username).first()
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         session['user_id'] = user.id
@@ -68,18 +63,15 @@ def login():
             return redirect(url_for('views.student_home'))
         elif role == 'teacher':
             return redirect(url_for('views.teacher_manage'))
-        elif role == 'admin':
-            return redirect(url_for('views.admin_page'))
+
     else:
         flash('Invalid credentials', 'danger')
         return redirect(url_for('auth.index'))
-
 
 @auth_bp.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('auth.index'))
-
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -95,14 +87,12 @@ def register():
             return redirect(url_for('auth.register'))
 
         if role != 'admin':
-            existing_email = Student.query.filter_by(email=email).first() or Teacher.query.filter_by(
-                email=email).first()
+            existing_email = Student.query.filter_by(email=email).first() or Teacher.query.filter_by(email=email).first()
             if existing_email:
                 flash('이미 사용 중인 이메일입니다. 다른 이메일을 사용하세요.', 'danger')
                 return redirect(url_for('auth.register'))
 
-        existing_user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(
-            username=username).first() or Admin.query.filter_by(username=username).first()
+        existing_user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
         if existing_user:
             flash('이미 사용 중인 아이디입니다. 다른 아이디를 사용하세요.', 'danger')
             return redirect(url_for('auth.register'))
@@ -146,96 +136,83 @@ def register():
 
     return render_template('register.html')
 
-
-@auth_bp.route('/find_id_reset_password')
-def find_id_reset_password():
-    return render_template('find_id_reset_password.html')
-
-
-@auth_bp.route('/find_id', methods=['POST'])
+@auth_bp.route('/find_id')
 def find_id():
-    role = request.form['role']
-    name = request.form['name']
-    grade = request.form.get('grade')
-    student_class = request.form.get('class')
-    number = request.form.get('number')
-    email = request.form['email']
+    return render_template('find_id.html')
 
-    if role == 'student':
-        barcode = request.form['barcode']
-        user = Student.query.filter_by(name=name, grade=grade, student_class=student_class, number=number,
-                                       barcode=barcode, email=email).first()
-    else:
-        user = Teacher.query.filter_by(name=name, grade=grade, teacher_class=student_class, email=email).first()
+@auth_bp.route('/student_find_id', methods=['GET', 'POST'])
+def student_find_id():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        grade = request.form.get('grade')
+        student_class = request.form.get('class')
+        number = request.form.get('number')
+        email = request.form.get('email')
 
-    if user:
-        verification_code = random.randint(100000, 999999)
-        session['verification_code'] = verification_code
-        session['user_id'] = user.id
-        session['role'] = role
-        send_verification_email(email, verification_code)
-        return redirect(url_for('auth.verify_code', action='find_id'))
-    else:
-        flash('해당 정보로 아이디를 찾을 수 없습니다.', 'danger')
-        return redirect(url_for('auth.find_id_reset_password'))
+        user = Student.query.filter_by(name=name, grade=grade, student_class=student_class, number=number, email=email).first()
 
+        if user:
+            verification_code = random.randint(100000, 999999)
+            session['verification_code'] = verification_code
+            session['user_id'] = user.id
+            session['role'] = 'student'
+            send_verification_email(email, verification_code)
+            return redirect(url_for('auth.verify_code', action='find_id'))
+        else:
+            flash('해당 정보로 아이디를 찾을 수 없습니다.', 'danger')
+            return render_template('find_id.html')
 
-@auth_bp.route('/reset_password', methods=['POST'])
-def reset_password():
-    role = request.form['role']
-    username = request.form['username']
-    name = request.form['name']
-    grade = request.form.get('grade')
-    student_class = request.form.get('class')
-    number = request.form.get('number')
-    email = request.form['email']
+    return render_template('student_find_id.html')
 
-    if role == 'student':
-        barcode = request.form['barcode']
-        user = Student.query.filter_by(username=username, name=name, grade=grade, student_class=student_class,
-                                       number=number, barcode=barcode, email=email).first()
-    else:
-        user = Teacher.query.filter_by(username=username, name=name, grade=grade, teacher_class=student_class,
-                                       email=email).first()
+@auth_bp.route('/teacher_find_id', methods=['GET', 'POST'])
+def teacher_find_id():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        grade = request.form.get('grade')
+        teacher_class = request.form.get('class')
+        email = request.form.get('email')
 
-    if user:
-        verification_code = random.randint(100000, 999999)
-        session['verification_code'] = verification_code
-        session['user_id'] = user.id
-        session['role'] = role
-        send_verification_email(email, verification_code)
-        return redirect(url_for('auth.verify_code', action='reset_password'))
-    else:
-        flash('해당 정보로 계정을 찾을 수 없습니다.', 'danger')
-        return redirect(url_for('auth.find_id_reset_password'))
+        user = Teacher.query.filter_by(name=name, grade=grade, teacher_class=teacher_class, email=email).first()
+
+        if user:
+            verification_code = random.randint(100000, 999999)
+            session['verification_code'] = verification_code
+            session['user_id'] = user.id
+            session['role'] = 'teacher'
+            send_verification_email(email, verification_code)
+            return redirect(url_for('auth.verify_code', action='find_id'))
+        else:
+            flash('해당 정보로 아이디를 찾을 수 없습니다.', 'danger')
+            return render_template('teacher_find_id.html')
+
+    return render_template('teacher_find_id.html')
 
 
 @auth_bp.route('/verify_code', methods=['GET', 'POST'])
 def verify_code():
+    action = request.args.get('action')  # action 값을 여기서 미리 가져옵니다.
+
     if request.method == 'POST':
-        input_code = ''.join([
-            request.form['code_digit_1'],
-            request.form['code_digit_2'],
-            request.form['code_digit_3'],
-            request.form['code_digit_4'],
-            request.form['code_digit_5'],
-            request.form['code_digit_6']
-        ])
-        if int(input_code) == session.get('verification_code'):
-            action = request.args.get('action')
+        input_code = request.form.get('verification_code')
+        if input_code and int(input_code) == session.get('verification_code'):
+            user_role = session.get('role')  # 사용자의 역할을 가져옵니다.
             if action == 'find_id':
-                user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(
-                    session['user_id'])
-                return render_template('find_id.html', name=user.name, username=user.username)
+                user = Student.query.get(session['user_id']) if user_role == 'student' else Teacher.query.get(session['user_id'])
+                if user_role == 'student':
+                    return render_template('student_find_id_result.html', name=user.name, username=user.username)
+                else:  # 'teacher'인 경우
+                    return render_template('teacher_find_id_result.html', name=user.name, username=user.username)
             elif action == 'reset_password':
-                user = Student.query.get(session['user_id']) if session['role'] == 'student' else Teacher.query.get(
-                    session['user_id'])
+                user = Student.query.get(session['user_id']) if user_role == 'student' else Teacher.query.get(session['user_id'])
                 session['username'] = user.username
                 return redirect(url_for('auth.reset_password_form'))
         else:
             flash('인증 코드가 올바르지 않습니다.', 'danger')
-            return redirect(url_for('auth.verify_code', action=request.args.get('action')))
-    return render_template('verify_code.html')
+            return redirect(url_for('auth.verify_code', action=action))  # action을 다시 전달합니다.
+    else:
+        return render_template('verify_code.html', action=action)
+
+
 
 
 @auth_bp.route('/reset_password_form', methods=['GET'])
@@ -245,7 +222,6 @@ def reset_password_form():
         flash('잘못된 접근입니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
     return render_template('reset_password.html', username=username)
-
 
 @auth_bp.route('/reset_password_confirm', methods=['POST'])
 def reset_password_confirm():
@@ -257,8 +233,7 @@ def reset_password_confirm():
         flash('비밀번호가 일치하지 않습니다.', 'danger')
         return redirect(url_for('auth.reset_password_form'))
 
-    user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(
-        username=username).first() or Admin.query.filter_by(username=username).first()
+    user = Student.query.filter_by(username=username).first() or Teacher.query.filter_by(username=username).first() or Admin.query.filter_by(username=username).first()
 
     if user:
         user.password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -268,15 +243,13 @@ def reset_password_confirm():
         flash('해당 아이디를 찾을 수 없습니다.', 'danger')
         return redirect(url_for('auth.find_id_reset_password'))
 
-
 @auth_bp.route('/barcode_scan', methods=['GET', 'POST'])
 def barcode_scan():
     if request.method == 'POST':
         barcode = request.form['barcode']
 
         # 바코드에 해당하는 외출 요청 중 가장 최근의 것을 가져옴
-        latest_outing_request = OutingRequest.query.filter_by(barcode=barcode).order_by(
-            OutingRequest.start_time.desc()).first()
+        latest_outing_request = OutingRequest.query.filter_by(barcode=barcode).order_by(OutingRequest.start_time.desc()).first()
 
         if latest_outing_request:
             current_time = datetime.now()
@@ -287,9 +260,7 @@ def barcode_scan():
                 if start_time <= current_time <= end_time:
                     flash(f"{latest_outing_request.student_name}님은 외출이 가능합니다. 조심히 다녀오세요!", 'success')
                 else:
-                    flash(
-                        f"{latest_outing_request.student_name}님은 외출이 불가능합니다. 외출 가능한 시간은 {start_time} ~ {end_time}입니다.",
-                        'danger')
+                    flash(f"{latest_outing_request.student_name}님은 외출이 불가능합니다. 외출 가능한 시간은 {start_time} ~ {end_time}입니다.", 'danger')
             elif latest_outing_request.status == '거절됨':
                 flash(f"외출 신청이 거절되어 외출할 수 없습니다. 사유는 {latest_outing_request.rejection_reason}입니다.", 'danger')
             elif latest_outing_request.status == '대기중':

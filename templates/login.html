@@ -1,143 +1,66 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인 - 김천고등학교 외출 관리 시스템</title>
     <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 로그인</title>
 </head>
 <body>
 <div class="login-container">
-    <div class="login-box blue">
-        <header>
-            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-            <h1>김천고등학교 외출 관리 시스템</h1>
-        </header>
-        <ul class="tabs">
-            <li class="tab on blue" data-role="student" id="student-tab">
-                <div class="check_text">학생 로그인</div>
-            </li>
-            <div class="tab-divider"></div>
-            <li class="tab green" data-role="teacher" id="teacher-tab">
-                <div class="check_text">교사 로그인</div>
-            </li>
-            <div class="tab-divider"></div>
-            <li class="tab red" data-role="admin" id="admin-tab">
-                <div class="check_text">관리자 로그인</div>
-            </li>
-        </ul>
-        <form id="student-form" class="login_form" method="post" action="{{ url_for('auth.login') }}">
-            <input type="hidden" name="role" value="student">
-            <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required autocomplete="username">
-                <label>아이디를 입력하세요</label>
-            </div>
-            <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
-                <label>비밀번호를 입력하세요</label>
-            </div>
-            <button class="button_normal login-button" type="submit">로그인</button>
-        </form>
-        <form id="teacher-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
-            <input type="hidden" name="role" value="teacher">
-            <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required autocomplete="username">
-                <label>아이디를 입력하세요</label>
-            </div>
-            <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
-                <label>비밀번호를 입력하세요</label>
-            </div>
-            <button class="button_normal login-button green" type="submit">로그인</button>
-        </form>
-        <form id="admin-form" class="login_form" method="post" action="{{ url_for('auth.login') }}" style="display:none;">
-            <input type="hidden" name="role" value="admin">
-            <div class="id_input input-box">
-                <input class="input_normal" type="text" name="username" required autocomplete="username">
-                <label>아이디를 입력하세요</label>
-            </div>
-            <div class="password_input input-box">
-                <input class="input_normal" type="password" name="password" required autocomplete="current-password">
-                <label>비밀번호를 입력하세요</label>
-            </div>
-            <button class="button_normal login-button red" type="submit">로그인</button>
-        </form>
-        <div class="forgot-link">
-            <p>아이디 또는 비밀번호를 잊으셨나요? <a href="{{ url_for('auth.find_id_reset_password') }}">찾기</a></p>
-        </div>
-        <div class="signup-link">
-            <p>테스트용 회원가입 링크 <a href="{{ url_for('auth.register') }}">회원가입</a></p>
-        </div>
-        <div class="barcode-link">
-            <button id="barcode-btn" class="button_normal">바코드 인식하기</button>
-        </div>
+    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+    <div class="tabs">
+        <div id="student-tab" data-role="student" class="active">학생 로그인</div>
+        <div id="teacher-tab" data-role="teacher">교사 로그인</div>
     </div>
-</div>
 
-<div id="password-modal" style="display: none;">
-    <div class="modal-content">
-        <h2>비밀번호 입력</h2>
-        <input type="password" id="barcode-password" placeholder="비밀번호를 입력하세요">
-        <button id="barcode-login-btn" class="button_normal">확인</button>
+    <form id="student-form" class="login-form active" method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="role" value="student">
+        <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
+        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
+        <button class="student-button-normal" type="submit">로그인</button>
+    </form>
+
+    <form id="teacher-form" class="login-form" method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="role" value="teacher">
+        <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
+        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
+        <button class="teacher-button-normal" type="submit">로그인</button>
+    </form>
+
+    <div class="links">
+        <a href="{{ url_for('auth.find_id') }}">아이디 찾기</a>
+        <a href="{{ url_for('auth.find_id') }}">비밀번호 찾기</a>
+        <a href="{{ url_for('auth.register') }}">회원가입</a>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const studentTab = document.getElementById('student-tab');
-        const teacherTab = document.getElementById('teacher-tab');
-        const adminTab = document.getElementById('admin-tab');
-        const studentForm = document.getElementById('student-form');
-        const teacherForm = document.getElementById('teacher-form');
-        const adminForm = document.getElementById('admin-form');
-        const loginBox = document.querySelector('.login-box');
+    const studentTab = document.getElementById('student-tab');
+    const teacherTab = document.getElementById('teacher-tab');
+    const studentForm = document.getElementById('student-form');
+    const teacherForm = document.getElementById('teacher-form');
 
-        studentTab.addEventListener('click', function () {
-            studentTab.classList.add('on');
-            teacherTab.classList.remove('on');
-            adminTab.classList.remove('on');
-            studentForm.style.display = 'block';
-            teacherForm.style.display = 'none';
-            adminForm.style.display = 'none';
-            loginBox.classList.remove('green', 'red');
-            loginBox.classList.add('blue');
-        });
+    studentTab.addEventListener('click', () => {
+        studentTab.classList.add('active');
+        teacherTab.classList.remove('active');
+        studentForm.classList.add('active');
+        teacherForm.classList.remove('active');
 
-        teacherTab.addEventListener('click', function () {
-            teacherTab.classList.add('on');
-            studentTab.classList.remove('on');
-            adminTab.classList.remove('on');
-            teacherForm.style.display = 'block';
-            studentForm.style.display = 'none';
-            adminForm.style.display = 'none';
-            loginBox.classList.add('green');
-            loginBox.classList.remove('red', 'blue');
-        });
+        studentTab.style.color = '#007BFF';
+        teacherTab.style.color = '#8C8C8C';
+    });
 
-        adminTab.addEventListener('click', function () {
-            adminTab.classList.add('on');
-            studentTab.classList.remove('on');
-            teacherTab.classList.remove('on');
-            adminForm.style.display = 'block';
-            studentForm.style.display = 'none';
-            teacherForm.style.display = 'none';
-            loginBox.classList.add('red');
-            loginBox.classList.remove('green', 'blue');
-        });
+    teacherTab.addEventListener('click', () => {
+        teacherTab.classList.add('active');
+        studentTab.classList.remove('active');
+        teacherForm.classList.add('active');
+        studentForm.classList.remove('active');
 
-        document.getElementById('barcode-btn').addEventListener('click', function () {
-            document.getElementById('password-modal').style.display = 'block';
-        });
-
-        document.getElementById('barcode-login-btn').addEventListener('click', function () {
-            const password = document.getElementById('barcode-password').value;
-            if (password === 'songseol2024**') {
-                window.location.href = "{{ url_for('auth.barcode_scan') }}";
-            } else {
-                alert('비밀번호가 틀렸습니다.');
-            }
-        });
+        teacherTab.style.color = '#8BC34A';
+        studentTab.style.color = '#8C8C8C';
     });
 </script>
 </body>

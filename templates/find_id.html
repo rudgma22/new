@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>아이디 찾기 - 김천고등학교 외출 관리 시스템</title>
-    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 아이디 찾기</title>
 </head>
 <body>
-<div class="login-container">
-    <div class="login-box blue">
-        <header>
-            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-            <h1>아이디 찾기 결과</h1>
-        </header>
-        <p>{{ name }}님의 아이디는 <strong>{{ username }}</strong>입니다.</p>
-        <button class="button_normal" onclick="location.href='{{ url_for('auth.index') }}'">로그인하기</button>
-    </div>
+<div class="find-id-container">
+    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="로고">
+    <button id="student-find-button-normal" type="button">학생 아이디 찾기</button>
+    <button id="teacher-find-button-normal" type="button">교사 아이디 찾기</button>
 </div>
+
+<script>
+    document.getElementById('student-find-button-normal').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.student_find_id') }}";
+    });
+
+    document.getElementById('teacher-find-button-normal').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.teacher_find_id') }}";
+    });
+</script>
+
 </body>
 </html>
