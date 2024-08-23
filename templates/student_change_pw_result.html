@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 비밀번호 변경 결과</title>
+</head>
+<body>
+    <div class="result-container">
+        <h1>비밀번호 변경 결과</h1>
+        <hr class="result-line">
+        <p><strong>비밀번호가 성공적으로 변경되었습니다!</strong></p>
+        <hr class="result-line">
+        <button id="student-id-result-normal" type="button">로그인하기</button>
+    </div>
+<script>
+    document.getElementById('student-id-result-normal').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.index') }}";
+    });
+</script>
+</body>
+</html>
