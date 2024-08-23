@@ -1,0 +1,415 @@
+/* 모든 요소에 기본 스타일 초기화 */
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    height: 40px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+}
+
+.header-link {
+    text-decoration: none;
+    color: #d9d9d9;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.header-link:hover {
+    color: #a9a9a9;
+}
+
+.application-container .application-line {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+.application-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 900px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 120px;
+}
+
+.application-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.teacher-link-container {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.teacher-commuting-manage {
+    text-decoration: none;
+    color: #d9d9d9;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.teacher-commuting-manage:hover{
+    color: #a9a9a9;
+}
+
+.teacher-check-link {
+    text-decoration: none;
+    background-color: #8BC34A;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.teacher-check-link:hover {
+    background-color: #4AC360;
+    color: #fff;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 12px;
+    width: 12px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #8BC34A;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+#infoModal .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#infoModal .modal-content h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#infoModal .modal-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+#infoModal .modal-content form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#infoModal .modal-content form label {
+    margin-top: 10px;
+    font-size: 14px;
+    display: block;
+}
+
+#infoModal .modal-content form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+#infoModal .modal-content form .readonly-field {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 8px;
+    font-size: 14px;
+}
+
+#infoModal .modal-content form button {
+    padding: 10px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    align-items: center;
+}
+
+#infoModal .button-group {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+#infoModal .button-group button {
+    width: 120px;
+    padding: 10px 0;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    text-align: center;
+}
+
+.teacher-submit-button {
+    background-color: #8BC34A;
+    color: white;
+}
+
+.teacher-submit-button:hover {
+    background-color: #4AC360;
+}
+
+#cancelModal {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelModal:hover {
+    background-color: #bbb;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* 비밀번호 입력 모달 */
+#passwordModal .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    text-align: center;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#passwordModal h2 {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#passwordModal p {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+#passwordModal input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#passwordModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#passwordModal .button-group button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+}
+
+#cancelPassword {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelPassword:hover {
+    background-color: #bbb;
+}
+
+#confirmPassword {
+    background-color: #8BC34A;
+    color: white;
+}
+
+#confirmPassword:hover {
+    background-color: #4AC360;
+}
+
+#passwordModal .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+#passwordModal .close:hover, #passwordModal .close:focus {
+    color: black;
+    text-decoration: none;
+}

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 아이디 찾기 결과</title>
+</head>
+<body>
+    <div class="result-container">
+        <h1>아이디 찾기 결과</h1>
+        <hr class="result-line">
+        <p>{{name}}님의 아이디는 <strong>{{username}}</strong>입니다.</p>
+        <hr class="result-line">
+        <button class="teacher-id-result-button">로그인하러 가기</button>
+    </div>
+</body>
+</html>

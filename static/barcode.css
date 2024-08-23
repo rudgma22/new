@@ -1,0 +1,74 @@
+/* 기본 스타일 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none; /* 텍스트 선택 방지 */
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f3f3f3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.barcode-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    text-align: center;
+}
+
+.barcode-container h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.title-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 10px 0;
+}
+
+.info-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.info-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#recognized-name,
+#recognized-barcode,
+#outing-time {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    pointer-events: none; /* 입력 불가 */
+}
+
+.radio-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.radio-group label {
+    font-size: 14px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+input[type="radio"] {
+    margin-right: 5px;
+}
