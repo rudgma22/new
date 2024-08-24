@@ -3,144 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학생 홈 - 김천고등학교 외출 관리 시스템</title>
     <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 학생 홈</title>
 </head>
 <body>
-<div class="login-container">
-    <div class="login-box">
-        <header>
-            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-            <h1>{{ student.name }}님, 환영합니다!</h1>
-        </header>
-        <div id="student-info">
-            <p><strong>이름:</strong> {{ student.name }}</p>
-            <p><strong>아이디:</strong> {{ student.username }}</p>
-            <p><strong>학년:</strong> {{ student.grade }}학년</p>
-            <p><strong>반:</strong> {{ student.student_class }}반</p>
-            <p><strong>번호:</strong> {{ student.number }}</p>
-            <p><strong>바코드:</strong> {{ student.barcode }}</p>
+    <header>
+        <img src="{{ url_for('static', filename='logo_blue.png') }}" alt="김천고등학교 로고" class="logo">
+        <nav>
+            <a href="javascript:void(0);" class="header-link" id="openInfoModal">내 정보 관리</a>
+            <a href="{{ url_for('auth.index') }}" class="header-link">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="application-container">
+        <h1>{{ student['name'] }}님, 환영합니다!</h1>
+        <div class="check-link-container">
+            <a href="javascript:void(0);" class="check-link" id="openModal">외출 신청 확인</a>
         </div>
+        <hr class="application-line">
+        <form method="POST" action="{{ url_for('views.apply_leave') }}">
+            <div class="date-time-group">
+                <label for="start-time">외출 시작 시간</label>
+                <input type="datetime-local" id="start-time" name="start_time" required>
 
-        <!-- 내 정보 관리 버튼 추가 -->
-        <div id="account-management">
-            <a href="{{ url_for('views.manage_account') }}" class="button_normal">내 정보 관리</a>
-        </div>
+                <label for="end-time">외출 종료 시간</label>
+                <input type="datetime-local" id="end-time" name="end_time" required>
+            </div>
+            <hr class="application-line">
 
-        <div id="outing-request">
-            <form method="POST" action="{{ url_for('views.apply_leave') }}">
-                <!-- Hidden input to include the student's barcode -->
-                <input type="hidden" id="barcode" name="barcode" value="{{ student.barcode }}">
+            <label for="reason">외출 사유</label>
+            <select id="reason" name="reason" onchange="toggleOtherReason()" required>
+                <option value="학원">학원</option>
+                <option value="병원">병원</option>
+                <option value="기타">기타</option>
+            </select>
 
-                <div class="input-box">
-                    <input type="datetime-local" id="out_time" name="out_time" required>
-                    <label for="out_time">외출 시작 시간:</label>
+            <input type="text" id="other-reason" name="other_reason" placeholder="기타 사유 입력" style="display:none; margin-top: 15px;">
+
+            <hr class="application-line">
+            <button type="submit" class="student-submit-button">외출 신청</button>
+        </form>
+    </div>
+
+    <!-- Password validation modal -->
+    <div id="passwordModal" class="modal" {% if password_validated %}style="display:none;"{% endif %}>
+        <div class="modal-content">
+            <span class="close" id="closePasswordModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <p>접근하려면 비밀번호를 입력해야합니다.</p>
+            <form method="POST" action="{{ url_for('views.validate_password') }}">
+                <input type="hidden" name="username" value="{{ student['username'] }}">
+                <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                <div class="button-group">
+                    <button type="button" id="cancelPassword">취소</button>
+                    <button type="submit" id="confirmPassword">확인</button>
                 </div>
-                <div class="input-box">
-                    <input type="datetime-local" id="in_time" name="in_time" required>
-                    <label for="in_time">외출 종료 시간:</label>
-                </div>
-                <div class="input-box">
-                    <select id="reason" name="reason" required>
-                        <option value="학원">학원</option>
-                        <option value="병원">병원</option>
-                        <option value="기타">기타</option>
-                    </select>
-                    <label for="reason">외출 사유:</label>
-                </div>
-                <div class="input-box" id="other-reason-container" style="display:none;">
-                    <input type="text" id="other_reason" name="other_reason">
-                    <label for="other_reason">기타 사유 입력:</label>
-                </div>
-                <button class="button_normal" type="submit">신청</button>
             </form>
         </div>
-        <div id="outing-list">
-            <h2 class="section-title">최근 외출 신청 내역</h2>
-            <button class="button_normal" id="toggle-outing-list">목록 접기/펼치기</button>
-            <table id="outing-list-items" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>시작 시간</th>
-                        <th>종료 시간</th>
-                        <th>상태</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for request in outing_requests %}
-                    <tr>
-                        <td>{{ request['start_time'] }}</td>
-                        <td>{{ request['end_time'] }}</td>
-                        <td class="{% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
-                            {% if request['status'] == '승인됨' %}
-                                승인됨
-                            {% elif request['status'] == '거절됨' %}
-                                <span class="rejected">거절됨
-                                <div class="rejection-reason">사유: {{ request['rejection_reason'] }}</div>
-                                </span>
-                            {% else %}
-                                대기중
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="3">외출 신청 내역이 없습니다.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="logout-container">
-            <a href="{{ url_for('auth.logout') }}">로그아웃</a>
+    </div>
+
+    <!-- Information management modal -->
+    <div id="infoModal" class="modal" {% if not password_validated %}style="display:none;"{% endif %}>
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <hr class="modal-line">
+            <form method="POST" action="{{ url_for('views.update_account') }}">
+                <div>
+                    <label for="name">이름</label>
+                    <div class="readonly-field">{{ student['name'] }}</div>
+                </div>
+                <div>
+                    <label for="grade">학년</label>
+                    <div class="readonly-field">{{ student['grade'] }}</div>
+                </div>
+                <div>
+                    <label for="class">반</label>
+                    <div class="readonly-field">{{ student['student_class'] }}</div>
+                </div>
+                <div>
+                    <label for="number">번호</label>
+                    <div class="readonly-field">{{ student['number'] }}</div>
+                </div>
+                <div>
+                    <label for="id">아이디</label>
+                    <div class="readonly-field">{{ student['username'] }}</div>
+                </div>
+                <div>
+                    <label for="barcode">바코드</label>
+                    <div class="readonly-field">{{ student['barcode'] }}</div>
+                </div>
+                <div>
+                    <label for="new_password">비밀번호</label>
+                    <input type="password" id="new_password" name="new_password" placeholder="변경할 비밀번호 입력" autocomplete="new-password">
+                </div>
+                <div>
+                    <label for="confirm_password">비밀번호 재입력</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="변경할 비밀번호 재입력" autocomplete="new-password">
+                </div>
+                <div>
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email" value="{{ student['email'] }}" placeholder="변경할 이메일 입력">
+                </div>
+                <div>
+                    <label for="pw-tips" style="font-size: 13px;">비밀번호 변경 시 <br> - 영문, 숫자, 특수문자 모두 포함(8~20자) <br> - 사용 가능한 특수문자 : @ ! # & ...</label>
+                </div>
+                <hr class="modal-line">
+                <div class="button-group">
+                    <button type="button" id="cancelModal">취소</button>
+                    <button type="submit" class="student-submit-button">저장</button>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const reasonSelect = document.getElementById('reason');
-        const otherReasonInput = document.getElementById('other-reason-container');
-        const toggleButton = document.getElementById('toggle-outing-list');
-        const outingList = document.getElementById('outing-list-items');
+    <div id="checkModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeCheckModal">&times;</span>
+            <h2>외출 신청 확인</h2>
+            <hr class="modal-line">
+            <div class="modal-body">
+                {% for request in student['outing_requests'] %}
+                    <p>시작 시간: {{ request['start_time'] }} / 종료 시간: {{ request['end_time'] }}</p>
+                    <p>사유: {{ request['reason'] }} / 상태: {{ request['status'] }}</p>
+                    <hr class="modal-line">
+                {% endfor %}
+            </div>
+            <div class="button-group">
+                <button type="button" id="checkConfirm">확인</button>
+            </div>
+        </div>
+    </div>
 
-        reasonSelect.addEventListener('change', function() {
-            if (reasonSelect.value === '기타') {
-                otherReasonInput.style.display = 'block';
-                otherReasonInput.querySelector('input').required = true;
-            } else {
-                otherReasonInput.style.display = 'none';
-                otherReasonInput.querySelector('input').required = false;
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var passwordModal = document.getElementById("passwordModal");
+            var infoModal = document.getElementById("infoModal");
+            var openInfoModalBtn = document.getElementById("openInfoModal");
+            var closePasswordModalSpan = document.getElementById("closePasswordModal");
+            var cancelPasswordBtn = document.getElementById("cancelPassword");
+            var closeInfoModalSpan = document.getElementById("closeModal");
+            var cancelInfoModalBtn = document.getElementById("cancelModal");
+
+            // 비밀번호 검증 후 바로 "내 정보 관리" 모달을 표시
+            var passwordValidated = {{ 'true' if password_validated else 'false' }};  // Jinja2 문법으로 설정
+
+            if (passwordValidated) {
+                infoModal.style.display = "block";
             }
-        });
 
-        toggleButton.addEventListener('click', function() {
-            if (outingList.style.display === 'none') {
-                outingList.style.display = 'table';
-                outingList.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
-            } else {
-                outingList.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500 }).onfinish = () => {
-                    outingList.style.display = 'none';
+            if (openInfoModalBtn) {
+                openInfoModalBtn.onclick = function () {
+                    if (!passwordValidated) {
+                        passwordModal.style.display = "block";
+                    } else {
+                        infoModal.style.display = "block";
+                    }
                 };
             }
+
+            if (closePasswordModalSpan) {
+                closePasswordModalSpan.onclick = function () {
+                    passwordModal.style.display = "none";
+                };
+            }
+
+            if (cancelPasswordBtn) {
+                cancelPasswordBtn.onclick = function () {
+                    passwordModal.style.display = "none";
+                };
+            }
+
+            if (closeInfoModalSpan) {
+                closeInfoModalSpan.onclick = function () {
+                    infoModal.style.display = "none";
+                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
+                };
+            }
+
+            if (cancelInfoModalBtn) {
+                cancelInfoModalBtn.onclick = function () {
+                    infoModal.style.display = "none";
+                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
+                };
+            }
+
+            var checkModal = document.getElementById("checkModal");
+            var openCheckModalBtn = document.getElementById("openModal");
+            var closeCheckModalSpan = document.getElementById("closeCheckModal");
+            var confirmCheckModalBtn = document.getElementById("checkConfirm");
+
+            if (openCheckModalBtn) {
+                openCheckModalBtn.onclick = function () {
+                    if (checkModal) {
+                        checkModal.style.display = "block";
+                    }
+                };
+            }
+
+            if (closeCheckModalSpan) {
+                closeCheckModalSpan.onclick = function () {
+                    if (checkModal) {
+                        checkModal.style.display = "none";
+                    }
+                };
+            }
+
+            if (confirmCheckModalBtn) {
+                confirmCheckModalBtn.onclick = function () {
+                    if (checkModal) {
+                        checkModal.style.display = "none";
+                    }
+                };
+            }
+
+            window.onclick = function (event) {
+                if (event.target == passwordModal) {
+                    passwordModal.style.display = "none";
+                } else if (event.target == infoModal) {
+                    infoModal.style.display = "none";
+                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
+                } else if (event.target == checkModal) {
+                    checkModal.style.display = "none";
+                }
+            };
         });
 
-        const rejectedItems = document.querySelectorAll('.rejected');
-        rejectedItems.forEach(item => {
-            item.addEventListener('mouseover', function() {
-                const reason = this.querySelector('.rejection-reason');
-                if (reason) {
-                    reason.style.display = 'block';
-                }
-            });
+        function toggleOtherReason() {
+            var reasonSelect = document.getElementById("reason");
+            var otherReasonInput = document.getElementById("other-reason");
 
-            item.addEventListener('mouseout', function() {
-                const reason = this.querySelector('.rejection-reason');
-                if (reason) {
-                    reason.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
+            if (reasonSelect.value === "기타") {
+                otherReasonInput.style.display = "block";
+            } else {
+                otherReasonInput.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>

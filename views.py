@@ -12,19 +12,34 @@ def row_to_dict(row):
         return None
     return dict(row._mapping)
 
+
 @views_bp.route('/student_home')
 def student_home():
     if 'user_id' in session and session['role'] == 'student':
         conn = get_db_connection()
+        # 학생 정보 가져오기
         student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
         student = row_to_dict(student)
+
+        # 학생의 외출 신청 내역 가져오기
         outing_requests = conn.execute(text('SELECT * FROM outing_requests WHERE student_name = :name'),
                                        {'name': student['name']}).fetchall()
         outing_requests = [row_to_dict(request) for request in outing_requests]
+
         conn.close()
-        return render_template('student_home.html', student=student, outing_requests=outing_requests)
+
+        # password_validated를 세션에서 가져오고, 기본값 False로 설정
+        password_validated = session.get('password_validated', False)
+        session['password_validated'] = False  # 항상 False로 초기화하여 매번 비밀번호를 확인하게 함
+
+        return render_template('student_home.html',
+                               student=student,
+                               outing_requests=outing_requests,
+                               password_validated=password_validated)  # 변수 전달
     else:
         return redirect(url_for('auth.index'))
+
+
 
 @views_bp.route('/teacher_manage')
 def teacher_manage():
@@ -64,8 +79,8 @@ def admin_page():
 def apply_leave():
     if 'user_id' in session and session['role'] == 'student':
         student_id = session['user_id']
-        start_time = datetime.fromisoformat(request.form['out_time'])
-        end_time = datetime.fromisoformat(request.form['in_time'])
+        start_time = datetime.fromisoformat(request.form['start_time'])
+        end_time = datetime.fromisoformat(request.form['end_time'])
         reason = request.form['reason']
         if reason == '기타':
             other_reason = request.form['other_reason']
@@ -94,6 +109,7 @@ def apply_leave():
         return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
+
 
 @views_bp.route('/approve_leave/<int:request_id>', methods=['POST'])
 def approve_leave(request_id):
@@ -218,65 +234,75 @@ def manage_account():
     else:
         return redirect(url_for('auth.index'))
 
-@views_bp.route('/change_username', methods=['GET', 'POST'])
-def change_username():
+
+@views_bp.route('/validate_password', methods=['POST'])
+def validate_password():
     if 'user_id' in session and session['role'] in ['student', 'teacher']:
-        if request.method == 'POST':
-            current_password = request.form['current_password']
-            new_username = request.form['new_username']
+        password = request.form.get('password')
+        conn = get_db_connection()
 
-            conn = get_db_connection()
-            user = conn.execute(text('SELECT * FROM students WHERE id = :id' if session[
-                                                                                    'role'] == 'student' else 'SELECT * FROM teachers WHERE id = :id'),
-                                {'id': session['user_id']}).fetchone()
-            user = row_to_dict(user)
+        user = None
+        if session['role'] == 'student':
+            user = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
+        elif session['role'] == 'teacher':
+            user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': session['user_id']}).fetchone()
 
-            if bcrypt.checkpw(current_password.encode('utf-8'), user['password'].encode('utf-8')):
-                conn.execute(text('UPDATE students SET username = :username WHERE id = :id' if session[
-                                                                                                   'role'] == 'student' else 'UPDATE teachers SET username = :username WHERE id = :id'),
-                             {'username': new_username, 'id': session['user_id']})
-                conn.commit()
-                flash('아이디가 성공적으로 변경되었습니다.')
-                conn.close()
-                return redirect(
-                    url_for('views.student_home' if session['role'] == 'student' else 'views.teacher_manage'))
-            else:
-                flash('현재 비밀번호가 올바르지 않습니다.')
+        user = row_to_dict(user)
+        conn.close()
 
-        return render_template('change_username.html')
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+            session['password_validated'] = True
+            flash('비밀번호가 확인되었습니다. 정보를 수정할 수 있습니다.', 'success')
+            return render_template('student_home.html',
+                                   student=user,
+                                   outing_requests=[],
+                                   password_validated=True)  # 바로 모달을 열기 위해
+        else:
+            session['password_validated'] = False
+            flash('비밀번호가 일치하지 않습니다. 다시 시도하세요.', 'danger')
+            return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
 
-@views_bp.route('/change_password', methods=['GET', 'POST'])
-def change_password():
-    if 'user_id' in session and session['role'] in ['student', 'teacher']:
-        if request.method == 'POST':
-            current_password = request.form['current_password']
-            new_password = request.form['new_password']
-            confirm_password = request.form['confirm_password']
 
-            conn = get_db_connection()
-            user = conn.execute(text('SELECT * FROM students WHERE id = :id' if session[
-                                                                                    'role'] == 'student' else 'SELECT * FROM teachers WHERE id = :id'),
-                                {'id': session['user_id']}).fetchone()
-            user = row_to_dict(user)
 
-            if bcrypt.checkpw(current_password.encode('utf-8'), user['password'].encode('utf-8')):
-                if new_password == confirm_password:
-                    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                    conn.execute(text('UPDATE students SET password = :password WHERE id = :id' if session[
-                                                                                                       'role'] == 'student' else 'UPDATE teachers SET password = :password WHERE id = :id'),
-                                 {'password': hashed_password, 'id': session['user_id']})
-                    conn.commit()
-                    flash('비밀번호가 성공적으로 변경되었습니다.')
-                    conn.close()
-                    return redirect(
-                        url_for('views.student_home' if session['role'] == 'student' else 'views.teacher_manage'))
-                else:
-                    flash('새 비밀번호가 일치하지 않습니다.')
-            else:
-                flash('현재 비밀번호가 올바르지 않습니다.')
+@views_bp.route('/update_account', methods=['POST'])
+def update_account():
+    if 'user_id' in session and session.get('password_validated') and session['role'] in ['student', 'teacher']:
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        email = request.form.get('email')
 
-        return render_template('change_password.html')
+        if new_password and new_password != confirm_password:
+            flash('새 비밀번호가 일치하지 않습니다.', 'danger')
+            return redirect(url_for('views.student_home'))
+
+        conn = get_db_connection()
+        if session['role'] == 'student':
+            user = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
+        elif session['role'] == 'teacher':
+            user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': session['user_id']}).fetchone()
+
+        user = row_to_dict(user)
+
+        if new_password:
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            conn.execute(text('UPDATE students SET password = :password WHERE id = :id' if session[
+                                                                                               'role'] == 'student' else 'UPDATE teachers SET password = :password WHERE id = :id'),
+                         {'password': hashed_password, 'id': session['user_id']})
+
+        if email:
+            conn.execute(text('UPDATE students SET email = :email WHERE id = :id' if session[
+                                                                                         'role'] == 'student' else 'UPDATE teachers SET email = :email WHERE id = :id'),
+                         {'email': email, 'id': session['user_id']})
+
+        conn.commit()
+        conn.close()
+
+        flash('계정 정보가 성공적으로 업데이트되었습니다.', 'success')
+        return redirect(url_for('views.student_home'))
     else:
+        flash('잘못된 접근입니다.', 'danger')
         return redirect(url_for('auth.index'))
+
+
