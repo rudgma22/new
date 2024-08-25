@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='teacher_home.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 교사 페이지</title>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo_green.png') }}" alt="김천고등학교 로고" class="logo">
+        <nav>
+            <a href="#" class="header-link" id="openInfoModal">내 정보 관리</a>
+            <a href="{{ url_for('auth.index') }}" class="header-link">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="application-container">
+        <h1>{{teacher.grade}}학년 {{teacher.teacher_class}}반 외출 관리</h1>
+        <hr class="application-line">
+
+        <div class="teacher-link-container">
+            <a href="#" class="teacher-commuting-manage" id="openStudentModal">통학생 관리</a>
+            <a href="#" class="teacher-commuting-manage" id="assignExternLink">통학생 지정하기</a>
+            <a href="#" class="teacher-commuting-manage" id="bulkApproveLink">외출 일괄 승인하기</a>
+        </div>
+
+        <div class="teacher-link-container">
+            <span>새로운 외출 신청</span>
+            <label class="switch">
+                <input type="checkbox" id="newRequestToggle" {% if new_requests_only %}checked{% endif %}>
+                <span class="slider round"></span>
+            </label>
+        </div>
+
+        <div class="table-container">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>학년</th>
+                        <th>반</th>
+                        <th>번호</th>
+                        <th>이름</th>
+                        <th>외출 통계</th>
+                        <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">승인</th>
+                        <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">거절</th>
+                        <th class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">통학생 지정</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if outing_requests %}
+                        {% for request in outing_requests %}
+                        <tr>
+                            <td>{{ request['grade'] }}</td>
+                            <td>{{ request['student_class'] }}</td>
+                            <td>{{ request['number'] }}</td>
+                            <td>{{ request['student_name'] }}</td>
+                            <td>{{ request['outing_count'] }}</td>
+                            <td class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">
+                                <button class="approve-btn" data-request-id="{{ request['id'] }}">승인</button>
+                            </td>
+                            <td class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">
+                                <button class="reject-btn" data-request-id="{{ request['id'] }}">거절</button>
+                            </td>
+                            <td class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">
+                                <input type="checkbox" class="extern-checkbox" data-student-id="{{ request['student_id'] }}" {% if request['is_extern'] %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: red;">승인할 학생이 없습니다.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 통학생 관리 모달 -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeStudentModal">&times;</span>
+            <h2>통학생 관리</h2>
+            <div id="externStudentList">
+                {% for extern in externs %}
+                <div>
+                    <input type="checkbox" class="manage-extern-checkbox" data-extern-id="{{ extern['id'] }}">
+                    {{ extern['name'] }} ({{ extern['grade'] }}학년 {{ extern['student_class'] }}반)
+                </div>
+                {% endfor %}
+            </div>
+            <button id="removeExternBtn">통학생 지정 해제하기</button>
+        </div>
+    </div>
+
+    <!-- 비밀번호 입력 모달 -->
+    <div id="passwordModal" class="modal" {% if password_validated %}style="display:none;"{% endif %}>
+        <div class="modal-content">
+            <span class="close" id="closePasswordModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <p>접근하려면 비밀번호를 입력해야합니다.</p>
+            <form method="POST" action="{{ url_for('views.validate_password') }}" id="passwordForm">
+                <!-- 숨겨진 사용자 이름 필드 추가 -->
+                <input type="text" name="username" autocomplete="username" style="display:none;">
+                <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                <div class="button-group">
+                    <button type="button" id="cancelPassword">취소</button>
+                    <button type="submit" id="confirmPassword">확인</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 정보 수정 모달 -->
+    <div id="infoModal" class="modal" {% if not password_validated %}style="display:none;"{% endif %}>
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <hr class="modal-line">
+            <form action="{{ url_for('views.update_account') }}" method="POST">
+                <div>
+                    <label for="name">이름</label>
+                    <div class="readonly-field">{{ teacher['name'] }}</div>
+                </div>
+                <div>
+                    <label for="grade">담당 학년</label>
+                    <div class="readonly-field">{{ teacher['grade'] }}</div>
+                </div>
+                <div>
+                    <label for="class">담당 반</label>
+                    <div class="readonly-field">{{ teacher['teacher_class'] }}</div>
+                </div>
+                <div>
+                    <label for="username">아이디</label>
+                    <div class="readonly-field">{{ teacher['username'] }}</div>
+                </div>
+                <div>
+                    <label for="password">비밀번호</label>
+                    <input type="password" name="new_password" placeholder="변경할 비밀번호 입력" autocomplete="new-password">
+                </div>
+                <div>
+                    <label for="confirm_password">비밀번호 재입력</label>
+                    <input type="password" name="confirm_password" placeholder="변경할 비밀번호 재입력" autocomplete="new-password">
+                </div>
+                <div>
+                    <label for="email">이메일</label>
+                    <input type="email" name="email" value="{{ teacher['email'] }}" placeholder="변경할 이메일 입력">
+                </div>
+                <button type="submit" class="save-btn">저장</button>
+                <button type="button" class="cancel-btn" id="cancelModal">취소</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 통학생 관리 모달
+            var studentModal = document.getElementById("studentModal");
+            var openStudentModalBtn = document.getElementById("openStudentModal");
+            var closeStudentModalSpan = document.getElementById("closeStudentModal");
+
+            if (openStudentModalBtn) {
+                openStudentModalBtn.onclick = function() {
+                    studentModal.style.display = "block";
+                }
+            }
+
+            if (closeStudentModalSpan) {
+                closeStudentModalSpan.onclick = function() {
+                    studentModal.style.display = "none";
+                }
+            }
+
+            window.onclick = function(event) {
+                if (event.target == studentModal) {
+                    studentModal.style.display = "none";
+                }
+            }
+
+            // 비밀번호 입력 모달 관련
+            var passwordModal = document.getElementById("passwordModal");
+            var openInfoModalBtn = document.getElementById("openInfoModal");
+            var closePasswordModalSpan = document.getElementById("closePasswordModal");
+            var cancelPasswordBtn = document.getElementById("cancelPassword");
+            var passwordForm = document.getElementById("passwordForm");
+
+            var infoModal = document.getElementById("infoModal");
+            var closeModalSpan = document.getElementById("closeModal");
+            var cancelModalBtn = document.getElementById("cancelModal");
+
+            if (openInfoModalBtn) {
+                openInfoModalBtn.onclick = function() {
+                    passwordModal.style.display = "block";
+                }
+            }
+
+            if (closePasswordModalSpan) {
+                closePasswordModalSpan.onclick = function() {
+                    passwordModal.style.display = "none";
+                }
+            }
+
+            if (cancelPasswordBtn) {
+                cancelPasswordBtn.onclick = function() {
+                    passwordModal.style.display = "none";
+                }
+            }
+
+            // Enter 키를 눌렀을 때 비밀번호 폼이 제출되도록 설정
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(event) {
+                    event.preventDefault();  // 기본 폼 제출 동작을 방지
+                    fetch('{{ url_for("views.validate_password") }}', {
+                        method: 'POST',
+                        body: new FormData(passwordForm)
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            passwordModal.style.display = "none";
+                            infoModal.style.display = "block";  // 비밀번호가 검증된 후 내 정보 관리 모달 표시
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during password validation:', error);
+                    });
+                });
+            }
+
+            if (closeModalSpan) {
+                closeModalSpan.onclick = function() {
+                    infoModal.style.display = "none";
+                    resetPasswordValidation(); // 모달이 닫힐 때 비밀번호 검증 상태 초기화
+                }
+            }
+
+            if (cancelModalBtn) {
+                cancelModalBtn.onclick = function() {
+                    infoModal.style.display = "none";
+                    resetPasswordValidation(); // 모달이 닫힐 때 비밀번호 검증 상태 초기화
+                }
+            }
+
+            function resetPasswordValidation() {
+                fetch('{{ url_for("views.reset_password_validation") }}', {
+                    method: 'POST'
+                }).then(response => {
+                    if (!response.ok) {
+                        console.error('Error during resetting password validation.');
+                    }
+                });
+            }
+
+            window.onclick = function(event) {
+                if (event.target == passwordModal) {
+                    passwordModal.style.display = "none";
+                } else if (event.target == infoModal) {
+                    infoModal.style.display = "none";
+                    resetPasswordValidation(); // 모달이 닫힐 때 비밀번호 검증 상태 초기화
+                }
+            }
+
+            // 외출 신청 승인 및 거절 처리
+            const approveUrlTemplate = "{{ url_for('views.approve_leave', request_id=0) }}".slice(0, -1);
+            const rejectUrlTemplate = "{{ url_for('views.reject_leave', request_id=0) }}".slice(0, -1);
+
+            document.querySelectorAll('.approve-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    var requestId = this.getAttribute('data-request-id');
+                    var approveUrl = approveUrlTemplate + requestId;
+
+                    fetch(approveUrl, {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('외출 신청이 승인되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('승인 처리 중 오류가 발생했습니다.');
+                        }
+                    });
+                });
+            });
+
+            var rejectModal = document.getElementById("rejectModal");
+            var closeRejectModalSpan = document.getElementById("closeRejectModal");
+            var cancelRejectBtn = document.getElementById("cancelReject");
+            var confirmRejectBtn = document.getElementById("confirmReject");
+
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    rejectModal.style.display = "block";
+                    var requestId = this.getAttribute('data-request-id');
+                    confirmRejectBtn.setAttribute('data-request-id', requestId);
+                });
+            });
+
+            if (closeRejectModalSpan) {
+                closeRejectModalSpan.onclick = function() {
+                    rejectModal.style.display = "none";
+                }
+            }
+
+            if (cancelRejectBtn) {
+                cancelRejectBtn.onclick = function() {
+                    rejectModal.style.display = "none";
+                }
+            }
+
+            if (confirmRejectBtn) {
+                confirmRejectBtn.onclick = function() {
+                    var requestId = this.getAttribute('data-request-id');
+                    var rejectReason = document.getElementById("rejectReasonInput").value;
+                    var rejectUrl = rejectUrlTemplate + requestId;
+
+                    fetch(rejectUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ rejection_reason: rejectReason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외출 신청이 거절되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('거절 처리 중 오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during leave rejection:', error);
+                        alert('거절 처리 중 오류가 발생했습니다.');
+                    });
+                }
+            }
+
+            window.onclick = function(event) {
+                if (event.target == rejectModal) {
+                    rejectModal.style.display = "none";
+                }
+            }
+
+            // 외출 신청 스위치 상태에 따라 데이터 필터링 및 메시지 표시
+            document.getElementById('newRequestToggle').addEventListener('change', function() {
+                const newRequestsOnly = this.checked;
+                window.location.href = `{{ url_for('views.teacher_home') }}?new_requests_only=${newRequestsOnly}`;
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                toggleColumns();
+            });
+
+            function toggleColumns() {
+                const isChecked = document.getElementById('newRequestToggle').checked;
+                document.querySelectorAll('.action-column').forEach(column => {
+                    column.style.display = isChecked ? 'table-cell' : 'none';
+                });
+                document.querySelectorAll('.extern-column').forEach(column => {
+                    column.style.display = isChecked ? 'none' : 'table-cell';
+                });
+            }
+
+            // 통학생 지정하기
+            var assignExternBtn = document.getElementById('assignExternLink');
+            assignExternBtn.onclick = function(event) {
+                event.preventDefault();
+                var checkedBoxes = document.querySelectorAll('.extern-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('통학생으로 지정할 학생을 선택해주세요.');
+                    return;
+                }
+
+                var studentIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-student-id')).filter(id => id && id.trim() !== "");
+
+                if (studentIds.length === 0) {
+                    alert('유효한 학생 ID가 없습니다.');
+                    return;
+                }
+
+                fetch('{{ url_for("views.add_extern") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ externs: studentIds, action: 'add' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('통학생이 성공적으로 지정되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('통학생 지정 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during assigning extern:', error);
+                    alert('통학생 지정 중 오류가 발생했습니다.');
+                });
+            };
+
+            // 통학생 지정 해제하기
+            var removeExternBtn = document.getElementById('removeExternBtn');
+            removeExternBtn.onclick = function(event) {
+                event.preventDefault();
+                var checkedBoxes = document.querySelectorAll('.manage-extern-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('통학생 지정 해제할 학생을 선택해주세요.');
+                    return;
+                }
+
+                var externIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-extern-id'));
+
+                fetch('{{ url_for("views.add_extern") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ externs: externIds, action: 'remove' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('통학생 지정이 해제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('통학생 지정 해제 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during removing extern:', error);
+                    alert('통학생 지정 해제 중 오류가 발생했습니다.');
+                });
+            };
+
+            // 외출 일괄 승인하기
+            var bulkApproveLink = document.getElementById('bulkApproveLink');
+            bulkApproveLink.onclick = function(event) {
+                event.preventDefault();
+                var approveUrl = '{{ url_for("views.bulk_approve") }}';
+
+                fetch(approveUrl, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('외출 신청이 성공적으로 일괄 승인되었습니다.');
+                        location.reload();
+                    } else if (data.status === 'no_requests') {
+                        alert('승인할 학생이 없습니다.');
+                    } else {
+                        alert('외출 일괄 승인 중 오류가 발생했습니다: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during bulk approval:', error);
+                    alert('외출 일괄 승인 중 오류가 발생했습니다.');
+                });
+            };
+        });
+    </script>
+</body>
+</html>
