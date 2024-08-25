@@ -62,7 +62,7 @@ def login():
         if role == 'student':
             return redirect(url_for('views.student_home'))
         elif role == 'teacher':
-            return redirect(url_for('views.teacher_manage'))
+            return redirect(url_for('views.teacher_home'))
 
     else:
         flash('Invalid credentials', 'danger')

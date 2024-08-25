@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 db = SQLAlchemy()
 
@@ -36,15 +36,52 @@ class OutingRequest(db.Model):
     __tablename__ = 'outing_requests'
     id = db.Column(db.Integer, primary_key=True)
     student_name = db.Column(db.String(80), nullable=False)
-    barcode = db.Column(db.String(80), nullable=False)  # 바코드 필드 추가
+    barcode = db.Column(db.String(80), nullable=False)
+    grade = db.Column(db.String(80), nullable=False)
+    student_class = db.Column(db.String(80), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(80), default='대기중', nullable=False)
     rejection_reason = db.Column(db.String(200), nullable=True)
 
+class Extern(db.Model):
+    __tablename__ = 'externs'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)  # student_id 필드 추가
+    grade = db.Column(db.String(80), nullable=False)
+    student_class = db.Column(db.String(80), nullable=False)
+    number = db.Column(db.String(80), nullable=False)
+    name = db.Column(db.String(80), nullable=False)
+    barcode = db.Column(db.String(80), unique=True, nullable=False)
+    student = db.relationship('Student', backref='externs')  # 관계 설정
+
 def get_db_connection():
     return db.session
+
+# 통학생 관리 관련 함수 추가
+def add_extern(student_id):
+    conn = get_db_connection()
+
+    student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': student_id}).fetchone()
+    if student:
+        extern_entry = Extern(
+            student_id=student.id,  # student_id 필드 사용
+            name=student.name,
+            grade=student.grade,
+            student_class=student.student_class,
+            number=student.number,
+            barcode=student.barcode
+        )
+        db.session.add(extern_entry)
+        db.session.commit()
+    else:
+        raise ValueError("Invalid student ID")
+
+def get_all_externs():
+    externs = Extern.query.all()
+    return [{'id': extern.id, 'name': extern.name, 'grade': extern.grade, 'student_class': extern.student_class,
+             'number': extern.number} for extern in externs]
 
 def add_student(name, grade, student_class, number, username, password, barcode, email):
     new_student = Student(

@@ -3,6 +3,7 @@ from auth import auth_bp
 from views import views_bp
 from models import db, Student, Teacher, OutingRequest
 import os
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'

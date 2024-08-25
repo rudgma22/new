@@ -48,12 +48,12 @@
     </div>
 
     <!-- Password validation modal -->
-    <div id="passwordModal" class="modal" {% if password_validated %}style="display:none;"{% endif %}>
+    <div id="passwordModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closePasswordModal">&times;</span>
             <h2>내 정보 수정</h2>
             <p>접근하려면 비밀번호를 입력해야합니다.</p>
-            <form method="POST" action="{{ url_for('views.validate_password') }}">
+            <form method="POST" id="passwordForm">
                 <input type="hidden" name="username" value="{{ student['username'] }}">
                 <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
                 <div class="button-group">
@@ -65,7 +65,7 @@
     </div>
 
     <!-- Information management modal -->
-    <div id="infoModal" class="modal" {% if not password_validated %}style="display:none;"{% endif %}>
+    <div id="infoModal" class="modal" style="display:none;">
         <div class="modal-content">
             <span class="close" id="closeModal">&times;</span>
             <h2>내 정보 수정</h2>
@@ -147,20 +147,11 @@
             var closeInfoModalSpan = document.getElementById("closeModal");
             var cancelInfoModalBtn = document.getElementById("cancelModal");
 
-            // 비밀번호 검증 후 바로 "내 정보 관리" 모달을 표시
-            var passwordValidated = {{ 'true' if password_validated else 'false' }};  // Jinja2 문법으로 설정
-
-            if (passwordValidated) {
-                infoModal.style.display = "block";
-            }
+            var passwordForm = document.getElementById("passwordForm");
 
             if (openInfoModalBtn) {
                 openInfoModalBtn.onclick = function () {
-                    if (!passwordValidated) {
-                        passwordModal.style.display = "block";
-                    } else {
-                        infoModal.style.display = "block";
-                    }
+                    passwordModal.style.display = "block";
                 };
             }
 
@@ -179,16 +170,34 @@
             if (closeInfoModalSpan) {
                 closeInfoModalSpan.onclick = function () {
                     infoModal.style.display = "none";
-                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
                 };
             }
 
             if (cancelInfoModalBtn) {
                 cancelInfoModalBtn.onclick = function () {
                     infoModal.style.display = "none";
-                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
                 };
             }
+
+            passwordForm.onsubmit = function (event) {
+                event.preventDefault(); // 폼 제출 막기
+                var formData = new FormData(passwordForm);
+
+                fetch('{{ url_for("views.validate_password") }}', { // 올바른 URL 사용
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        passwordModal.style.display = "none";
+                        infoModal.style.display = "block"; // 비밀번호 검증 성공 시 정보 관리 모달 표시
+                    } else {
+                        alert('비밀번호가 일치하지 않습니다.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            };
 
             var checkModal = document.getElementById("checkModal");
             var openCheckModalBtn = document.getElementById("openModal");
@@ -224,7 +233,6 @@
                     passwordModal.style.display = "none";
                 } else if (event.target == infoModal) {
                     infoModal.style.display = "none";
-                    passwordValidated = false;  // 모달을 닫으면 비밀번호 검증 초기화
                 } else if (event.target == checkModal) {
                     checkModal.style.display = "none";
                 }
