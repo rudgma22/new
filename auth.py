@@ -341,7 +341,7 @@ def barcode_scan():
         print(f"현재 시간: {current_time}")  # 디버깅을 위한 출력
 
         # 통학생이고, 현재 시간이 9시부터 23시 사이라면 자동 승인
-        if extern_student and time(9, 0) <= current_time <= time(23, 0):
+        if extern_student and time(18, 0) <= current_time <= time(23, 0):
             print(f"통학생 {extern_student.name}님이 통학 시간이므로 자동 승인됩니다.")  # 디버깅을 위한 출력
             response_data = {
                 'barcode': extern_student.barcode,
