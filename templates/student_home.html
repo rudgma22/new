@@ -152,6 +152,7 @@
             if (openInfoModalBtn) {
                 openInfoModalBtn.onclick = function () {
                     passwordModal.style.display = "block";
+                    document.getElementById('passwordInput').value = ''; // 비밀번호 필드 초기화
                 };
             }
 

@@ -28,9 +28,14 @@ def student_home():
                                        {'name': student['name']}).fetchall()
         outing_requests = [row_to_dict(request) for request in outing_requests]
 
+        # 여기서 start_time과 end_time을 문자열로 포맷
+        for request in outing_requests:
+            # 마이크로초까지 포함된 포맷 문자열로 변환
+            request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d %H:%M')
+            request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d %H:%M')
+
         conn.close()
 
-        # 수정: session['password_validated'] 값이 없을 경우 기본값을 False로 설정합니다.
         if 'password_validated' not in session:
             session['password_validated'] = False
 
