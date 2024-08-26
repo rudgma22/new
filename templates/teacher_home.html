@@ -103,7 +103,6 @@
             <h2>내 정보 수정</h2>
             <p>접근하려면 비밀번호를 입력해야합니다.</p>
             <form method="POST" action="{{ url_for('views.validate_password') }}" id="passwordForm">
-                <!-- 숨겨진 사용자 이름 필드 추가 -->
                 <input type="text" name="username" autocomplete="username" style="display:none;">
                 <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
                 <div class="button-group">
@@ -152,6 +151,20 @@
                 <button type="submit" class="save-btn">저장</button>
                 <button type="button" class="cancel-btn" id="cancelModal">취소</button>
             </form>
+        </div>
+    </div>
+
+    <!-- 거절 모달 추가 -->
+    <div id="rejectModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeRejectModal">&times;</span>
+            <h2>외출 신청 거절</h2>
+            <p>거절 사유를 입력해주세요.</p>
+            <textarea id="rejectReasonInput" placeholder="거절 사유 입력"></textarea>
+            <div class="button-group">
+                <button type="button" id="cancelReject">취소</button>
+                <button type="button" id="confirmReject">확인</button>
+            </div>
         </div>
     </div>
 
@@ -261,6 +274,8 @@
                 } else if (event.target == infoModal) {
                     infoModal.style.display = "none";
                     resetPasswordValidation(); // 모달이 닫힐 때 비밀번호 검증 상태 초기화
+                } else if (event.target == rejectModal) {
+                    rejectModal.style.display = "none";
                 }
             }
 
@@ -292,57 +307,64 @@
             var cancelRejectBtn = document.getElementById("cancelReject");
             var confirmRejectBtn = document.getElementById("confirmReject");
 
-            document.querySelectorAll('.reject-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    rejectModal.style.display = "block";
-                    var requestId = this.getAttribute('data-request-id');
-                    confirmRejectBtn.setAttribute('data-request-id', requestId);
-                });
-            });
-
-            if (closeRejectModalSpan) {
-                closeRejectModalSpan.onclick = function() {
-                    rejectModal.style.display = "none";
-                }
-            }
-
-            if (cancelRejectBtn) {
-                cancelRejectBtn.onclick = function() {
-                    rejectModal.style.display = "none";
-                }
-            }
-
-            if (confirmRejectBtn) {
-                confirmRejectBtn.onclick = function() {
-                    var requestId = this.getAttribute('data-request-id');
-                    var rejectReason = document.getElementById("rejectReasonInput").value;
-                    var rejectUrl = rejectUrlTemplate + requestId;
-
-                    fetch(rejectUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ rejection_reason: rejectReason })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            alert('외출 신청이 거절되었습니다.');
-                            location.reload();
-                        } else {
-                            alert('거절 처리 중 오류가 발생했습니다.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error during leave rejection:', error);
-                        alert('거절 처리 중 오류가 발생했습니다.');
+            if (rejectModal) {
+                document.querySelectorAll('.reject-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        rejectModal.style.display = "block";
+                        var requestId = this.getAttribute('data-request-id');
+                        confirmRejectBtn.setAttribute('data-request-id', requestId);
                     });
+                });
+
+                if (closeRejectModalSpan) {
+                    closeRejectModalSpan.onclick = function() {
+                        rejectModal.style.display = "none";
+                    }
+                }
+
+                if (cancelRejectBtn) {
+                    cancelRejectBtn.onclick = function() {
+                        rejectModal.style.display = "none";
+                    }
+                }
+
+                if (confirmRejectBtn) {
+                    confirmRejectBtn.onclick = function() {
+                        var requestId = this.getAttribute('data-request-id');
+                        var rejectReason = document.getElementById("rejectReasonInput").value;
+                        var rejectUrl = rejectUrlTemplate + requestId;
+
+                        fetch(rejectUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ rejection_reason: rejectReason })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert('외출 신청이 거절되었습니다.');
+                                location.reload();
+                            } else {
+                                alert('거절 처리 중 오류가 발생했습니다.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error during leave rejection:', error);
+                            alert('거절 처리 중 오류가 발생했습니다.');
+                        });
+                    }
                 }
             }
 
             window.onclick = function(event) {
-                if (event.target == rejectModal) {
+                if (event.target == passwordModal) {
+                    passwordModal.style.display = "none";
+                } else if (event.target == infoModal) {
+                    infoModal.style.display = "none";
+                    resetPasswordValidation(); // 모달이 닫힐 때 비밀번호 검증 상태 초기화
+                } else if (event.target == rejectModal) {
                     rejectModal.style.display = "none";
                 }
             }

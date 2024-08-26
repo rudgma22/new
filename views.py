@@ -70,8 +70,16 @@ def teacher_home():
                 {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
 
         outing_requests = [row_to_dict(request) for request in outing_requests]
-        externs = Extern.query.all()
-        extern_ids = [extern.student_id for extern in externs]
+
+        # 통학생 목록을 담당 학년 및 반으로 필터링
+        externs = conn.execute(text(
+            'SELECT e.* '
+            'FROM externs e '
+            'JOIN students s ON e.student_id = s.id '
+            'WHERE s.grade = :grade AND s.student_class = :class'),
+            {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
+
+        externs = [row_to_dict(extern) for extern in externs]
 
         conn.close()
 
@@ -80,11 +88,12 @@ def teacher_home():
             session['password_validated'] = False
 
         return render_template('teacher_home.html', teacher=teacher, outing_requests=outing_requests,
-                               externs=externs, extern_ids=extern_ids,
+                               externs=externs,  # 필터링된 externs 전달
                                new_requests_only=new_requests_only,
                                password_validated=session.get('password_validated', False))
     else:
         return redirect(url_for('auth.index'))
+
 
 
 @views_bp.route('/add_extern', methods=['POST'])

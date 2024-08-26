@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='barcode.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+</head>
+<body>
+    <div class="barcode-container">
+        <h1>바코드 인식</h1>
+        <hr class="title-line">
+        <form id="barcode-form" method="POST" action="{{ url_for('auth.barcode_scan') }}">
+            <div class="info-group">
+                <label for="recognized-barcode">인식된 바코드</label>
+                <input type="text" id="recognized-barcode" name="barcode" placeholder="바코드를 입력하세요" required>
+            </div>
+        </form>
+        <div class="info-group">
+            <label for="recognized-name">인식된 이름</label>
+            <input type="text" id="recognized-name" value="{{ response_data['student_name'] if response_data else '' }}" readonly>
+        </div>
+        <div class="info-group">
+            <label>승인 여부</label>
+            <div class="radio-group">
+                <label><input type="radio" name="approval-status" id="approved" disabled> 승인됨</label>
+                <label><input type="radio" name="approval-status" id="reprocess" disabled> 재인식</label>
+                <label><input type="radio" name="approval-status" id="rejected" disabled> 거절됨</label>
+            </div>
+        </div>
+        <div class="info-group">
+            <label for="outing-time">외출 시간</label>
+            <input type="text" id="outing-time" value="{{ response_data['outing_time'] if response_data else '' }}" readonly>
+        </div>
+        <hr class="title-line">
+    </div>
+
+    <audio id="sound-player" src="" preload="auto"></audio>
+
+    <script>
+        document.getElementById('recognized-barcode').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();  // 기본 엔터키 동작 방지
+                document.getElementById('barcode-form').submit();  // 폼 제출
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var barcodeInput = document.getElementById('recognized-barcode');
+
+            // 페이지 로드 시 바코드 입력 필드에 포커스
+            barcodeInput.focus();
+
+            var responseData = {{ response_data | tojson if response_data else 'null' }};
+            if (responseData) {
+                var soundPlayer = document.getElementById('sound-player');
+                barcodeInput.value = responseData.barcode;
+                document.getElementById('recognized-name').value = responseData.student_name;
+                document.getElementById('outing-time').value = responseData.outing_time;
+
+                if (responseData.color === 'green') {
+                    document.getElementById('approved').checked = true;
+                    document.getElementById('approved').parentElement.style.backgroundColor = 'lightgreen';
+                } else if (responseData.color === 'yellow') {
+                    document.getElementById('reprocess').checked = true;
+                    document.getElementById('reprocess').parentElement.style.backgroundColor = 'yellow';
+                } else if (responseData.color === 'red') {
+                    document.getElementById('rejected').checked = true;
+                    document.getElementById('rejected').parentElement.style.backgroundColor = 'lightcoral';
+                }
+
+                soundPlayer.src = responseData.sound;
+                soundPlayer.play();
+
+                setTimeout(function() {
+                    barcodeInput.value = '';  // 바코드 입력 필드 초기화
+                    document.getElementById('recognized-name').value = '';  // 인식된 이름 필드 초기화
+                    document.getElementById('outing-time').value = '';  // 외출 시간 필드 초기화
+                    document.getElementById('approved').checked = false;
+                    document.getElementById('reprocess').checked = false;
+                    document.getElementById('rejected').checked = false;
+                    document.getElementById('approved').parentElement.style.backgroundColor = '';
+                    document.getElementById('reprocess').parentElement.style.backgroundColor = '';
+                    document.getElementById('rejected').parentElement.style.backgroundColor = '';
+                    barcodeInput.focus();  // 입력 필드에 포커스 다시 설정
+                }, 3000);
+            }
+
+            // 바코드 입력 필드가 포커스를 잃었을 때 다시 포커스를 설정
+            barcodeInput.addEventListener('blur', function() {
+                setTimeout(function() {
+                    barcodeInput.focus();
+                }, 0);
+            });
+        });
+    </script>
+</body>
+</html>

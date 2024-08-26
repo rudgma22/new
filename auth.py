@@ -2,12 +2,13 @@ import os
 import random
 import smtplib
 from email.mime.text import MIMEText
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_from_directory
+from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest, Extern
+
 import bcrypt
 from dotenv import load_dotenv
 import logging
-from datetime import datetime
+from datetime import datetime, time
 
 # .env 파일에서 환경 변수를 로드합니다.
 load_dotenv()
@@ -323,31 +324,66 @@ def student_reset_password_result():
 def teacher_reset_password_result():
     return render_template('teacher_change_pw_result.html')
 
+from datetime import datetime, time
+from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest, Extern
+
 @auth_bp.route('/barcode_scan', methods=['GET', 'POST'])
 def barcode_scan():
+    response_data = None  # 기본값 설정
+
     if request.method == 'POST':
-        barcode = request.form['barcode']
+        barcode = request.form.get('barcode')
+        print(f"입력된 바코드: {barcode}")  # 디버깅을 위한 출력
 
-        # 바코드에 해당하는 외출 요청 중 가장 최근의 것을 가져옴
-        latest_outing_request = OutingRequest.query.filter_by(barcode=barcode).order_by(OutingRequest.start_time.desc()).first()
+        # extern 테이블에서 해당 바코드를 가진 학생이 있는지 확인
+        extern_student = Extern.query.filter_by(barcode=barcode).first()
+        current_time = datetime.now().time()
+        print(f"현재 시간: {current_time}")  # 디버깅을 위한 출력
 
-        if latest_outing_request:
-            current_time = datetime.now()
-            start_time = latest_outing_request.start_time
-            end_time = latest_outing_request.end_time
-
-            if latest_outing_request.status == '승인됨':
-                if start_time <= current_time <= end_time:
-                    flash(f"{latest_outing_request.student_name}님은 외출이 가능합니다. 조심히 다녀오세요!", 'success')
-                else:
-                    flash(f"{latest_outing_request.student_name}님은 외출이 불가능합니다. 외출 가능한 시간은 {start_time} ~ {end_time}입니다.", 'danger')
-            elif latest_outing_request.status == '거절됨':
-                flash(f"외출 신청이 거절되어 외출할 수 없습니다. 사유는 {latest_outing_request.rejection_reason}입니다.", 'danger')
-            elif latest_outing_request.status == '대기중':
-                flash("외출 신청이 대기중입니다. 승인 후 다시 인식해주세요.", 'warning')
+        # 통학생이고, 현재 시간이 9시부터 23시 사이라면 자동 승인
+        if extern_student and time(9, 0) <= current_time <= time(23, 0):
+            print(f"통학생 {extern_student.name}님이 통학 시간이므로 자동 승인됩니다.")  # 디버깅을 위한 출력
+            response_data = {
+                'barcode': extern_student.barcode,
+                'student_name': extern_student.name,
+                'outing_time': "통학생입니다.",  # 외출 시간 메시지 수정
+                'status': '승인됨',
+                'color': 'green',
+                'sound': url_for('static', filename='Pling Sound.mp3'),
+                'message': f"{extern_student.name}님은 통학이 승인되었습니다. 조심히 다녀오세요!"
+            }
         else:
-            flash('해당 바코드로 외출 요청을 찾을 수 없습니다.', 'danger')
+            # extern 테이블에 없는 학생이거나 통학생이지만 시간이 맞지 않는 경우 기존 로직 사용
+            latest_outing_request = OutingRequest.query.filter_by(barcode=barcode).order_by(OutingRequest.start_time.desc()).first()
 
-        return redirect(url_for('auth.barcode_scan'))
+            if latest_outing_request:
+                start_time = latest_outing_request.start_time
+                end_time = latest_outing_request.end_time
 
-    return render_template('barcode_scan.html')
+                response_data = {
+                    'barcode': latest_outing_request.barcode,
+                    'student_name': latest_outing_request.student_name,
+                    'outing_time': f"{start_time} ~ {end_time}",
+                    'status': latest_outing_request.status,
+                    'color': '',
+                    'sound': '',
+                    'message': ''
+                }
+
+                if latest_outing_request.status == '승인됨' and start_time <= datetime.now() <= end_time:
+                    response_data['color'] = 'green'
+                    response_data['sound'] = url_for('static', filename='Pling Sound.mp3')
+                    response_data['message'] = f"{latest_outing_request.student_name}님은 외출이 가능합니다. 조심히 다녀오세요!"
+                elif latest_outing_request.status == '대기중' and start_time <= datetime.now() <= end_time:
+                    response_data['color'] = 'yellow'
+                    response_data['sound'] = url_for('static', filename='Buzz 2.mp3')
+                    response_data['message'] = "외출 신청이 대기중입니다. 승인 후 다시 인식해주세요."
+                else:
+                    response_data['color'] = 'red'
+                    response_data['sound'] = url_for('static', filename='Buzz 2.mp3')
+                    response_data['message'] = f"외출이 불가능합니다. 외출 가능한 시간은 {start_time} ~ {end_time}입니다."
+            else:
+                flash('해당 바코드로 외출 요청을 찾을 수 없습니다.', 'danger')
+                print("해당 바코드로 외출 요청을 찾을 수 없습니다.")  # 디버깅을 위한 출력
+
+    return render_template('barcode.html', response_data=response_data)
