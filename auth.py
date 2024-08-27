@@ -175,7 +175,7 @@ def student_find_id():
             return redirect(url_for('auth.verify_code', action='find_id'))
         else:
             flash('해당 정보로 아이디를 찾을 수 없습니다.', 'danger')
-            return render_template('find_id.html')
+            return render_template('student_find_id.html')
 
     return render_template('student_find_id.html')
 
