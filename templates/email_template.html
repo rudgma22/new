@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이메일 인증 코드</title>
+    <style>
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            font-family: Arial, sans-serif;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+        </div>
+        <div class="content">
+            <h2>김천고등학교 외출 관리 시스템</h2>
+            <p>안녕하세요, 김천고등학교입니다.</p>
+            <p>아래의 인증 코드를 입력하여 이메일 인증을 완료해 주세요:</p>
+            <h3>{{ verification_code }}</h3>
+        </div>
+        <div class="footer" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd;">
+            &copy; 2024 김천고등학교. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

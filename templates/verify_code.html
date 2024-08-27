@@ -11,6 +11,15 @@
 <body>
     <div class="verification-container">
         <h1>인증번호 입력</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <hr>
         <form method="post" action="{{ url_for('auth.verify_code', action=action) }}">
             <div class="inputs">

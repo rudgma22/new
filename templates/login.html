@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 로그인</title>
@@ -11,6 +11,15 @@
 <body>
 <div class="login-container">
     <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
     <div class="tabs">
         <div id="student-tab" data-role="student" class="active">학생 로그인</div>
         <div id="teacher-tab" data-role="teacher">교사 로그인</div>

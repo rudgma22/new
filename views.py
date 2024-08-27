@@ -6,6 +6,9 @@ from sqlalchemy.sql import text
 from sqlalchemy import func
 from datetime import datetime
 
+# **추가된 코드**: 비밀번호 해싱을 위한 모듈 가져오기
+from werkzeug.security import generate_password_hash
+
 
 views_bp = Blueprint('views', __name__)
 
@@ -30,9 +33,24 @@ def student_home():
 
         # 여기서 start_time과 end_time을 문자열로 포맷
         for request in outing_requests:
-            # 마이크로초까지 포함된 포맷 문자열로 변환
-            request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d %H:%M')
-            request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%d %H:%M')
+            # start_time과 end_time이 문자열일 경우, datetime 객체로 변환
+            if isinstance(request['start_time'], str):
+                try:
+                    request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S.%f')
+                except ValueError:
+                    # 마이크로초가 없는 경우 처리
+                    request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S')
+
+            if isinstance(request['end_time'], str):
+                try:
+                    request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S.%f')
+                except ValueError:
+                    # 마이크로초가 없는 경우 처리
+                    request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S')
+
+            # datetime 객체를 문자열로 포맷
+            request['start_time'] = request['start_time'].strftime('%Y-%m-%d %H:%M')
+            request['end_time'] = request['end_time'].strftime('%Y-%m-%d %H:%M')
 
         conn.close()
 
@@ -43,6 +61,7 @@ def student_home():
                                password_validated=session.get('password_validated', False))
     else:
         return redirect(url_for('auth.index'))
+
 
 
 @views_bp.route('/teacher_home')
@@ -57,20 +76,22 @@ def teacher_home():
             outing_requests = conn.execute(text(
                 'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
                 '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                'o.status '
+                'o.status, o.reason '  # 외출 사유(reason) 추가
                 'FROM outing_requests o '
                 'JOIN students s ON o.barcode = s.barcode '
                 'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
                 'ORDER BY s.number'),
                 {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
         else:
+            # 최신 외출 신청 정보를 가져오도록 하며, 학생별로 중복을 피하기 위해 'MAX'와 'GROUP BY' 사용
             outing_requests = conn.execute(text(
                 'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                '(SELECT COUNT(*) FROM outing_requests o WHERE o.barcode = s.barcode AND o.status = "승인됨") as outing_count '
+                'MAX(o.reason) as reason, '  # 학생별로 가장 최신의 reason을 가져옴
+                '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
                 'FROM students s '
                 'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                 'WHERE s.grade = :grade AND s.student_class = :class '
-                'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '  # 학생별로 그룹화하여 중복 제거
                 'ORDER BY s.number'),
                 {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
 
@@ -98,7 +119,6 @@ def teacher_home():
                                password_validated=session.get('password_validated', False))
     else:
         return redirect(url_for('auth.index'))
-
 
 
 @views_bp.route('/add_extern', methods=['POST'])
@@ -199,6 +219,9 @@ def approve_leave(request_id):
         print(f"Error occurred during leave approval: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
+from flask import request, redirect, url_for, flash, session
+from datetime import datetime
+
 @views_bp.route('/apply_leave', methods=['POST'])
 def apply_leave():
     if 'user_id' in session and session['role'] == 'student':
@@ -216,43 +239,49 @@ def apply_leave():
             {'name': student['name']}
         ).fetchone()
 
-        if existing_request is not None:
-            existing_request = row_to_dict(existing_request)
-
-        if not existing_request:
-            start_time_str = request.form['start_time']
-            end_time_str = request.form['end_time']
-            start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
-            end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
-            reason = request.form['reason']
-
-            grade = student.get('grade')
-            student_class = student.get('student_class')
-
-            if grade is None or student_class is None:
-                flash('학생의 학년 또는 반 정보를 찾을 수 없습니다.', 'danger')
-                return redirect(url_for('views.student_home'))
-
-            new_request = OutingRequest(
-                student_name=student['name'],
-                barcode=student['barcode'],
-                grade=grade,
-                student_class=student_class,
-                start_time=start_time,
-                end_time=end_time,
-                reason=reason,
-                status='대기중'
-            )
-            conn.add(new_request)
-            conn.commit()
-            flash('외출 신청이 성공적으로 접수되었습니다.', 'success')
-        else:
+        if existing_request:
             flash('이미 대기 중인 외출 신청이 있습니다.', 'warning')
+            conn.close()
+            return redirect(url_for('views.student_home'))
 
+        # 새로운 외출 신청 처리
+        start_time_str = request.form['start_time']
+        end_time_str = request.form['end_time']
+        start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+        end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+
+        # reason 필드와 other_reason 필드를 가져옴
+        reason = request.form.get('reason', '기타')
+        if reason == '기타':
+            reason = request.form.get('other_reason', '기타')  # '기타' 선택 시 other_reason 필드 값 사용
+
+        grade = student.get('grade')
+        student_class = student.get('student_class')
+
+        if grade is None or student_class is None:
+            flash('학생의 학년 또는 반 정보를 찾을 수 없습니다.', 'danger')
+            conn.close()
+            return redirect(url_for('views.student_home'))
+
+        new_request = OutingRequest(
+            student_name=student['name'],
+            barcode=student['barcode'],
+            grade=grade,
+            student_class=student_class,
+            start_time=start_time,
+            end_time=end_time,
+            reason=reason,
+            status='대기중'
+        )
+
+        conn.add(new_request)
+        conn.commit()
+        flash('외출 신청이 성공적으로 접수되었습니다.', 'success')
         conn.close()
         return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
+
 
 from flask import request  # Ensure this import statement is present
 
@@ -279,9 +308,11 @@ def reject_leave(request_id):
 @views_bp.route('/validate_password', methods=['POST'])
 def validate_password():
     if 'user_id' in session:
-        password = request.form['password']
-        role = session['role']
+        password = request.form.get('password')  # .get() 메소드 사용
+        if not password:
+            return jsonify({'status': 'error', 'message': '비밀번호를 입력해주세요.'}), 400
 
+        role = session['role']
         conn = get_db_connection()
         user = None
         if role == 'student':
@@ -289,16 +320,20 @@ def validate_password():
         elif role == 'teacher':
             user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': session['user_id']}).fetchone()
 
-        user = row_to_dict(user)
+        if user:
+            user = row_to_dict(user)
         conn.close()
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             session['password_validated'] = True
             return jsonify({'status': 'success'}), 200
         else:
+            print(f"Password validation failed for user ID {session['user_id']}")
             return jsonify({'status': 'error', 'message': '비밀번호가 일치하지 않습니다.'}), 400
     else:
+        print("Unauthorized access attempt to validate_password")
         return jsonify({'status': 'error', 'message': '인증되지 않은 사용자입니다.'}), 403
+
 
 
 @views_bp.route('/reset_password_validation', methods=['POST'])
@@ -310,34 +345,79 @@ def reset_password_validation():
 
 @views_bp.route('/update_account', methods=['POST'])
 def update_account():
-    if 'user_id' in session and session.get('password_validated'):
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        email = request.form.get('email')
+    if 'user_id' not in session:
+        return redirect(url_for('auth.index'))
 
-        if new_password and new_password == confirm_password:
-            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        else:
-            flash('비밀번호가 일치하지 않거나 유효하지 않습니다.')
-            return redirect(
-                url_for('views.teacher_home') if session['role'] == 'teacher' else url_for('views.student_home'))
+    user_id = session['user_id']
+    user_role = session['role']
 
-        conn = get_db_connection()
-        if session['role'] == 'student':
-            conn.execute(text('UPDATE students SET password = :password, email = :email WHERE id = :id'),
-                         {'password': hashed_password, 'email': email, 'id': session['user_id']})
-        elif session['role'] == 'teacher':
-            conn.execute(text('UPDATE teachers SET password = :password, email = :email WHERE id = :id'),
-                         {'password': hashed_password, 'email': email, 'id': session['user_id']})
+    conn = get_db_connection()
 
-        conn.commit()
-        conn.close()
-
-        session.pop('password_validated', None)
-        flash('계정 정보가 성공적으로 업데이트되었습니다.')
-        return redirect(
-            url_for('views.teacher_home') if session['role'] == 'teacher' else url_for('views.student_home'))
+    # 사용자 정보 가져오기
+    if user_role == 'student':
+        user = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': user_id}).fetchone()
+        user_table = 'students'
+    elif user_role == 'teacher':
+        user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': user_id}).fetchone()
+        user_table = 'teachers'
     else:
-        flash('비밀번호 검증이 필요합니다.')
-        return redirect(
-            url_for('views.teacher_home') if session['role'] == 'teacher' else url_for('views.student_home'))
+        conn.close()
+        return jsonify({'status': 'danger', 'message': '잘못된 사용자 유형입니다.'})
+
+    if user is None:
+        conn.close()
+        return jsonify({'status': 'danger', 'message': '사용자 정보를 가져올 수 없습니다.'})
+
+    user = row_to_dict(user)
+
+    new_email = request.form.get('email')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    # 이메일 유효성 검사
+    if not new_email or '@' not in new_email:
+        conn.close()
+        return jsonify({'status': 'danger', 'message': '유효하지 않은 이메일 주소입니다.'})
+
+    # 이메일 중복 체크
+    existing_user = conn.execute(
+        text(f'SELECT * FROM {user_table} WHERE email = :email AND id != :id'),
+        {'email': new_email, 'id': user_id}
+    ).fetchone()
+
+    if existing_user:
+        conn.close()
+        return jsonify({'status': 'danger', 'message': '중복된 이메일이 있습니다.'})
+
+    # 비밀번호 확인
+    if new_password and new_password != confirm_password:
+        conn.close()
+        return jsonify({'status': 'danger', 'message': '비밀번호가 일치하지 않습니다.'})
+
+    try:
+        # 비밀번호 업데이트
+        if new_password:
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            conn.execute(
+                text(f'UPDATE {user_table} SET password = :password WHERE id = :id'),
+                {'password': hashed_password, 'id': user_id}
+            )
+
+        # 이메일 업데이트
+        conn.execute(
+            text(f'UPDATE {user_table} SET email = :email WHERE id = :id'),
+            {'email': new_email, 'id': user_id}
+        )
+
+        conn.commit()  # 커밋 수행
+        return jsonify({'status': 'success', 'message': '정보가 성공적으로 업데이트되었습니다.'})
+
+    except Exception as e:
+        conn.rollback()  # 오류 발생 시 롤백 수행
+        print(f"Error updating account: {e}")
+        return jsonify({'status': 'danger', 'message': '서버 오류가 발생했습니다. 다시 시도해주세요.'})
+
+    finally:
+        conn.close()  # 연결 닫기
+
+

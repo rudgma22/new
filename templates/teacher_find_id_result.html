@@ -10,6 +10,15 @@
 </head>
 <body>
     <div class="result-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <h1>아이디 찾기 결과</h1>
         <hr class="result-line">
         <p>{{name}}님의 아이디는 <strong>{{username}}</strong>입니다.</p>

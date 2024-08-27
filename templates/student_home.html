@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='songseol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 학생 홈</title>
@@ -19,6 +19,18 @@
 
     <div class="application-container">
         <h1>{{ student['name'] }}님, 환영합니다!</h1>
+
+        <!-- Flash 메시지 표시 (일반 페이지용) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="check-link-container">
             <a href="javascript:void(0);" class="check-link" id="openModal">외출 신청 확인</a>
         </div>
@@ -69,8 +81,9 @@
         <div class="modal-content">
             <span class="close" id="closeModal">&times;</span>
             <h2>내 정보 수정</h2>
+            <div id="modal-flash-messages"></div> <!-- 모달 내 플래시 메시지 표시 위치 -->
             <hr class="modal-line">
-            <form method="POST" action="{{ url_for('views.update_account') }}">
+            <form method="POST" action="{{ url_for('views.update_account') }}" id="infoForm">
                 <div>
                     <label for="name">이름</label>
                     <div class="readonly-field">{{ student['name'] }}</div>
@@ -125,11 +138,15 @@
             <h2>외출 신청 확인</h2>
             <hr class="modal-line">
             <div class="modal-body">
-                {% for request in student['outing_requests'] %}
-                    <p>시작 시간: {{ request['start_time'] }} / 종료 시간: {{ request['end_time'] }}</p>
-                    <p>사유: {{ request['reason'] }} / 상태: {{ request['status'] }}</p>
-                    <hr class="modal-line">
-                {% endfor %}
+                {% if outing_requests %}
+                    {% for request in outing_requests %}
+                        <p>시작 시간: {{ request['start_time'] }} / 종료 시간: {{ request['end_time'] }}</p>
+                        <p>사유: {{ request['reason'] }} / 상태: {{ request['status'] }}</p>
+                        <hr class="modal-line">
+                    {% endfor %}
+                {% else %}
+                    <p>외출 신청 내역이 없습니다.</p>
+                {% endif %}
             </div>
             <div class="button-group">
                 <button type="button" id="checkConfirm">확인</button>
@@ -148,6 +165,12 @@
             var cancelInfoModalBtn = document.getElementById("cancelModal");
 
             var passwordForm = document.getElementById("passwordForm");
+            var infoForm = document.getElementById("infoForm");
+
+            // 초기 상태 저장
+            var originalEmail = document.getElementById('email').value;
+            var originalPassword = document.getElementById('new_password').value;
+            var originalConfirmPassword = document.getElementById('confirm_password').value;
 
             if (openInfoModalBtn) {
                 openInfoModalBtn.onclick = function () {
@@ -170,14 +193,27 @@
 
             if (closeInfoModalSpan) {
                 closeInfoModalSpan.onclick = function () {
+                    resetInfoForm();
                     infoModal.style.display = "none";
                 };
             }
 
             if (cancelInfoModalBtn) {
                 cancelInfoModalBtn.onclick = function () {
+                    resetInfoForm();
                     infoModal.style.display = "none";
                 };
+            }
+
+            function resetInfoForm() {
+                document.getElementById('email').value = originalEmail;
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+                clearModalFlashMessages(); // 모달 내 플래시 메시지 제거
+            }
+
+            function clearModalFlashMessages() {
+                document.getElementById('modal-flash-messages').innerHTML = '';
             }
 
             passwordForm.onsubmit = function (event) {
@@ -199,6 +235,38 @@
                 })
                 .catch(error => console.error('Error:', error));
             };
+
+            infoForm.onsubmit = function (event) {
+                event.preventDefault(); // 폼 제출 막기
+                var formData = new FormData(infoForm);
+
+                fetch('{{ url_for("views.update_account") }}', { // 올바른 URL 사용
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.status === 'success') {
+                            alert(data.message); // 성공 메시지 표시
+                            location.href = "{{ url_for('views.student_home') }}"; // 메인 화면으로 리다이렉트
+                        } else {
+                            showModalFlashMessage(data.message); // 실패 시 모달 내 플래시 메시지 표시
+                        }
+                    } catch (e) {
+                        console.error('Error parsing response as JSON:', e);
+                        console.log('Response text:', text); // 에러 발생 시 응답 텍스트 출력
+                        alert('서버 오류가 발생했습니다. 다시 시도해주세요.');
+                    }
+                })
+                .catch(error => console.error('Error during account update:', error));
+            };
+
+            function showModalFlashMessage(message) {
+                var flashContainer = document.getElementById('modal-flash-messages');
+                flashContainer.innerHTML = '<div class="flash-message danger">' + message + '</div>';
+            }
 
             var checkModal = document.getElementById("checkModal");
             var openCheckModalBtn = document.getElementById("openModal");
@@ -233,6 +301,7 @@
                 if (event.target == passwordModal) {
                     passwordModal.style.display = "none";
                 } else if (event.target == infoModal) {
+                    resetInfoForm();
                     infoModal.style.display = "none";
                 } else if (event.target == checkModal) {
                     checkModal.style.display = "none";

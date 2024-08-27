@@ -1,9 +1,11 @@
 import os
 import random
 import smtplib
-from email.mime.text import MIMEText
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_from_directory
 from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest, Extern
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 import bcrypt
 from dotenv import load_dotenv
@@ -24,13 +26,21 @@ def send_verification_email(email, code):
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
 
-    subject = "김천고등학교 외출 관리 시스템 - 이메일 인증 코드"
-    body = f"인증 코드는 {code} 입니다. 이 코드를 입력해 인증을 완료해주세요."
+    # HTML 템플릿 파일을 읽어옵니다.
+    with open("templates/email_template.html", "r", encoding="utf-8") as file:
+        html_template = file.read()
 
-    msg = MIMEText(body)
-    msg['Subject'] = subject
+    # HTML 템플릿에서 자리 표시자를 실제 데이터로 대체합니다.
+    html_content = html_template.replace("{{ verification_code }}", str(code))
+
+    # 이메일 메시지 객체를 생성합니다.
+    msg = MIMEMultipart('related')
+    msg['Subject'] = "김천고등학교 외출 관리 시스템 - 이메일 인증 코드"
     msg['From'] = smtp_user
     msg['To'] = email
+
+    # HTML 본문을 이메일에 첨부합니다.
+    msg.attach(MIMEText(html_content, 'html'))
 
     try:
         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
@@ -66,7 +76,7 @@ def login():
             return redirect(url_for('views.teacher_home'))
 
     else:
-        flash('Invalid credentials', 'danger')
+        flash('아이디 또는 비밀번호가 옳지 않습니다.', 'danger')
         return redirect(url_for('auth.index'))
 
 @auth_bp.route('/logout')
@@ -341,7 +351,7 @@ def barcode_scan():
         print(f"현재 시간: {current_time}")  # 디버깅을 위한 출력
 
         # 통학생이고, 현재 시간이 9시부터 23시 사이라면 자동 승인
-        if extern_student and time(18, 0) <= current_time <= time(23, 0):
+        if extern_student and time(18, 0) <= current_time <= time(19, 10):
             print(f"통학생 {extern_student.name}님이 통학 시간이므로 자동 승인됩니다.")  # 디버깅을 위한 출력
             response_data = {
                 'barcode': extern_student.barcode,

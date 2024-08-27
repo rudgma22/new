@@ -11,6 +11,15 @@
 </head>
 <body>
     <div class="password-change-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <h1>비밀번호 변경</h1>
         <hr class="password-change-line">
         <form class="login_form" method="post" action="{{ url_for('auth.student_reset_password_form') }}">

@@ -10,6 +10,15 @@
 </head>
 <body>
     <div class="result-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <h1>비밀번호 변경 결과</h1>
         <hr class="result-line">
         <p><strong>비밀번호가 성공적으로 변경되었습니다!</strong></p>
