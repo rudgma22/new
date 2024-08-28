@@ -1,122 +1,145 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
-from models import get_db_connection, add_outing_request, approve_outing_request, reject_outing_request, add_extern, get_all_externs, db, Student, Extern, OutingRequest, Teacher  # Teacher 추가
+from models import db, Student, Extern, OutingRequest, Teacher  # 필요한 모델들 임포트
 import bcrypt
 from sqlalchemy import text
-from sqlalchemy.sql import text
-from sqlalchemy import func
 from datetime import datetime
-
-# **추가된 코드**: 비밀번호 해싱을 위한 모듈 가져오기
 from werkzeug.security import generate_password_hash
-
 
 views_bp = Blueprint('views', __name__)
 
-def row_to_dict(row):
-    """SQLAlchemy Row 객체를 딕셔너리로 변환"""
-    return {column: getattr(row, column) for column in row._fields}
 
-def get_db_connection():
-    return db.session
+def row_to_dict(row):
+    # If row is a dictionary, return it as is
+    if isinstance(row, dict):
+        return row
+
+    # If row is an SQLAlchemy RowProxy (from raw SQL), convert it to a dictionary
+    if hasattr(row, '_fields'):
+        return {field: getattr(row, field) for field in row._fields}
+
+    # If row is an SQLAlchemy ORM object, convert it to a dictionary
+    elif hasattr(row, '__table__'):
+        return {column.name: getattr(row, column.name) for column in row.__table__.columns}
+
+    else:
+        raise ValueError("Unsupported row type")
+
 
 
 @views_bp.route('/student_home')
 def student_home():
     if 'user_id' in session and session['role'] == 'student':
-        conn = get_db_connection()
-        student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
-        student = row_to_dict(student)
+        student = Student.query.get(session['user_id'])
+        if student:
+            outing_requests = OutingRequest.query.filter_by(student_name=student.name).all()
 
-        outing_requests = conn.execute(text('SELECT * FROM outing_requests WHERE student_name = :name'),
-                                       {'name': student['name']}).fetchall()
-        outing_requests = [row_to_dict(request) for request in outing_requests]
+            # 날짜와 시간을 포맷팅합니다.
+            for request in outing_requests:
+                request.start_time = request.start_time.strftime('%Y-%m-%d %H:%M')
+                request.end_time = request.end_time.strftime('%Y-%m-%d %H:%M')
 
-        # 여기서 start_time과 end_time을 문자열로 포맷
-        for request in outing_requests:
-            # start_time과 end_time이 문자열일 경우, datetime 객체로 변환
-            if isinstance(request['start_time'], str):
-                try:
-                    request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S.%f')
-                except ValueError:
-                    # 마이크로초가 없는 경우 처리
-                    request['start_time'] = datetime.strptime(request['start_time'], '%Y-%m-%d %H:%M:%S')
+            if 'password_validated' not in session:
+                session['password_validated'] = False
 
-            if isinstance(request['end_time'], str):
-                try:
-                    request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S.%f')
-                except ValueError:
-                    # 마이크로초가 없는 경우 처리
-                    request['end_time'] = datetime.strptime(request['end_time'], '%Y-%m-%d %H:%M:%S')
-
-            # datetime 객체를 문자열로 포맷
-            request['start_time'] = request['start_time'].strftime('%Y-%m-%d %H:%M')
-            request['end_time'] = request['end_time'].strftime('%Y-%m-%d %H:%M')
-
-        conn.close()
-
-        if 'password_validated' not in session:
-            session['password_validated'] = False
-
-        return render_template('student_home.html', student=student, outing_requests=outing_requests,
-                               password_validated=session.get('password_validated', False))
+            return render_template('student_home.html', student=row_to_dict(student),
+                                   outing_requests=[row_to_dict(req) for req in outing_requests],
+                                   password_validated=session.get('password_validated', False))
+        else:
+            return redirect(url_for('auth.index'))
     else:
         return redirect(url_for('auth.index'))
-
 
 
 @views_bp.route('/teacher_home')
 def teacher_home():
     if 'user_id' in session and session['role'] == 'teacher':
-        conn = get_db_connection()
-        teacher = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': session['user_id']}).fetchone()
-        teacher = row_to_dict(teacher)
+        teacher = Teacher.query.get(session['user_id'])
+        if teacher:
+            new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
 
-        new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
-        if new_requests_only:
-            outing_requests = conn.execute(text(
-                'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                'o.status, o.reason '  # 외출 사유(reason) 추가
-                'FROM outing_requests o '
-                'JOIN students s ON o.barcode = s.barcode '
-                'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
-                'ORDER BY s.number'),
-                {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
+            # 교사가 '기타' 반인 경우의 쿼리 수정
+            if teacher.teacher_class == '기타':
+                if new_requests_only:
+                    outing_requests = db.session.execute(text(
+                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                        'o.status, o.reason '
+                        'FROM outing_requests o '
+                        'JOIN students s ON o.barcode = s.barcode '
+                        'WHERE o.status = "대기중" AND s.grade = :grade '
+                        'ORDER BY s.student_class, s.number'),
+                        {'grade': teacher.grade}).fetchall()
+                else:
+                    outing_requests = db.session.execute(text(
+                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        'MAX(o.reason) as reason, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                        'FROM students s '
+                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                        'WHERE s.grade = :grade '
+                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                        'ORDER BY s.student_class, s.number'),
+                        {'grade': teacher.grade}).fetchall()
+            else:
+                # 기존 쿼리 유지
+                if new_requests_only:
+                    outing_requests = db.session.execute(text(
+                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                        'o.status, o.reason '
+                        'FROM outing_requests o '
+                        'JOIN students s ON o.barcode = s.barcode '
+                        'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
+                        'ORDER BY s.number'),
+                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+                else:
+                    outing_requests = db.session.execute(text(
+                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        'MAX(o.reason) as reason, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                        'FROM students s '
+                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                        'WHERE s.grade = :grade AND s.student_class = :class '
+                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                        'ORDER BY s.number'),
+                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+
+            outing_requests = [row_to_dict(request) for request in outing_requests]
+
+            # 통학생 조회 로직도 수정
+            if teacher.teacher_class == '기타':
+                externs = db.session.execute(text(
+                    'SELECT e.* '
+                    'FROM externs e '
+                    'JOIN students s ON e.student_id = s.id '
+                    'WHERE s.grade = :grade'),
+                    {'grade': teacher.grade}).fetchall()
+            else:
+                externs = db.session.execute(text(
+                    'SELECT e.* '
+                    'FROM externs e '
+                    'JOIN students s ON e.student_id = s.id '
+                    'WHERE s.grade = :grade AND s.student_class = :class'),
+                    {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+
+            externs = [row_to_dict(extern) for extern in externs]
+
+            if 'password_validated' not in session:
+                session['password_validated'] = False
+
+            return render_template('teacher_home.html', teacher=row_to_dict(teacher), outing_requests=outing_requests,
+                                   externs=externs, new_requests_only=new_requests_only,
+                                   password_validated=session.get('password_validated', False))
         else:
-            # 최신 외출 신청 정보를 가져오도록 하며, 학생별로 중복을 피하기 위해 'MAX'와 'GROUP BY' 사용
-            outing_requests = conn.execute(text(
-                'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                'MAX(o.reason) as reason, '  # 학생별로 가장 최신의 reason을 가져옴
-                '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
-                'FROM students s '
-                'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
-                'WHERE s.grade = :grade AND s.student_class = :class '
-                'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '  # 학생별로 그룹화하여 중복 제거
-                'ORDER BY s.number'),
-                {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
+            return redirect(url_for('auth.index'))
+    else:
+        return redirect(url_for('auth.index'))
 
-        outing_requests = [row_to_dict(request) for request in outing_requests]
 
-        # 통학생 목록을 담당 학년 및 반으로 필터링
-        externs = conn.execute(text(
-            'SELECT e.* '
-            'FROM externs e '
-            'JOIN students s ON e.student_id = s.id '
-            'WHERE s.grade = :grade AND s.student_class = :class'),
-            {'grade': teacher['grade'], 'class': teacher['teacher_class']}).fetchall()
-
-        externs = [row_to_dict(extern) for extern in externs]
-
-        conn.close()
-
-        # 수정: session['password_validated'] 값이 없을 경우 기본값을 False로 설정합니다.
-        if 'password_validated' not in session:
-            session['password_validated'] = False
-
-        return render_template('teacher_home.html', teacher=teacher, outing_requests=outing_requests,
-                               externs=externs,  # 필터링된 externs 전달
-                               new_requests_only=new_requests_only,
-                               password_validated=session.get('password_validated', False))
+@views_bp.route('/admin_home')
+def admin_home():
+    if 'user_id' in session and session['role'] == 'admin':
+        return render_template('admin_page.html')
     else:
         return redirect(url_for('auth.index'))
 
@@ -133,16 +156,10 @@ def add_extern():
     try:
         if action == 'add':
             for student_id in extern_ids:
-                if not student_id:
-                    print(f"Invalid student ID: {student_id}")
-                    return jsonify({'status': 'error', 'message': 'Invalid student ID'}), 400
-
                 student = Student.query.get(student_id)
                 if not student:
-                    print(f"Invalid student ID: {student_id}")
-                    return jsonify({'status': 'error', 'message': 'Invalid student ID'}), 400
+                    return jsonify({'status': 'error', 'message': f'Invalid student ID: {student_id}'}), 400
 
-                # 이미 지정된 통학생인지 확인
                 if not Extern.query.filter_by(student_id=student.id).first():
                     extern = Extern(
                         student_id=student.id,
@@ -163,7 +180,6 @@ def add_extern():
                 else:
                     print(f"Extern not found for student ID: {student_id}")
         else:
-            print("Invalid action:", action)
             return jsonify({'status': 'error', 'message': 'Invalid action'}), 400
 
         db.session.commit()
@@ -175,12 +191,10 @@ def add_extern():
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
 
-
 @views_bp.route('/bulk_approve', methods=['POST'])
 def bulk_approve():
     if 'user_id' in session and session['role'] == 'teacher':
         try:
-            # 교사가 담당하는 학년/반의 대기중인 모든 외출 신청을 승인
             teacher = Teacher.query.get(session['user_id'])
             requests_to_approve = OutingRequest.query.filter_by(
                 grade=teacher.grade,
@@ -204,7 +218,6 @@ def bulk_approve():
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
 
 
-
 @views_bp.route('/approve_leave/<int:request_id>', methods=['POST'])
 def approve_leave(request_id):
     try:
@@ -219,75 +232,52 @@ def approve_leave(request_id):
         print(f"Error occurred during leave approval: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
-from flask import request, redirect, url_for, flash, session
-from datetime import datetime
 
 @views_bp.route('/apply_leave', methods=['POST'])
 def apply_leave():
     if 'user_id' in session and session['role'] == 'student':
-        conn = get_db_connection()
-        student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
+        student = Student.query.get(session['user_id'])
 
         if student is not None:
-            student = row_to_dict(student)
+            existing_request = OutingRequest.query.filter_by(student_name=student.name, status="대기중").first()
+
+            if existing_request:
+                flash('이미 대기 중인 외출 신청이 있습니다.', 'warning')
+                return redirect(url_for('views.student_home'))
+
+            start_time_str = request.form['start_time']
+            end_time_str = request.form['end_time']
+            start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+            end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+
+            reason = request.form.get('reason', '기타')
+            if reason == '기타':
+                reason = request.form.get('other_reason', '기타')
+
+            new_request = OutingRequest(
+                student_name=student.name,
+                barcode=student.barcode,
+                grade=student.grade,
+                student_class=student.student_class,
+                start_time=start_time,
+                end_time=end_time,
+                reason=reason,
+                status='대기중'
+            )
+
+            db.session.add(new_request)
+            db.session.commit()
+            flash('외출 신청이 성공적으로 접수되었습니다.', 'success')
+            return redirect(url_for('views.student_home'))
         else:
             flash('학생 정보를 가져올 수 없습니다.', 'danger')
             return redirect(url_for('views.student_home'))
-
-        existing_request = conn.execute(text(
-            'SELECT * FROM outing_requests WHERE student_name = :name AND status = "대기중"'),
-            {'name': student['name']}
-        ).fetchone()
-
-        if existing_request:
-            flash('이미 대기 중인 외출 신청이 있습니다.', 'warning')
-            conn.close()
-            return redirect(url_for('views.student_home'))
-
-        # 새로운 외출 신청 처리
-        start_time_str = request.form['start_time']
-        end_time_str = request.form['end_time']
-        start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
-        end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
-
-        # reason 필드와 other_reason 필드를 가져옴
-        reason = request.form.get('reason', '기타')
-        if reason == '기타':
-            reason = request.form.get('other_reason', '기타')  # '기타' 선택 시 other_reason 필드 값 사용
-
-        grade = student.get('grade')
-        student_class = student.get('student_class')
-
-        if grade is None or student_class is None:
-            flash('학생의 학년 또는 반 정보를 찾을 수 없습니다.', 'danger')
-            conn.close()
-            return redirect(url_for('views.student_home'))
-
-        new_request = OutingRequest(
-            student_name=student['name'],
-            barcode=student['barcode'],
-            grade=grade,
-            student_class=student_class,
-            start_time=start_time,
-            end_time=end_time,
-            reason=reason,
-            status='대기중'
-        )
-
-        conn.add(new_request)
-        conn.commit()
-        flash('외출 신청이 성공적으로 접수되었습니다.', 'success')
-        conn.close()
-        return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
 
 
-from flask import request  # Ensure this import statement is present
-
 @views_bp.route('/reject_leave/<int:request_id>', methods=['POST'])
 def reject_leave(request_id):
-    # Make sure to use Flask's request object
     json_data = request.get_json()
     rejection_reason = json_data.get('rejection_reason', '')
 
@@ -308,32 +298,24 @@ def reject_leave(request_id):
 @views_bp.route('/validate_password', methods=['POST'])
 def validate_password():
     if 'user_id' in session:
-        password = request.form.get('password')  # .get() 메소드 사용
+        password = request.form.get('password')
         if not password:
             return jsonify({'status': 'error', 'message': '비밀번호를 입력해주세요.'}), 400
 
         role = session['role']
-        conn = get_db_connection()
         user = None
         if role == 'student':
-            user = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': session['user_id']}).fetchone()
+            user = Student.query.get(session['user_id'])
         elif role == 'teacher':
-            user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': session['user_id']}).fetchone()
+            user = Teacher.query.get(session['user_id'])
 
-        if user:
-            user = row_to_dict(user)
-        conn.close()
-
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
             session['password_validated'] = True
             return jsonify({'status': 'success'}), 200
         else:
-            print(f"Password validation failed for user ID {session['user_id']}")
             return jsonify({'status': 'error', 'message': '비밀번호가 일치하지 않습니다.'}), 400
     else:
-        print("Unauthorized access attempt to validate_password")
         return jsonify({'status': 'error', 'message': '인증되지 않은 사용자입니다.'}), 403
-
 
 
 @views_bp.route('/reset_password_validation', methods=['POST'])
@@ -351,73 +333,170 @@ def update_account():
     user_id = session['user_id']
     user_role = session['role']
 
-    conn = get_db_connection()
-
-    # 사용자 정보 가져오기
     if user_role == 'student':
-        user = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': user_id}).fetchone()
-        user_table = 'students'
+        user = Student.query.get(user_id)
+        user_table = Student
     elif user_role == 'teacher':
-        user = conn.execute(text('SELECT * FROM teachers WHERE id = :id'), {'id': user_id}).fetchone()
-        user_table = 'teachers'
+        user = Teacher.query.get(user_id)
+        user_table = Teacher
     else:
-        conn.close()
         return jsonify({'status': 'danger', 'message': '잘못된 사용자 유형입니다.'})
 
     if user is None:
-        conn.close()
         return jsonify({'status': 'danger', 'message': '사용자 정보를 가져올 수 없습니다.'})
-
-    user = row_to_dict(user)
 
     new_email = request.form.get('email')
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
 
-    # 이메일 유효성 검사
     if not new_email or '@' not in new_email:
-        conn.close()
         return jsonify({'status': 'danger', 'message': '유효하지 않은 이메일 주소입니다.'})
 
-    # 이메일 중복 체크
-    existing_user = conn.execute(
-        text(f'SELECT * FROM {user_table} WHERE email = :email AND id != :id'),
-        {'email': new_email, 'id': user_id}
-    ).fetchone()
+    existing_user = user_table.query.filter(user_table.email == new_email, user_table.id != user_id).first()
 
     if existing_user:
-        conn.close()
         return jsonify({'status': 'danger', 'message': '중복된 이메일이 있습니다.'})
 
-    # 비밀번호 확인
     if new_password and new_password != confirm_password:
-        conn.close()
         return jsonify({'status': 'danger', 'message': '비밀번호가 일치하지 않습니다.'})
 
     try:
-        # 비밀번호 업데이트
         if new_password:
             hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            conn.execute(
-                text(f'UPDATE {user_table} SET password = :password WHERE id = :id'),
-                {'password': hashed_password, 'id': user_id}
-            )
+            user.password = hashed_password
 
-        # 이메일 업데이트
-        conn.execute(
-            text(f'UPDATE {user_table} SET email = :email WHERE id = :id'),
-            {'email': new_email, 'id': user_id}
-        )
-
-        conn.commit()  # 커밋 수행
+        user.email = new_email
+        db.session.commit()
         return jsonify({'status': 'success', 'message': '정보가 성공적으로 업데이트되었습니다.'})
 
     except Exception as e:
-        conn.rollback()  # 오류 발생 시 롤백 수행
+        db.session.rollback()
         print(f"Error updating account: {e}")
         return jsonify({'status': 'danger', 'message': '서버 오류가 발생했습니다. 다시 시도해주세요.'})
 
-    finally:
-        conn.close()  # 연결 닫기
+
+@views_bp.route('/get_users', methods=['GET'])
+def get_users():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user_type = request.args.get('type', 'student')
+    user_id = request.args.get('id')
+
+    grade = request.args.get('grade')
+    student_class = request.args.get('class')
+    number = request.args.get('number')
+
+    if user_id:
+        if user_type == 'student':
+            user = Student.query.get(user_id)
+        elif user_type == 'teacher':
+            user = Teacher.query.get(user_id)
+        else:
+            return jsonify({'error': 'Invalid user type'}), 400
+
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        user_data = {
+            'id': user.id,
+            'name': user.name,
+            'username': user.username,
+            'grade': user.grade,
+            'class': user.student_class if user_type == 'student' else user.teacher_class,
+            'number': user.number if user_type == 'student' else '',
+            'barcode': user.barcode if user_type == 'student' else ''
+        }
+
+        return jsonify(user_data)
+
+    else:
+        query = None
+        if user_type == 'student':
+            query = Student.query
+            if grade:
+                query = query.filter_by(grade=grade)
+            if student_class:
+                query = query.filter_by(student_class=student_class)
+            if number:
+                query = query.filter_by(number=number)
+        elif user_type == 'teacher':
+            query = Teacher.query
+            if grade:
+                query = query.filter_by(grade=grade)
+            if student_class:
+                query = query.filter_by(teacher_class=student_class)
+        else:
+            return jsonify({'error': 'Invalid user type'}), 400
+
+        users = query.all()
+        user_list = []
+        for user in users:
+            user_data = {
+                'id': user.id,
+                'name': user.name,
+                'username': user.username,
+                'grade': user.grade,
+                'class': user.student_class if user_type == 'student' else user.teacher_class,
+                'number': user.number if user_type == 'student' else ''
+            }
+            user_list.append(user_data)
+
+        return jsonify(user_list)
 
 
+
+@views_bp.route('/update_user', methods=['POST'])
+def update_user():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json
+    user_type = data.get('type')
+    user_id = data.get('id')
+
+    if user_type == 'student':
+        user = Student.query.get(user_id)
+    elif user_type == 'teacher':
+        user = Teacher.query.get(user_id)
+    else:
+        return jsonify({'error': 'Invalid user type'}), 400
+
+    if user:
+        user.name = data.get('name')
+        user.grade = data.get('grade')
+        if user_type == 'student':
+            user.student_class = data.get('class')
+            user.number = data.get('number')
+            user.barcode = data.get('barcode')
+        else:
+            user.teacher_class = data.get('class')
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': '사용자 정보가 업데이트되었습니다.'})
+    else:
+        return jsonify({'success': False, 'message': '사용자를 찾을 수 없습니다.'}), 404
+
+
+@views_bp.route('/delete_user', methods=['POST'])
+def delete_user():
+    if 'user_id' not in session or session['role'] != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json
+    user_type = data.get('type')
+    user_id = data.get('id')
+
+    if user_type == 'student':
+        user = Student.query.get(user_id)
+    elif user_type == 'teacher':
+        user = Teacher.query.get(user_id)
+    else:
+        return jsonify({'error': 'Invalid user type'}), 400
+
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'success': True, 'message': '사용자가 삭제되었습니다.'})
+    else:
+        return jsonify({'success': False, 'message': '사용자를 찾을 수 없습니다.'}), 404

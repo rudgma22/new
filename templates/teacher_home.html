@@ -17,10 +17,15 @@
         </nav>
     </header>
 
-    <div class="application-container">
-        <h1>{{teacher.grade}}학년 {{teacher.teacher_class}}반 외출 관리</h1>
+<div class="application-container">
+        <h1>
+            {% if teacher.teacher_class == '기타' %}
+                {{teacher.grade}} 전체 외출 관리
+            {% else %}
+                {{teacher.grade}} {{teacher.teacher_class}} 외출 관리
+            {% endif %}
+        </h1>
         <hr class="application-line">
-
         <div class="teacher-link-container">
             <a href="#" class="teacher-commuting-manage" id="openStudentModal">통학생 관리</a>
             <a href="#" class="teacher-commuting-manage" id="assignExternLink">통학생 지정하기</a>
@@ -56,8 +61,8 @@
                     {% if outing_requests %}
                         {% for request in outing_requests %}
                         <tr>
-                            <td>{{ request['grade'] }}학년</td>
-                            <td>{{ request['student_class'] }}반</td>
+                            <td>{{ request['grade'] }}</td>
+                            <td>{{ request['student_class'] }}</td>
                             <td>{{ request['number'] }}</td>
                             <td>{{ request['student_name'] }}</td>
                             <td>{{ request['outing_count'] }}</td>
@@ -94,7 +99,7 @@
                 {% for extern in externs %}
                 <div>
                     <input type="checkbox" class="manage-extern-checkbox" data-extern-id="{{ extern['id'] }}">
-                    {{ extern['name'] }} ({{ extern['grade'] }}학년 {{ extern['student_class'] }}반)
+                    {{ extern['name'] }} ({{ extern['grade'] }} {{ extern['student_class'] }})
                 </div>
                 {% endfor %}
             </div>

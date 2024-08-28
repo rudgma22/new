@@ -36,17 +36,12 @@
 
     <h2>관리자 로그인</h2>
 
-    <form id="admin-form" class="login-form active" method="post" action="{{ url_for('auth.login') }}">
+    <form id="admin-form" class="login-form active" method="post" action="{{ url_for('auth.admin_login') }}">
         <input type="hidden" name="role" value="admin">
         <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
         <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
         <button class="admin-button-normal" type="submit">로그인</button>
     </form>
-
-    <div class="links">
-        <a href="{{ url_for('auth.find_id') }}">아이디 찾기</a>
-        <a href="{{ url_for('auth.find_pw') }}">비밀번호 찾기</a>
-    </div>
 </div>
 
 <div class="footer">

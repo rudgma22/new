@@ -3,168 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 페이지 - 김천고등학교 외출 관리 시스템</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_styles.css') }}">
 </head>
 <body>
-<div class="login-container">
-    <div class="login-box">
+    <div class="container">
         <header>
-            <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
-            <h1>관리자 페이지</h1>
+            <h1>김천고 외출 시스템 관리 포털</h1>
+            <div class="header-buttons">
+                <!-- 회원 가입 버튼 클릭 시 /register 경로로 이동 -->
+                <button id="member-management" onclick="window.location.href='{{ url_for('auth.register') }}'">학생 추가</button>
+                <button id="logout" onclick="window.location.href='{{ url_for('auth.admin_login') }}'">로그아웃</button>
+            </div>
         </header>
 
-        <!-- 로그아웃 버튼 추가 -->
-        <div class="logout-container" style="text-align: right; margin-bottom: 20px;">
-            <a href="{{ url_for('auth.logout') }}" class="button_normal" style="width: auto; padding: 10px 20px;">로그아웃</a>
+        <div class="search-section">
+            <input type="text" id="search-input" placeholder="학년을 입력해주세요">
+            <input type="text" id="name-input" placeholder="반을 입력해주세요">
+            <input type="text" id="number-input" placeholder="번호를 입력해주세요">
+            <button id="search-button">검색</button>
         </div>
 
-        <div class="signup-link">
-            <p><a href="{{ url_for('auth.register') }}" class="button_normal" style="text-decoration: none;">회원 추가</a></p>
+        <div class="toggle-section">
+            <label for="user-toggle" class="switch" aria-label="Toggle User Type">
+                <input type="checkbox" id="user-toggle" />
+                <span>학생 관리</span>
+                <span>교사 관리</span>
+            </label>
         </div>
 
-        <!-- 통계 보기 버튼 추가 -->
-        <div class="statistics-link" style="margin-bottom: 20px;">
-            <p><a href="{{ url_for('views.outing_statistics') }}" class="button_normal" style="text-decoration: none;">통계 보기</a></p>
-        </div>
-
-        <div class="filter-container">
-            <select id="grade-filter" class="input_select" onchange="updateClassOptions()">
-                <option value="all" selected>전체 학년</option>
-                <option value="1">1학년</option>
-                <option value="2">2학년</option>
-                <option value="3">3학년</option>
-            </select>
-            <select id="class-filter" class="input_select" onchange="filterStudents()">
-                <option value="all" selected>전체 반</option>
-            </select>
-        </div>
-
-        <h2>학생 목록</h2>
-        <table>
+        <table id="user-table">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>이름</th>
+                    <th>아이디</th>
                     <th>학년</th>
                     <th>반</th>
-                    <th>번호</th>
-                    <th>아이디</th>
+                    <th id="number-header">번호</th>
+                    <th>수정</th>
                     <th>삭제</th>
                 </tr>
             </thead>
-            <tbody id="student-table-body">
-                {% if students.items|length == 0 %}
-                <tr>
-                    <td colspan="7">학생이 존재하지 않습니다</td>
-                </tr>
-                {% else %}
-                {% for student in students.items %}
-                <tr>
-                    <td>{{ student.id }}</td>
-                    <td>{{ student.name }}</td>
-                    <td>{{ student.grade }}</td>
-                    <td>{{ student.student_class }}</td>
-                    <td>{{ student.number }}</td>
-                    <td>{{ student.username }}</td>
-                    <td>
-                        <button class="button_normal" onclick="confirmDelete('{{ url_for('views.delete_user', user_type='student', user_id=student.id) }}')">삭제</button>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% endif %}
+            <tbody id="user-list">
+                <!-- 사용자 목록이 여기에 동적으로 추가됩니다 -->
             </tbody>
         </table>
+    </div>
 
-        <div class="pagination">
-            {% for page_num in students.iter_pages() %}
-                {% if page_num %}
-                    <a href="{{ url_for('views.admin_page', page=page_num) }}" class="pagination-link">{{ page_num }}</a>
-                {% else %}
-                    <span class="pagination-ellipsis">&hellip;</span>
-                {% endif %}
-            {% endfor %}
+    <!-- 모달 -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>사용자 정보 수정</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id" name="id">
+                <input type="hidden" id="edit-type" name="type">
+                <div id="student-fields">
+                    <label for="edit-name">이름:</label>
+                    <input type="text" id="edit-name" name="name" required>
+                    <label for="edit-grade">학년:</label>
+                    <input type="text" id="edit-grade" name="grade" required>
+                    <label for="edit-class">반:</label>
+                    <input type="text" id="edit-class" name="class" required>
+                    <label for="edit-number">번호:</label>
+                    <input type="text" id="edit-number" name="number">
+                    <label for="edit-barcode">바코드:</label>
+                    <input type="text" id="edit-barcode" name="barcode">
+                </div>
+                <div id="teacher-fields">
+                    <label for="edit-name-teacher">이름:</label>
+                    <input type="text" id="edit-name-teacher" name="name_teacher" required>
+                    <label for="edit-grade-teacher">담당 학년:</label>
+                    <input type="text" id="edit-grade-teacher" name="grade_teacher" required>
+                    <label for="edit-class-teacher">담당 반:</label>
+                    <input type="text" id="edit-class-teacher" name="class_teacher" required>
+                </div>
+                <button type="submit">수정 완료</button>
+            </form>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const gradeFilter = document.getElementById('grade-filter');
-        const classFilter = document.getElementById('class-filter');
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userToggle = document.getElementById('user-toggle');
+    const userList = document.getElementById('user-list');
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-form');
+    const closeModal = document.querySelector('.close');
 
-        gradeFilter.addEventListener('change', function() {
-            updateClassOptions();
-            filterStudents();
+    const studentFields = document.getElementById('student-fields');
+    const teacherFields = document.getElementById('teacher-fields');
+    const numberHeader = document.getElementById('number-header');
+
+    const studentInputs = studentFields.querySelectorAll('input');
+    const teacherInputs = teacherFields.querySelectorAll('input');
+
+    const searchButton = document.getElementById('search-button');
+
+    function loadUsers(userType, searchParams = {}) {
+        let url = `/views/get_users?type=${userType}`;
+
+        // Add search parameters to the URL if provided
+        if (Object.keys(searchParams).length > 0) {
+            const queryString = new URLSearchParams(searchParams).toString();
+            url += `&${queryString}`;
+        }
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(users => {
+                users.sort((a, b) => {
+                    if (a.grade !== b.grade) return a.grade - b.grade;
+                    if (a.class !== b.class) return a.class.localeCompare(b.class);
+                    return (parseInt(a.number) || 0) - (parseInt(b.number) || 0);
+                });
+
+                userList.innerHTML = '';
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.name}</td>
+                        <td>${user.username}</td>
+                        <td>${user.grade}</td>
+                        <td>${user.class}</td>
+                        <td class="number-cell">${userType === 'student' ? (user.number || '-') : '-'}</td>
+                        <td><button onclick="editUser(${user.id}, '${userType}')">수정</button></td>
+                        <td><button onclick="deleteUser(${user.id}, '${userType}')">삭제</button></td>
+                    `;
+                    userList.appendChild(row);
+                });
+
+                if (userType === 'teacher') {
+                    hideNumberColumn();
+                } else {
+                    showNumberColumn();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('사용자 목록을 불러오는 데 실패했습니다.');
+            });
+    }
+
+    function hideNumberColumn() {
+        numberHeader.style.display = 'none';
+        document.querySelectorAll('#user-table .number-cell').forEach(td => {
+            td.style.display = 'none';
         });
+    }
 
-        classFilter.addEventListener('change', filterStudents);
+    function showNumberColumn() {
+        numberHeader.style.display = 'table-cell';
+        document.querySelectorAll('#user-table .number-cell').forEach(td => {
+            td.style.display = 'table-cell';
+        });
+    }
+
+    userToggle.addEventListener('change', function() {
+        const userType = this.checked ? 'teacher' : 'student';
+        loadUsers(userType);
     });
 
-    function updateClassOptions() {
-        const grade = document.getElementById('grade-filter').value;
-        const classFilter = document.getElementById('class-filter');
-        classFilter.innerHTML = '<option value="all" selected>전체 반</option>';
+    searchButton.addEventListener('click', function() {
+        const grade = document.getElementById('search-input').value;
+        const studentClass = document.getElementById('name-input').value;
+        const number = document.getElementById('number-input').value;
 
-        if (grade === 'all') return;
+        const userType = userToggle.checked ? 'teacher' : 'student';
+        const searchParams = {};
 
-        let numberOfClasses = 0;
-        if (grade === '1') numberOfClasses = 8;
-        if (grade === '2') numberOfClasses = 10;
-        if (grade === '3') numberOfClasses = 7;
+        if (grade) searchParams.grade = grade;
+        if (studentClass) searchParams.class = studentClass;
+        if (number) searchParams.number = number;
 
-        for (let i = 1; i <= numberOfClasses; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = `${i}반`;
-            classFilter.appendChild(option);
+        loadUsers(userType, searchParams);
+    });
+
+    loadUsers('student');
+
+    window.editUser = function(userId, userType) {
+        fetch(`/views/get_users?id=${userId}&type=${userType}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(user => {
+                document.getElementById('edit-id').value = user.id;
+                document.getElementById('edit-type').value = userType;
+
+                if (userType === 'student') {
+                    studentFields.style.display = 'block';
+                    teacherFields.style.display = 'none';
+
+                    studentInputs.forEach(input => input.required = true);
+                    teacherInputs.forEach(input => input.required = false);
+
+                    document.getElementById('edit-name').value = user.name || '';
+                    document.getElementById('edit-grade').value = user.grade || '';
+                    document.getElementById('edit-class').value = user.class || '';
+                    document.getElementById('edit-number').value = user.number || '';
+                    document.getElementById('edit-barcode').value = user.barcode || '';
+                } else {
+                    studentFields.style.display = 'none';
+                    teacherFields.style.display = 'block';
+
+                    studentInputs.forEach(input => input.required = false);
+                    teacherInputs.forEach(input => input.required = true);
+
+                    document.getElementById('edit-name-teacher').value = user.name || '';
+                    document.getElementById('edit-grade-teacher').value = user.grade || '';
+                    document.getElementById('edit-class-teacher').value = user.class || '';
+                }
+
+                editModal.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('사용자 정보를 불러오는 데 실패했습니다.');
+            });
+    }
+
+    window.deleteUser = function(userId, userType) {
+        if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
+            fetch('/views/delete_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: userId, type: userType }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('사용자가 삭제되었습니다.');
+                    loadUsers(userType);
+                } else {
+                    alert('사용자 삭제에 실패했습니다: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('사용자 삭제 중 오류가 발생했습니다.');
+            });
         }
     }
 
-    function filterStudents() {
-        const grade = document.getElementById('grade-filter').value;
-        const studentClass = document.getElementById('class-filter').value;
-        const rows = document.querySelectorAll('#student-table-body tr');
-        let hasVisibleRow = false;
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('edit-id').value;
+        const userType = document.getElementById('edit-type').value;
+        let userData = { id: userId, type: userType };
 
-        rows.forEach(row => {
-            const gradeText = row.children[2] ? row.children[2].textContent : '';
-            const classText = row.children[3] ? row.children[3].textContent : '';
-
-            if ((grade === 'all' || grade === gradeText) && (studentClass === 'all' || studentClass === classText)) {
-                row.style.display = '';
-                hasVisibleRow = true;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // "학생이 존재하지 않습니다" 문구 추가
-        const noStudentsRow = document.createElement('tr');
-        noStudentsRow.innerHTML = '<td colspan="7">학생이 존재하지 않습니다</td>';
-        if (!hasVisibleRow) {
-            document.getElementById('student-table-body').appendChild(noStudentsRow);
+        if (userType === 'student') {
+            userData.name = document.getElementById('edit-name').value;
+            userData.grade = document.getElementById('edit-grade').value;
+            userData.class = document.getElementById('edit-class').value;
+            userData.number = document.getElementById('edit-number').value;
+            userData.barcode = document.getElementById('edit-barcode').value;
         } else {
-            const existingNoStudentsRow = document.querySelector('#student-table-body tr td[colspan="7"]');
-            if (existingNoStudentsRow) existingNoStudentsRow.parentNode.remove();
+            userData.name = document.getElementById('edit-name-teacher').value;
+            userData.grade = document.getElementById('edit-grade-teacher').value;
+            userData.class = document.getElementById('edit-class-teacher').value;
         }
+
+        fetch('/views/update_user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('사용자 정보가 업데이트되었습니다.');
+                editModal.style.display = 'none';
+                loadUsers(userType);
+            } else {
+                alert('사용자 정보 업데이트에 실패했습니다: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('사용자 정보 업데이트 중 오류가 발생했습니다.');
+        });
+    });
+
+    closeModal.onclick = function() {
+        editModal.style.display = 'none';
     }
 
-    function confirmDelete(url) {
-        const adminPassword = prompt("정말로 삭제하시겠습니까? 계속하려면 관리자 비밀번호를 입력하세요:");
-        if (adminPassword !== null) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = url;
-            const passwordInput = document.createElement('input');
-            passwordInput.type = 'hidden';
-            passwordInput.name = 'admin_password';
-            passwordInput.value = adminPassword;
-            form.appendChild(passwordInput);
-            document.body.appendChild(form);
-            form.submit();
+    window.onclick = function(event) {
+        if (event.target == editModal) {
+            editModal.style.display = 'none';
         }
     }
+});
 </script>
 </body>
 </html>

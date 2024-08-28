@@ -51,9 +51,16 @@ def send_verification_email(email, code):
     except Exception as e:
         print(f"이메일 전송 중 오류 발생: {e}")
 
+
 @auth_bp.route('/')
 def index():
     return render_template('login.html')
+
+
+@auth_bp.route('/admin_login')
+def admin_login_page():
+    return render_template('admin_login.html')
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -74,10 +81,25 @@ def login():
             return redirect(url_for('views.student_home'))
         elif role == 'teacher':
             return redirect(url_for('views.teacher_home'))
-
     else:
         flash('아이디 또는 비밀번호가 옳지 않습니다.', 'danger')
         return redirect(url_for('auth.index'))
+
+
+@auth_bp.route('/admin_login', methods=['POST'])
+def admin_login():
+    username = request.form['username']
+    password = request.form['password']
+
+    user = Admin.query.filter_by(username=username).first()
+
+    if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        session['user_id'] = user.id
+        session['role'] = 'admin'
+        return redirect(url_for('views.admin_home'))  # 관리자 홈페이지로 리다이렉트
+    else:
+        flash('아이디 또는 비밀번호가 옳지 않습니다.', 'danger')
+        return redirect(url_for('auth.admin_login_page'))
 
 @auth_bp.route('/logout')
 def logout():
