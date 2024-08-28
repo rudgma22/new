@@ -413,3 +413,109 @@ th {
     color: black;
     text-decoration: none;
 }
+
+#removeExternBtn {
+    background-color: none;
+    color: black;
+    border-color: #f3f3f3;
+    padding: 8px 8px;
+    border-radius: 8px;
+}
+
+#removeExternBtn:hover {
+    background-color: #d9d9d9;
+}
+
+#studentModal .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#studentModal .modal-content h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#studnetModal .modal-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
+}
+
+.approve-btn {
+    background-color: #8BC34A;
+    padding: 8px 8px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.approve-btn:hover {
+    background-color: #4AC360;
+}
+
+.reject-btn {
+    background-color: #8BC34A;
+    padding: 8px 8px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.reject-btn:hover {
+    background-color: #4AC360;
+}
+
+#rejectReasonInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+#rejectModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#rejectModal .button-group button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+}
+
+#cancelReject {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelReject:hover {
+    background-color: #bbb;
+}
+
+#confirmReject {
+    background-color: #8BC34A;
+    color: white;
+}
+
+#confirmReject:hover {
+    background-color: #4AC360;
+}
