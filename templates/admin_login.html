@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 관리자 로그인</title>
+    <style>
+        /* 하단 중앙 텍스트 스타일 */
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa; /* 연한 색상 */
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <h2>관리자 로그인</h2>
+
+    <form id="admin-form" class="login-form active" method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="role" value="admin">
+        <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
+        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
+        <button class="admin-button-normal" type="submit">로그인</button>
+    </form>
+
+    <div class="links">
+        <a href="{{ url_for('auth.find_id') }}">아이디 찾기</a>
+        <a href="{{ url_for('auth.find_pw') }}">비밀번호 찾기</a>
+    </div>
+</div>
+
+<div class="footer">
+    <p>&copy; 2024 김천고등학교. All rights reserved.</p>
+    <p>Made by 89기 박도영, 조경흠, 박시언</p>
+    <p>Contribute by 90기 김민준, 이강민, 최형우, 황동욱</p>
+</div>
+</body>
+</html>

@@ -10,20 +10,25 @@
 </head>
 <body>
     <div class="result-container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% endwith %}
         <h1>아이디 찾기 결과</h1>
         <hr class="result-line">
         <p>{{name}}님의 아이디는 <strong>{{username}}</strong>입니다.</p>
         <hr class="result-line">
-        <button class="teacher-id-result-button">로그인하러 가기</button>
+        <button id="teacher-id-result-button" class="teacher-id-result-button">로그인하러 가기</button>
     </div>
+<script>
+    document.getElementById('teacher-id-result-button').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.index') }}";
+    });
+</script>
 </body>
 </html>

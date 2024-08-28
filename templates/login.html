@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -7,19 +7,33 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 로그인</title>
+    <style>
+        /* 하단 중앙 텍스트 스타일 */
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa; /* 연한 색상 */
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
 <div class="login-container">
     <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
     {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <div class="tabs">
         <div id="student-tab" data-role="student" class="active">학생 로그인</div>
         <div id="teacher-tab" data-role="teacher">교사 로그인</div>
@@ -44,6 +58,12 @@
         <a href="{{ url_for('auth.find_pw') }}">비밀번호 찾기</a>
         <a href="{{ url_for('auth.register') }}">회원가입</a>
     </div>
+</div>
+
+<div class="footer">
+    <p>&copy; 2024 김천고등학교. All rights reserved.</p>
+    <p>Made by 89기 박도영, 조경흠, 박시언</p>
+    <p>Contribute by 90기 김민준, 이강민, 최형우, 황동욱</p>
 </div>
 
 <script>

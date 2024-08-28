@@ -23,7 +23,12 @@
         <hr class="result-line">
         <p>{{name}}님의 아이디는 <strong>{{username}}</strong>입니다.</p>
         <hr class="result-line">
-        <button class="student-id-result-button">로그인하러 가기</button>
+        <button id="student-id-result-button" class="student-id-result-button">로그인하러 가기</button>
     </div>
+<script>
+    document.getElementById('student-id-result-button').addEventListener('click', function() {
+        window.location.href = "{{ url_for('auth.index') }}";
+    });
+</script>
 </body>
 </html>
