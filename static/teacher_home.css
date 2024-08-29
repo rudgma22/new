@@ -414,87 +414,108 @@ th {
     text-decoration: none;
 }
 
-/* 통학생 관리 모달 스타일 */
-#studentModal .modal-content {
-    background-color: #ffffff;
-    margin: 5% auto;
-    padding: 20px;
-    border: none;
-    width: 80%;
-    max-width: 400px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-family: 'Noto Sans KR', sans-serif;
-}
-
-#studentModal .modal-content h2 {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #333;
-    text-align: center;
-}
-
-#externStudentList {
-    max-height: 250px;
-    overflow-y: auto;
-    margin-bottom: 15px;
-}
-
-#externStudentList div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-#externStudentList input[type="checkbox"] {
-    margin-right: 10px;
-}
-
 #removeExternBtn {
-    background-color: #f0f0f0;
-    color: #333;
-    border: none;
-    padding: 8px 15px;
-    font-size: 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: block;
-    margin: 10px auto 0;
-    transition: background-color 0.3s;
+    background-color: none;
+    color: black;
+    border-color: #f3f3f3;
+    padding: 8px 8px;
+    border-radius: 8px;
 }
 
 #removeExternBtn:hover {
-    background-color: #e0e0e0;
+    background-color: #d9d9d9;
 }
 
-#studentModal .close {
-    color: #aaa;
-    float: right;
-    font-size: 20px;
+#studentModal .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Noto Sans KR', sans-serif;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#studentModal .modal-content h2 {
+    margin-bottom: 20px;
     font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s;
+    text-align: center;
 }
 
-#studentModal .close:hover,
-#studentModal .close:focus {
-    color: #333;
-    text-decoration: none;
+#studnetModal .modal-line {
+    border: none;
+    border-top: 1px solid #000;
+    margin: 20px 0;
 }
 
-#externStudentList::-webkit-scrollbar {
-    width: 5px;
+.approve-btn {
+    background-color: #8BC34A;
+    padding: 8px 8px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
 }
 
-#externStudentList::-webkit-scrollbar-track {
-    background: #f1f1f1;
+.approve-btn:hover {
+    background-color: #4AC360;
 }
 
-#externStudentList::-webkit-scrollbar-thumb {
-    background: #888;
+.reject-btn {
+    background-color: #8BC34A;
+    padding: 8px 8px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.reject-btn:hover {
+    background-color: #4AC360;
+}
+
+#rejectReasonInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
     border-radius: 5px;
+    font-size: 16px;
 }
 
-#externStudentList::-webkit-scrollbar-thumb:hover {
-    background: #555;
+#rejectModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#rejectModal .button-group button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+}
+
+#cancelReject {
+    background-color: #ccc;
+    color: #000;
+}
+
+#cancelReject:hover {
+    background-color: #bbb;
+}
+
+#confirmReject {
+    background-color: #8BC34A;
+    color: white;
+}
+
+#confirmReject:hover {
+    background-color: #4AC360;
 }

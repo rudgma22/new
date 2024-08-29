@@ -64,7 +64,7 @@ h1 {
 }
 
 .search-section button {
-    background-color: #2ecc71;
+    background-color: #3498db;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -74,7 +74,7 @@ h1 {
 }
 
 .search-section button:hover {
-    background-color: #27ae60;
+    background-color: #2980b9;
 }
 
 /* 토글 스위치 스타일 */
