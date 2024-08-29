@@ -132,6 +132,7 @@
         </div>
     </div>
 
+    <!-- Outing request confirmation modal -->
     <div id="checkModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeCheckModal">&times;</span>
@@ -140,9 +141,31 @@
             <div class="modal-body">
                 {% if outing_requests %}
                     {% for request in outing_requests %}
-                        <p>시작 시간: {{ request['start_time'] }} / 종료 시간: {{ request['end_time'] }}</p>
-                        <p>사유: {{ request['reason'] }} / 상태: {{ request['status'] }}</p>
-                        <hr class="modal-line">
+                        <div class="outing-card">
+                            <div class="time-info">
+                                <i class="far fa-clock"></i> {{ request['start_time'] }} - {{ request['end_time'] }}
+                            </div>
+                            <div class="reason-status">
+                                <span class="reason">
+                                    <i class="fas fa-info-circle"></i> {{ request['reason'] }}
+                                </span>
+                                <span class="status {% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
+                                    {% if request['status'] == '승인됨' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif request['status'] == '거절됨' %}
+                                        <i class="fas fa-times-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock"></i>
+                                    {% endif %}
+                                    {{ request['status'] }}
+                                </span>
+                            </div>
+                            {% if request['status'] == '거절됨' and request['rejection_reason'] %}
+                                <span class="rejection-reason">
+                                    거절 사유: {{ request['rejection_reason'] }}
+                                </span>
+                            {% endif %}
+                        </div>
                     {% endfor %}
                 {% else %}
                     <p>외출 신청 내역이 없습니다.</p>

@@ -160,6 +160,7 @@ def add_extern():
                 if not student:
                     return jsonify({'status': 'error', 'message': f'Invalid student ID: {student_id}'}), 400
 
+                # 통학생 추가
                 if not Extern.query.filter_by(student_id=student.id).first():
                     extern = Extern(
                         student_id=student.id,
@@ -173,20 +174,22 @@ def add_extern():
                 else:
                     print(f"Student ID {student_id} is already an extern.")
         elif action == 'remove':
-            for student_id in extern_ids:
-                extern = Extern.query.filter_by(student_id=student_id).first()
+            for extern_id in extern_ids:  # 변경: extern_ids가 이제 Extern의 id를 담고 있다고 가정
+                extern = Extern.query.get(extern_id)
                 if extern:
-                    db.session.delete(extern)
+                    db.session.delete(extern)  # 데이터베이스에서 Extern 정보 삭제
+                    print(f"Extern with ID {extern_id} removed.")
                 else:
-                    print(f"Extern not found for student ID: {student_id}")
+                    print(f"Extern not found for ID: {extern_id}")
         else:
             return jsonify({'status': 'error', 'message': 'Invalid action'}), 400
 
-        db.session.commit()
+        db.session.commit()  # 변경 사항 커밋
+        print("Database changes committed successfully.")
         return jsonify({'status': 'success'}), 200
 
     except Exception as e:
-        db.session.rollback()
+        db.session.rollback()  # 예외 발생 시 롤백
         print(f"Error occurred during add_extern processing: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
