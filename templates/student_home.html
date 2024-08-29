@@ -20,7 +20,7 @@
     <div class="application-container">
         <h1>{{ student['name'] }}님, 환영합니다!</h1>
 
-        <!-- Flash 메시지 표시 (일반 페이지용) -->
+        <!-- Flash 메시지 표시 (일반 페이지용) --->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
@@ -345,3 +345,4 @@
     </script>
 </body>
 </html>
+
