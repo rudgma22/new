@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='logo_red.png') }}"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='admin_page.css') }}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
-    <title>김천고등학교 외출 신청 - 관리자 페이지</title>
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_styles.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>김천고 외출 시스템 계정 관리 포털</h1>
+            <h1>김천고 외출 시스템 관리 포털</h1>
             <div class="header-buttons">
                 <!-- 회원 가입 버튼 클릭 시 /register 경로로 이동 -->
                 <button id="member-management" onclick="window.location.href='{{ url_for('auth.register') }}'">학생 추가</button>
