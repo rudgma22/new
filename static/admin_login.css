@@ -1,138 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
-
-:root {
-    --primary-color: #0056b3;
-    --hover-color: #003d82;
-    --text-color: #333;
-    --background-color: #f5f5f5;
-    --input-background: #fff;
-    --input-border: #ccc;
-    --input-focus-border: #0056b3;
-    --button-text: #fff;
+/* 모든 요소에 기본 스타일 초기화 */
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: var(--background-color);
+    font-family: 'Noto Sans KR', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f3f3f3;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    margin: 0;
-    padding: 0;
+}
+
+button {
+    font-family: 'Noto Sans KR', Arial, sans-serif; /* 버튼 폰트 지정 */
 }
 
 .login-container {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 30%;
-    max-width: 400px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 360px;
     text-align: center;
 }
 
 .login-container img {
-    max-width: 150px;
-    margin-bottom: 1.5rem;
+    width: 100px;
+    margin-bottom: 20px;
 }
 
-h2 {
-    color: var(--text-color);
-    margin-bottom: 1.5rem;
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.login-form input {
-    width: 80%;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-}
-
-.login-form input:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
-}
-
-.login-form button {
-    width: 80%;
-    padding: 0.75rem;
-    background-color: var(--primary-color);
-    color: var(--button-text);
+.admin-button-normal {
+    width: 100%;
+    padding: 12px;
+    background-color: #3498db;
+    color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin-top: 10px;
 }
 
-.login-form button:hover {
-    background-color: var(--hover-color);
+.admin-button-normal:hover {
+    background-color: #2980b9;
 }
 
-.login-form button:active {
-    transform: scale(0.98);
-}
-
-.flash-messages {
-    margin-bottom: 1rem;
-}
-
-.flash-message {
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-}
-
-.flash-message.error {
-    background-color: #ffebee;
-    color: #c62828;
-    border: 1px solid #ef9a9a;
-}
-
-.flash-message.success {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
-}
-
-.footer {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 12px;
-    color: #aaa;
-    line-height: 1.6;
-}
-
-@media (max-width: 480px) {
-    .login-container {
-        padding: 1.5rem;
-    }
-
-    .login-container img {
-        max-width: 120px;
-    }
-
-    h2 {
-        font-size: 1.5rem;
-    }
-
-    .login-form input,
-    .login-form button {
-        width: 90%;
-        font-size: 0.9rem;
-    }
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-family: 'Noto Sans KR', Arial, sans-serif; /* 폰트 지정 */
 }
