@@ -7,13 +7,42 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='teacher_home.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 교사 페이지</title>
+    <!-- 브라우저 캐시 방지 메타 태그 보완 -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
 </head>
 <body>
+    <!-- 세션 확인 및 캐시 무효화를 위한 JavaScript 개선 -->
+    <script>
+        (function() {
+            // 세션 상태 확인
+            if (!{{ 'true' if session.get('user_id') else 'false' }}) {
+                window.location.href = "{{ url_for('auth.index') }}";
+                return;
+            }
+
+            // 페이지 로드 시 항상 서버에서 최신 데이터 요청
+            window.onpageshow = function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload(true);
+                }
+            };
+
+            // 뒤로가기 방지
+            history.pushState(null, null, location.href);
+            window.onpopstate = function(event) {
+                history.go(1);
+            };
+        })();
+    </script>
+
     <header>
         <img src="{{ url_for('static', filename='logo_green.png') }}" alt="김천고등학교 로고" class="logo">
         <nav>
             <a href="#" class="header-link" id="openInfoModal">내 정보 관리</a>
-            <a href="{{ url_for('auth.index') }}" class="header-link">Log Out</a>
+            <!-- 로그아웃 링크 수정 -->
+            <a href="{{ url_for('views.logout') }}" class="header-link">Log Out</a>
         </nav>
     </header>
 
@@ -93,17 +122,21 @@
     <!-- 통학생 관리 모달 -->
     <div id="studentModal" class="modal">
         <div class="modal-content">
-            <span class="close" id="closeStudentModal">&times;</span>
-            <h2>통학생 관리</h2>
-            <div id="externStudentList">
-                {% for extern in externs %}
-                <div>
-                    <input type="checkbox" class="manage-extern-checkbox" data-extern-id="{{ extern['id'] }}">
-                    {{ extern['name'] }} ({{ extern['grade'] }} {{ extern['student_class'] }})
-                </div>
-                {% endfor %}
+            <div class="modal-header">
+                <span class="close" id="closeStudentModal">&times;</span>
+                <h2>통학생 관리</h2>
             </div>
-            <button id="removeExternBtn">통학생 지정 해제하기</button>
+            <div class="modal-body">
+                <div id="externStudentList">
+                    {% for extern in externs %}
+                    <div>
+                        <input type="checkbox" class="manage-extern-checkbox" data-extern-id="{{ extern['id'] }}">
+                        {{ extern['name'] }} ({{ extern['grade'] }} {{ extern['student_class'] }})
+                    </div>
+                    {% endfor %}
+                </div>
+                <button id="removeExternBtn">통학생 지정 해제하기</button>
+            </div>
         </div>
     </div>
 
@@ -166,15 +199,18 @@
         </div>
     </div>
 
-    <!-- 거절 사유 입력 모달 -->
     <div id="rejectModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="closeRejectModal">&times;</span>
-            <h2>거절 사유 입력</h2>
-            <textarea id="rejectReasonInput" placeholder="거절 사유를 입력해주세요"></textarea>
-            <div class="button-group">
-                <button type="button" id="cancelReject">취소</button>
-                <button type="button" id="confirmReject">확인</button>
+        <div class="modal-content reject-modal">
+            <div class="modal-header">
+                <h2>거절 사유 입력</h2>
+                <span class="close" id="closeRejectModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="rejectReasonInput" placeholder="거절 사유를 입력해주세요"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelReject" class="btn btn-cancel">취소</button>
+                <button type="button" id="confirmReject" class="btn btn-confirm">확인</button>
             </div>
         </div>
     </div>

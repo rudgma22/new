@@ -5,15 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='student_home.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 학생 홈</title>
+    <!-- 브라우저 캐시 방지 메타 태그 보완 -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
 </head>
 <body>
+    <!-- 세션 확인 및 캐시 무효화를 위한 JavaScript 개선 -->
+    <script>
+        (function() {
+            // 세션 상태 확인
+            if (!{{ 'true' if session.get('user_id') else 'false' }}) {
+                window.location.href = "{{ url_for('auth.index') }}";
+                return;
+            }
+
+            // 페이지 로드 시 항상 서버에서 최신 데이터 요청
+            window.onpageshow = function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload(true);
+                }
+            };
+
+            // 뒤로가기 방지
+            history.pushState(null, null, location.href);
+            window.onpopstate = function(event) {
+                history.go(1);
+            };
+        })();
+    </script>
+
     <header>
         <img src="{{ url_for('static', filename='logo_blue.png') }}" alt="김천고등학교 로고" class="logo">
         <nav>
             <a href="javascript:void(0);" class="header-link" id="openInfoModal">내 정보 관리</a>
-            <a href="{{ url_for('auth.index') }}" class="header-link">Log Out</a>
+            <!-- 로그아웃 링크 수정 -->
+            <a href="{{ url_for('views.logout') }}" class="header-link">Log Out</a>
         </nav>
     </header>
 
@@ -132,6 +162,7 @@
         </div>
     </div>
 
+    <!-- Outing request confirmation modal -->
     <div id="checkModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeCheckModal">&times;</span>
@@ -140,9 +171,31 @@
             <div class="modal-body">
                 {% if outing_requests %}
                     {% for request in outing_requests %}
-                        <p>시작 시간: {{ request['start_time'] }} / 종료 시간: {{ request['end_time'] }}</p>
-                        <p>사유: {{ request['reason'] }} / 상태: {{ request['status'] }}</p>
-                        <hr class="modal-line">
+                        <div class="outing-card">
+                            <div class="time-info">
+                                <i class="far fa-clock"></i> {{ request['start_time'] }} - {{ request['end_time'] }}
+                            </div>
+                            <div class="reason-status">
+                                <span class="reason">
+                                    <i class="fas fa-info-circle"></i> {{ request['reason'] }}
+                                </span>
+                                <span class="status {% if request['status'] == '승인됨' %}approved{% elif request['status'] == '거절됨' %}rejected{% else %}pending{% endif %}">
+                                    {% if request['status'] == '승인됨' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif request['status'] == '거절됨' %}
+                                        <i class="fas fa-times-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock"></i>
+                                    {% endif %}
+                                    {{ request['status'] }}
+                                </span>
+                            </div>
+                            {% if request['status'] == '거절됨' and request['rejection_reason'] %}
+                                <span class="rejection-reason">
+                                    거절 사유: {{ request['rejection_reason'] }}
+                                </span>
+                            {% endif %}
+                        </div>
                     {% endfor %}
                 {% else %}
                     <p>외출 신청 내역이 없습니다.</p>

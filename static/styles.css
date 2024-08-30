@@ -726,15 +726,15 @@ nav {
 
 /* 외출 신청 확인 */
 .modal {
-    display: none; 
-    position: fixed; 
-    z-index: 1; 
+    display: none;
+    position: fixed;
+    z-index: 1;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.4); 
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
 }
 
 #infoModal .modal-content {
@@ -854,36 +854,91 @@ nav {
 /* 외출 신청 확인 모달 */
 #checkModal .modal-content {
     background-color: #fff;
-    margin: auto;
+    margin: 5% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
-    max-width: 500px;
+    width: 90%;
+    max-width: 600px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     font-family: 'Noto Sans KR', sans-serif;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-    text-align: center;
+    overflow: hidden;
 }
 
 #checkModal h2 {
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     font-size: 24px;
     font-weight: bold;
+    text-align: center;
+    color: #333;
 }
 
 #checkModal .modal-line {
     border: none;
-    border-top: 1px solid #000;
+    border-top: 1px solid #e0e0e0;
     margin: 20px 0;
 }
 
 #checkModal .modal-body {
-    height: 300px; /* Adjust this height based on your content */
+    max-height: 400px;
     overflow-y: auto;
-    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+#checkModal .outing-card {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#checkModal .outing-card .time-info {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+#checkModal .outing-card .reason-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#checkModal .outing-card .reason {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+#checkModal .outing-card .status {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+#checkModal .outing-card .rejection-reason {
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 5px;
+    padding-left: 20px; /* 약간의 여백 추가 */
+    display: block; /* 사유가 표시될 때 block으로 보이도록 설정 */
+}
+
+#checkModal .outing-card .status.approved {
+    background-color: #e6f7e6;
+    color: #28a745;
+}
+
+#checkModal .outing-card .status.rejected {
+    background-color: #fde8e8;
+    color: #dc3545;
+}
+
+#checkModal .outing-card .status.pending {
+    background-color: #fff3cd;
+    color: #ffc107;
 }
 
 #checkModal .button-group {
@@ -901,6 +956,7 @@ nav {
     border-radius: 5px;
     cursor: pointer;
     min-width: 100px;
+    transition: background-color 0.3s;
 }
 
 #checkModal .button-group button:hover {
@@ -915,11 +971,27 @@ nav {
     font-weight: bold;
     color: #aaa;
     cursor: pointer;
+    transition: color 0.3s;
 }
 
 #checkModal .close:hover, #checkModal .close:focus {
-    color: black;
-    text-decoration: none;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    #checkModal .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+
+    #checkModal .outing-card .reason-status {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #checkModal .outing-card .status {
+        margin-top: 5px;
+    }
 }
 
 /* 비밀번호 입력 모달 */

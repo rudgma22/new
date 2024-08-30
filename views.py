@@ -1,148 +1,168 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
-from models import db, Student, Extern, OutingRequest, Teacher  # 필요한 모델들 임포트
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response
+from models import db, Student, Extern, OutingRequest, Teacher
 import bcrypt
 from sqlalchemy import text
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 
+# 블루프린트 정의
 views_bp = Blueprint('views', __name__)
 
-
 def row_to_dict(row):
-    # If row is a dictionary, return it as is
     if isinstance(row, dict):
         return row
-
-    # If row is an SQLAlchemy RowProxy (from raw SQL), convert it to a dictionary
     if hasattr(row, '_fields'):
         return {field: getattr(row, field) for field in row._fields}
-
-    # If row is an SQLAlchemy ORM object, convert it to a dictionary
     elif hasattr(row, '__table__'):
         return {column.name: getattr(row, column.name) for column in row.__table__.columns}
-
     else:
         raise ValueError("Unsupported row type")
 
-
+@views_bp.route('/logout')
+def logout():
+    session.clear()  # 세션에서 모든 데이터 삭제
+    flash('성공적으로 로그아웃되었습니다.', 'success')
+    response = make_response(redirect(url_for('auth.index')))
+    # 캐시 무효화 헤더 추가
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 @views_bp.route('/student_home')
 def student_home():
-    if 'user_id' in session and session['role'] == 'student':
-        student = Student.query.get(session['user_id'])
-        if student:
-            outing_requests = OutingRequest.query.filter_by(student_name=student.name).all()
+    if 'user_id' not in session or session['role'] != 'student':
+        return redirect(url_for('auth.index'))
 
-            # 날짜와 시간을 포맷팅합니다.
-            for request in outing_requests:
-                request.start_time = request.start_time.strftime('%Y-%m-%d %H:%M')
-                request.end_time = request.end_time.strftime('%Y-%m-%d %H:%M')
+    student = Student.query.get(session['user_id'])
+    if student:
+        outing_requests = OutingRequest.query.filter_by(student_name=student.name).all()
+        for request in outing_requests:
+            request.start_time = request.start_time.strftime('%Y-%m-%d %H:%M')
+            request.end_time = request.end_time.strftime('%Y-%m-%d %H:%M')
 
-            if 'password_validated' not in session:
-                session['password_validated'] = False
+        if 'password_validated' not in session:
+            session['password_validated'] = False
 
-            return render_template('student_home.html', student=row_to_dict(student),
-                                   outing_requests=[row_to_dict(req) for req in outing_requests],
-                                   password_validated=session.get('password_validated', False))
-        else:
-            return redirect(url_for('auth.index'))
+        response = make_response(render_template(
+            'student_home.html',
+            student=row_to_dict(student),
+            outing_requests=[row_to_dict(req) for req in outing_requests],
+            password_validated=session.get('password_validated', False)
+        ))
+        # 캐시 무효화 헤더 추가
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
     else:
         return redirect(url_for('auth.index'))
 
 
 @views_bp.route('/teacher_home')
 def teacher_home():
-    if 'user_id' in session and session['role'] == 'teacher':
-        teacher = Teacher.query.get(session['user_id'])
-        if teacher:
-            new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
+    if 'user_id' not in session or session['role'] != 'teacher':
+        return redirect(url_for('auth.index'))
 
-            # 교사가 '기타' 반인 경우의 쿼리 수정
-            if teacher.teacher_class == '기타':
-                if new_requests_only:
-                    outing_requests = db.session.execute(text(
-                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                        'o.status, o.reason '
-                        'FROM outing_requests o '
-                        'JOIN students s ON o.barcode = s.barcode '
-                        'WHERE o.status = "대기중" AND s.grade = :grade '
-                        'ORDER BY s.student_class, s.number'),
-                        {'grade': teacher.grade}).fetchall()
-                else:
-                    outing_requests = db.session.execute(text(
-                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                        'MAX(o.reason) as reason, '
-                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
-                        'FROM students s '
-                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
-                        'WHERE s.grade = :grade '
-                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.student_class, s.number'),
-                        {'grade': teacher.grade}).fetchall()
-            else:
-                # 기존 쿼리 유지
-                if new_requests_only:
-                    outing_requests = db.session.execute(text(
-                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                        'o.status, o.reason '
-                        'FROM outing_requests o '
-                        'JOIN students s ON o.barcode = s.barcode '
-                        'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
-                        'ORDER BY s.number'),
-                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
-                else:
-                    outing_requests = db.session.execute(text(
-                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                        'MAX(o.reason) as reason, '
-                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
-                        'FROM students s '
-                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
-                        'WHERE s.grade = :grade AND s.student_class = :class '
-                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.number'),
-                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
-
-            outing_requests = [row_to_dict(request) for request in outing_requests]
-
-            # 통학생 조회 로직도 수정
-            if teacher.teacher_class == '기타':
-                externs = db.session.execute(text(
-                    'SELECT e.* '
-                    'FROM externs e '
-                    'JOIN students s ON e.student_id = s.id '
-                    'WHERE s.grade = :grade'),
+    teacher = Teacher.query.get(session['user_id'])
+    if teacher:
+        new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
+        # 각 교사에 맞는 요청 처리 로직
+        if teacher.teacher_class == '기타':
+            if new_requests_only:
+                outing_requests = db.session.execute(text(
+                    'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                    'o.status, o.reason '
+                    'FROM outing_requests o '
+                    'JOIN students s ON o.barcode = s.barcode '
+                    'WHERE o.status = "대기중" AND s.grade = :grade '
+                    'ORDER BY s.student_class, s.number'),
                     {'grade': teacher.grade}).fetchall()
             else:
-                externs = db.session.execute(text(
-                    'SELECT e.* '
-                    'FROM externs e '
-                    'JOIN students s ON e.student_id = s.id '
-                    'WHERE s.grade = :grade AND s.student_class = :class'),
+                outing_requests = db.session.execute(text(
+                    'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                    'MAX(o.reason) as reason, '
+                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                    'FROM students s '
+                    'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                    'WHERE s.grade = :grade '
+                    'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                    'ORDER BY s.student_class, s.number'),
+                    {'grade': teacher.grade}).fetchall()
+        else:
+            if new_requests_only:
+                outing_requests = db.session.execute(text(
+                    'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                    'o.status, o.reason '
+                    'FROM outing_requests o '
+                    'JOIN students s ON o.barcode = s.barcode '
+                    'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
+                    'ORDER BY s.number'),
+                    {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+            else:
+                outing_requests = db.session.execute(text(
+                    'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                    'MAX(o.reason) as reason, '
+                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                    'FROM students s '
+                    'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                    'WHERE s.grade = :grade AND s.student_class = :class '
+                    'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                    'ORDER BY s.number'),
                     {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
-            externs = [row_to_dict(extern) for extern in externs]
+        outing_requests = [row_to_dict(request) for request in outing_requests]
 
-            if 'password_validated' not in session:
-                session['password_validated'] = False
-
-            return render_template('teacher_home.html', teacher=row_to_dict(teacher), outing_requests=outing_requests,
-                                   externs=externs, new_requests_only=new_requests_only,
-                                   password_validated=session.get('password_validated', False))
+        if teacher.teacher_class == '기타':
+            externs = db.session.execute(text(
+                'SELECT e.* '
+                'FROM externs e '
+                'JOIN students s ON e.student_id = s.id '
+                'WHERE s.grade = :grade'),
+                {'grade': teacher.grade}).fetchall()
         else:
-            return redirect(url_for('auth.index'))
+            externs = db.session.execute(text(
+                'SELECT e.* '
+                'FROM externs e '
+                'JOIN students s ON e.student_id = s.id '
+                'WHERE s.grade = :grade AND s.student_class = :class'),
+                {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+
+        externs = [row_to_dict(extern) for extern in externs]
+
+        if 'password_validated' not in session:
+            session['password_validated'] = False
+
+        response = make_response(render_template(
+            'teacher_home.html',
+            teacher=row_to_dict(teacher),
+            outing_requests=outing_requests,
+            externs=externs,
+            new_requests_only=new_requests_only,
+            password_validated=session.get('password_validated', False)
+        ))
+        # 캐시 무효화 헤더 추가
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
     else:
         return redirect(url_for('auth.index'))
 
 
 @views_bp.route('/admin_home')
 def admin_home():
-    if 'user_id' in session and session['role'] == 'admin':
-        return render_template('admin_page.html')
-    else:
+    if 'user_id' not in session or session['role'] != 'admin':
         return redirect(url_for('auth.index'))
 
+    response = make_response(render_template('admin_page.html'))
+    # 캐시 무효화 헤더 추가
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 @views_bp.route('/add_extern', methods=['POST'])
 def add_extern():
@@ -173,12 +193,12 @@ def add_extern():
                 else:
                     print(f"Student ID {student_id} is already an extern.")
         elif action == 'remove':
-            for student_id in extern_ids:
-                extern = Extern.query.filter_by(student_id=student_id).first()
+            for extern_id in extern_ids:  # 변경된 부분: extern_id를 사용하여 확인
+                extern = Extern.query.get(extern_id)  # 변경된 부분: id로 찾음
                 if extern:
                     db.session.delete(extern)
                 else:
-                    print(f"Extern not found for student ID: {student_id}")
+                    print(f"Extern not found for ID: {extern_id}")
         else:
             return jsonify({'status': 'error', 'message': 'Invalid action'}), 400
 
@@ -189,6 +209,7 @@ def add_extern():
         db.session.rollback()
         print(f"Error occurred during add_extern processing: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
+
 
 
 @views_bp.route('/bulk_approve', methods=['POST'])

@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 로그인</title>
+    <!-- 캐시 제어 메타 태그 추가 -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
     <style>
         /* 하단 중앙 텍스트 스타일 */
         .footer {
@@ -39,24 +43,23 @@
         <div id="teacher-tab" data-role="teacher">교사 로그인</div>
     </div>
 
-    <form id="student-form" class="login-form active" method="post" action="{{ url_for('auth.login') }}">
+    <form id="student-form" class="login-form active" method="post" action="{{ url_for('auth.login') }}" autocomplete="off">
         <input type="hidden" name="role" value="student">
-        <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
-        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
+        <input type="text" name="username" placeholder="아이디를 입력해주세요" required>
+        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required>
         <button class="student-button-normal" type="submit">로그인</button>
     </form>
 
-    <form id="teacher-form" class="login-form" method="post" action="{{ url_for('auth.login') }}">
+    <form id="teacher-form" class="login-form" method="post" action="{{ url_for('auth.login') }}" autocomplete="off">
         <input type="hidden" name="role" value="teacher">
-        <input type="text" name="username" placeholder="아이디를 입력해주세요" required autocomplete="username">
-        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required autocomplete="current-password">
+        <input type="text" name="username" placeholder="아이디를 입력해주세요" required>
+        <input type="password" name='password' placeholder="비밀번호를 입력해주세요" required>
         <button class="teacher-button-normal" type="submit">로그인</button>
     </form>
 
     <div class="links">
         <a href="{{ url_for('auth.find_id') }}">아이디 찾기</a>
         <a href="{{ url_for('auth.find_pw') }}">비밀번호 찾기</a>
-        <a href="{{ url_for('auth.register') }}">회원가입</a>
     </div>
 </div>
 
@@ -91,6 +94,19 @@
         teacherTab.style.color = '#8BC34A';
         studentTab.style.color = '#8C8C8C';
     });
+
+    // 페이지 로드 시 폼 초기화
+    window.onload = function() {
+        document.getElementById('student-form').reset();
+        document.getElementById('teacher-form').reset();
+    };
+
+    // 뒤로가기 시 폼 초기화 및 페이지 새로고침
+    window.onpageshow = function(event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    };
 </script>
 </body>
 </html>

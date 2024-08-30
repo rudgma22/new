@@ -1,7 +1,24 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func, text
+from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
+import time
 
 db = SQLAlchemy()
+
+# 데이터베이스 연결이 끊어졌을 때 쿼리를 재시도하는 함수
+def execute_with_retry(session, query, retries=3):
+    attempt = 0
+    while attempt < retries:
+        try:
+            result = session.execute(query)
+            return result
+        except OperationalError as e:
+            if "Lost connection" in str(e):
+                attempt += 1
+                time.sleep(2)  # 잠시 대기 후 재시도
+                continue
+            else:
+                raise e
 
 class Student(db.Model):
     __tablename__ = 'students'
@@ -48,25 +65,20 @@ class OutingRequest(db.Model):
 class Extern(db.Model):
     __tablename__ = 'externs'
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)  # student_id 필드 추가
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     grade = db.Column(db.String(80), nullable=False)
     student_class = db.Column(db.String(80), nullable=False)
     number = db.Column(db.String(80), nullable=False)
     name = db.Column(db.String(80), nullable=False)
     barcode = db.Column(db.String(80), unique=True, nullable=False)
-    student = db.relationship('Student', backref='externs')  # 관계 설정
+    student = db.relationship('Student', backref='externs')
 
-def get_db_connection():
-    return db.session
-
-# 통학생 관리 관련 함수 추가
+# 통학생 관리 관련 함수
 def add_extern(student_id):
-    conn = get_db_connection()
-
-    student = conn.execute(text('SELECT * FROM students WHERE id = :id'), {'id': student_id}).fetchone()
+    student = Student.query.get(student_id)
     if student:
         extern_entry = Extern(
-            student_id=student.id,  # student_id 필드 사용
+            student_id=student.id,
             name=student.name,
             grade=student.grade,
             student_class=student.student_class,
@@ -149,12 +161,3 @@ def get_outing_statistics():
     ).join(OutingRequest, Student.name == OutingRequest.student_name)\
     .filter(OutingRequest.status == '승인됨')\
     .group_by(Student.grade, Student.student_class).all()
-
-def initialize_database():
-    db.drop_all()
-    db.create_all()
-
-if __name__ == '__main__':
-    from app import app
-    with app.app_context():
-        initialize_database()

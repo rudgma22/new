@@ -34,9 +34,9 @@
                 <label for="teacher-reset-password-grade">담당 학년을 선택하세요</label>
                 <select class="input_select" name="grade" id="teacher-reset-password-grade" required onchange="updateClassOptions(this, document.getElementById('teacher_reset-password-class'))">
                     <option value="" disabled selected>담당 학년을 선택하세요</option>
-                    <option value="1">1학년</option>
-                    <option value="2">2학년</option>
-                    <option value="3">3학년</option>
+                    <option value="1학년">1학년</option>
+                    <option value="2학년">2학년</option>
+                    <option value="3학년">3학년</option>
                 </select>
             </div>
             <div class="input-box">
@@ -62,13 +62,13 @@
             let classCount;
 
             switch (grade) {
-                case '1':
+                case '1학년':
                     classCount = 9;
                     break;
-                case '2':
+                case '2학년':
                     classCount = 10;
                     break;
-                case '3':
+                case '3학년':
                     classCount = 7;
                     break;
                 default:
@@ -81,7 +81,7 @@
             // 새로운 옵션 추가
             for (let i = 1; i <= classCount; i++) {
                 const option = document.createElement('option');
-                option.value = i;
+                option.value = `${i}반`;  // 여기를 `${i}반`으로 수정하여 반 번호와 '반' 문자열을 포함시킵니다.
                 option.textContent = `${i}반`;
                 classSelect.appendChild(option);
             }
