@@ -854,7 +854,7 @@ nav {
 /* 외출 신청 확인 모달 */
 #checkModal .modal-content {
     background-color: #fff;
-    margin: 5% auto;
+    margin: 20% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 90%;
@@ -978,47 +978,29 @@ nav {
     color: #333;
 }
 
-@media (max-width: 768px) {
-    #checkModal .modal-content {
-        width: 95%;
-        margin: 10% auto;
-    }
-
-    #checkModal .outing-card .reason-status {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    #checkModal .outing-card .status {
-        margin-top: 5px;
-    }
-}
-
-/* 비밀번호 입력 모달 */
 #passwordModal .modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 400px;
+    background-color: #ffffff;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    font-family: 'Noto Sans KR', sans-serif;
-    text-align: center;
-    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    position: fixed;
     top: 50%;
-    transform: translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #passwordModal h2 {
+    font-size: 24px;
     margin-bottom: 10px;
-    font-weight: bold;
+    text-align: center;
 }
 
 #passwordModal p {
-    margin-bottom: 20px;
     font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 #passwordModal input[type="password"] {
@@ -1032,34 +1014,26 @@ nav {
 
 #passwordModal .button-group {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-between;
 }
 
 #passwordModal .button-group button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
+    width: 48%;
+    padding: 10px;
     border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
 }
 
 #cancelPassword {
-    background-color: #ccc;
-    color: #000;
-}
-
-#cancelPassword:hover {
-    background-color: #bbb;
+    background-color: #f1f3f5;
+    color: #000000;
 }
 
 #confirmPassword {
     background-color: #007bff;
-    color: white;
-}
-
-#confirmPassword:hover {
-    background-color: #0069d9;
+    color: #ffffff;
 }
 
 #passwordModal .close {
@@ -1072,7 +1046,284 @@ nav {
     cursor: pointer;
 }
 
-#passwordModal .close:hover, #passwordModal .close:focus {
-    color: black;
-    text-decoration: none;
+/* 기존 CSS 코드 맨 아래에 추가 */
+
+@media screen and (max-width: 768px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        justify-content: center; /* 변경: flex-start에서 center로 */
+        align-items: center;
+        padding: 20px;
+        background-color: #f3f3f3;
+    }
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-color: white;
+        z-index: 1000;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .logo {
+        height: 30px;
+    }
+
+    nav {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .header-link {
+        font-size: 12px;
+    }
+
+    .application-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        margin: 0; /* 변경: margin-top 제거 */
+        position: relative; /* 추가 */
+        top: 20px; /* 추가: 헤더와 겹치지 않도록 약간 아래로 조정 */
+    }
+
+    .application-container h1 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .application-container .application-line {
+        width: 100%;
+    }
+
+    .date-time-group {
+        flex-direction: column;
+    }
+
+    .date-time-group input[type="datetime-local"],
+    #reason,
+    .student-submit-button {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .student-submit-button {
+        margin-top: 20px;
+    }
+
+    .check-link-container {
+        text-align: right;
+        margin-bottom: 1px;
+    }
+
+    .application-line {
+        margin: 15px 0;
+    }
+
+    #infoModal .modal-content {
+        width: 95%;
+        max-width: 400px;
+        padding: 25px;
+        margin: 5% auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    #infoModal form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #infoModal form > div {
+        margin-bottom: 1px;
+    }
+
+    #infoModal label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    #infoModal .modal-line {
+        width: 100%;
+        border-top: 1px solid #000;
+        margin: 20px 0;
+    }
+
+    #infoModal .readonly-field,
+    #infoModal input[type="text"],
+    #infoModal input[type="email"],
+    #infoModal input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
+        font-size: 14px;
+    }
+
+    #infoModal input[type="password"],
+    #infoModal input[type="email"] {
+        background-color: #ffffff;
+    }
+
+    #infoModal .button-group {
+        display: flex;
+        justify-content: center; /* 버튼을 중앙으로 정렬 */
+        gap: 10px; /* 버튼 사이의 간격 */
+        margin-top: 20px; /* 상단 여백 추가 */
+    }
+
+    #infoModal .button-group button {
+        width: 45%; /* 버튼 너비 조정 */
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        height: 45px; /* 버튼 높이 통일 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #infoModal #cancelModal {
+        background-color: #f1f3f5;
+        color: #000000;
+    }
+
+    #infoModal .student-submit-button {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+
+    #infoModal .password-tips {
+        font-size: 12px;
+        color: #666;
+        margin-top: 10px;
+    }
+
+    .button-group {
+        flex-direction: row;
+        gap: 1px;
+    }
+
+    .button-group button {
+        width: 90%;
+    }
+
+    .student-submit-button {
+        width: 100%;
+    }
+
+    .check-link-container {
+        padding-right: 0;
+    }
+
+        #passwordModal .modal-content {
+        width: 90%;
+        max-width: 400px;
+        margin: 10% auto;
+        padding: 20px;
+    }
+
+    #passwordModal input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+
+    #passwordModal .button-group {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #passwordModal .button-group button {
+        width: 48%;
+        padding: 10px;
+    }
+
+        #passwordModal .modal-content {
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0; /* 기존 margin 제거 */
+    }
+
+    #passwordModal h2 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    #passwordModal p {
+        font-size: 14px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    #passwordModal input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    #passwordModal .button-group {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: row; /* 버튼을 가로로 배치 */
+        gap: 10px;
+    }
+
+    #passwordModal .button-group button {
+        width: 48%;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    #cancelPassword {
+        background-color: #f1f3f5;
+        color: #000000;
+    }
+
+    #confirmPassword {
+        background-color: #007bff;
+        color: #ffffff;
+    }
+
+    #passwordModal .close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #aaa;
+        cursor: pointer;
+    }
 }

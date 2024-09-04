@@ -54,12 +54,30 @@ def send_verification_email(email, code):
 
 @auth_bp.route('/')
 def index():
-    return render_template('login.html')
+    response = make_response(render_template('login.html'))
+    # 캐시 무효화 헤더 추가
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
+@auth_bp.route('/warning')
+def warning():
+    response = make_response(render_template('warning.html'))
+    # 캐시 무효화 헤더 추가
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 @auth_bp.route('/admin_login')
 def admin_login_page():
-    return render_template('admin_login.html')
+    response = make_response(render_template('admin_login.html'))
+    # 캐시 무효화 헤더 추가
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 
 @auth_bp.route('/login', methods=['POST'])

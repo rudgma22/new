@@ -6,6 +6,7 @@
     <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <script src="/static/js/blockDevTools.js"></script>
     <title>김천고등학교 외출 신청 - 로그인</title>
     <!-- 캐시 제어 메타 태그 추가 -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
@@ -60,6 +61,7 @@
     <div class="links">
         <a href="{{ url_for('auth.find_id') }}">아이디 찾기</a>
         <a href="{{ url_for('auth.find_pw') }}">비밀번호 찾기</a>
+        <a href="{{ url_for('auth.register') }}">회원가</a>
     </div>
 </div>
 

@@ -52,7 +52,7 @@ nav {
     width: 100%;
     border: none;
     border-top: 1px solid #000;
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
 .application-container {
@@ -618,14 +618,143 @@ th {
     background-color: #7CB342;
 }
 
+/* 기존 스타일은 유지 */
+
 /* 모바일 화면에 대한 반응형 스타일 */
-@media (max-width: 600px) {
-    .reject-modal .modal-footer {
-        flex-direction: column;
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        background-color: #f3f3f3;
+    }
+
+    /* 헤더 수정 */
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+        height: 30px;
+        margin-right: auto; /* 로고를 왼쪽에 고정 */
+    }
+
+    nav {
+        display: flex;
+        flex-direction: row; /* 버튼을 가로로 배치 */
         gap: 10px;
     }
 
-    .reject-modal .btn {
+    .header-link {
+        font-size: 12px;
+        padding: 5px;
+        text-align: center;
+    }
+
+    /* 메인 컨텐츠의 상단 여백을 헤더만큼 추가 */
+    .application-container {
         width: 100%;
+        padding: 15px; /* 패딩을 줄여서 더 촘촘한 레이아웃 제공 */
+        margin-top: 80px; /* 헤더 높이만큼 마진을 추가하여 컨텐츠가 가려지지 않도록 */
+        box-shadow: none;
+        text-align: right; /* 전체 내용을 오른쪽 정렬 */
+        margin-bottom: 10px; /* 하단에 일정한 간격 추가 */
+    }
+
+    .application-container h1 {
+        font-size: 20px;
+        text-align: center; /* 제목은 중앙 정렬 유지 */
+        margin-bottom: 0px; /* 제목과 다른 요소 사이의 간격을 줄여서 대칭을 맞춤 */
+    }
+
+    /* 제목 아래의 선과 간격 조정 */
+    .application-line {
+        margin: 5px 0; /* 선 위아래 간격을 줄여 더 균형 잡힌 레이아웃 제공 */
+    }
+
+    /* 버튼들을 오른쪽으로 정렬 */
+    .teacher-link-container {
+        display: flex;
+        justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
+        gap: 3px; /* 버튼 사이의 간격을 줄여 더 촘촘하게 배치 */
+        width: 100%;
+        margin-bottom: 10px; /* 버튼들 사이의 간격을 줄여 정돈된 느낌 제공 */
+    }
+
+    .teacher-commuting-manage, .teacher-check-link {
+        font-size: 12px;
+        padding: 5px; /* 버튼 패딩을 줄여 더 작고 깔끔하게 */
+        width: auto; /* 버튼 크기를 자동으로 조정 */
+        text-align: center;
+    }
+
+    .switch {
+        width: 30px;
+        height: 18px;
+        margin-left: 5px; /* 스위치와 텍스트 사이에 간격 조정 */
+    }
+
+    .slider:before {
+        height: 10px;
+        width: 10px;
+        left: 4px;
+        bottom: 4px;
+    }
+
+    .table-container {
+        max-height: 300px;
+        margin-top: 10px; /* 테이블과 위의 요소 간의 간격 조정 */
+    }
+
+    th, td {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+        margin: 20% auto;
+    }
+
+    .modal-content h2 {
+        font-size: 18px;
+    }
+
+    .button-group {
+        flex-direction: row; /* 버튼을 가로로 배치 */
+        gap: 5px; /* 버튼 사이의 간격을 줄여 더 촘촘한 배치 */
+        justify-content: center; /* 버튼들이 중앙에 위치하도록 조정 */
+        margin-bottom: 10px; /* 버튼 그룹 아래에 일정한 간격 추가 */
+    }
+
+    .button-group button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* 기타 작은 화면에 맞게 조정 */
+    .modal-header {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .close {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+
+    #studentModal .modal-content,
+    #passwordModal .modal-content {
+        width: 95%;
+        max-width: 320px;
     }
 }

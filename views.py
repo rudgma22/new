@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash
 # 블루프린트 정의
 views_bp = Blueprint('views', __name__)
 
+
 def row_to_dict(row):
     if isinstance(row, dict):
         return row
@@ -17,6 +18,7 @@ def row_to_dict(row):
         return {column.name: getattr(row, column.name) for column in row.__table__.columns}
     else:
         raise ValueError("Unsupported row type")
+
 
 @views_bp.route('/logout')
 def logout():
@@ -28,6 +30,7 @@ def logout():
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
     return response
+
 
 @views_bp.route('/student_home')
 def student_home():
@@ -67,18 +70,19 @@ def teacher_home():
     teacher = Teacher.query.get(session['user_id'])
     if teacher:
         new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
-        # 각 교사에 맞는 요청 처리 로직
-        if teacher.teacher_class == '기타':
+
+        # '학년'과 '반'이 모두 '기타'인 경우 모든 학생을 표시
+        if teacher.grade == '기타' and teacher.teacher_class == '기타':
             if new_requests_only:
                 outing_requests = db.session.execute(text(
                     'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
                     '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                    'o.status, o.reason '
+                    'o.start_time, o.end_time, o.status, o.reason '
                     'FROM outing_requests o '
                     'JOIN students s ON o.barcode = s.barcode '
-                    'WHERE o.status = "대기중" AND s.grade = :grade '
-                    'ORDER BY s.student_class, s.number'),
-                    {'grade': teacher.grade}).fetchall()
+                    'WHERE o.status = "대기중" '
+                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+                )).fetchall()
             else:
                 outing_requests = db.session.execute(text(
                     'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
@@ -86,49 +90,90 @@ def teacher_home():
                     '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
                     'FROM students s '
                     'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                    'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+                )).fetchall()
+        else:
+            # 기존 로직: 특정 학년/반에 대한 처리
+            if teacher.teacher_class == '기타':
+                if new_requests_only:
+                    outing_requests = db.session.execute(text(
+                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                        'o.start_time, o.end_time, o.status, o.reason '
+                        'FROM outing_requests o '
+                        'JOIN students s ON o.barcode = s.barcode '
+                        'WHERE o.status = "대기중" AND s.grade = :grade '
+                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        {'grade': teacher.grade}).fetchall()
+                else:
+                    outing_requests = db.session.execute(text(
+                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        'MAX(o.reason) as reason, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                        'FROM students s '
+                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                        'WHERE s.grade = :grade '
+                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        {'grade': teacher.grade}).fetchall()
+            else:
+                if new_requests_only:
+                    outing_requests = db.session.execute(text(
+                        'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
+                        'o.start_time, o.end_time, o.status, o.reason '
+                        'FROM outing_requests o '
+                        'JOIN students s ON o.barcode = s.barcode '
+                        'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
+                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+                else:
+                    outing_requests = db.session.execute(text(
+                        'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
+                        'MAX(o.reason) as reason, '
+                        '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
+                        'FROM students s '
+                        'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                        'WHERE s.grade = :grade AND s.student_class = :class '
+                        'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
+                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
+
+        outing_requests = [row_to_dict(outing_request) for outing_request in outing_requests]
+
+        # 날짜 형식 변환
+        for outing_request in outing_requests:
+            if 'start_time' in outing_request and outing_request['start_time']:
+                outing_request['start_time'] = outing_request['start_time'].strftime('%Y-%m-%d %H:%M')
+            if 'end_time' in outing_request and outing_request['end_time']:
+                outing_request['end_time'] = outing_request['end_time'].strftime('%Y-%m-%d %H:%M')
+
+        # '학년'과 '반'이 모두 '기타'인 경우 모든 externs 가져오기
+        if teacher.grade == '기타' and teacher.teacher_class == '기타':
+            externs = db.session.execute(text(
+                'SELECT e.* '
+                'FROM externs e '
+                'JOIN students s ON e.student_id = s.id '
+                'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+            )).fetchall()
+        else:
+            if teacher.teacher_class == '기타':
+                externs = db.session.execute(text(
+                    'SELECT e.* '
+                    'FROM externs e '
+                    'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade '
-                    'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                    'ORDER BY s.student_class, s.number'),
+                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
                     {'grade': teacher.grade}).fetchall()
-        else:
-            if new_requests_only:
-                outing_requests = db.session.execute(text(
-                    'SELECT o.id, s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count, '
-                    'o.status, o.reason '
-                    'FROM outing_requests o '
-                    'JOIN students s ON o.barcode = s.barcode '
-                    'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
-                    'ORDER BY s.number'),
-                    {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
             else:
-                outing_requests = db.session.execute(text(
-                    'SELECT s.id as student_id, s.grade, s.student_class, s.number, s.name as student_name, '
-                    'MAX(o.reason) as reason, '
-                    '(SELECT COUNT(*) FROM outing_requests o2 WHERE o2.barcode = s.barcode AND o2.status = "승인됨") as outing_count '
-                    'FROM students s '
-                    'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
+                externs = db.session.execute(text(
+                    'SELECT e.* '
+                    'FROM externs e '
+                    'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade AND s.student_class = :class '
-                    'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                    'ORDER BY s.number'),
+                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
                     {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
-
-        outing_requests = [row_to_dict(request) for request in outing_requests]
-
-        if teacher.teacher_class == '기타':
-            externs = db.session.execute(text(
-                'SELECT e.* '
-                'FROM externs e '
-                'JOIN students s ON e.student_id = s.id '
-                'WHERE s.grade = :grade'),
-                {'grade': teacher.grade}).fetchall()
-        else:
-            externs = db.session.execute(text(
-                'SELECT e.* '
-                'FROM externs e '
-                'JOIN students s ON e.student_id = s.id '
-                'WHERE s.grade = :grade AND s.student_class = :class'),
-                {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
         externs = [row_to_dict(extern) for extern in externs]
 
@@ -164,6 +209,7 @@ def admin_home():
     response.headers['Expires'] = '-1'
     return response
 
+
 @views_bp.route('/add_extern', methods=['POST'])
 def add_extern():
     data = request.get_json()
@@ -193,8 +239,8 @@ def add_extern():
                 else:
                     print(f"Student ID {student_id} is already an extern.")
         elif action == 'remove':
-            for extern_id in extern_ids:  # 변경된 부분: extern_id를 사용하여 확인
-                extern = Extern.query.get(extern_id)  # 변경된 부분: id로 찾음
+            for extern_id in extern_ids:
+                extern = Extern.query.get(extern_id)
                 if extern:
                     db.session.delete(extern)
                 else:
@@ -211,17 +257,21 @@ def add_extern():
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
 
-
 @views_bp.route('/bulk_approve', methods=['POST'])
 def bulk_approve():
     if 'user_id' in session and session['role'] == 'teacher':
         try:
             teacher = Teacher.query.get(session['user_id'])
-            requests_to_approve = OutingRequest.query.filter_by(
-                grade=teacher.grade,
-                student_class=teacher.teacher_class,
-                status='대기중'
-            ).all()
+            if teacher.grade == '기타' and teacher.teacher_class == '기타':
+                # 모든 외출 신청을 승인
+                requests_to_approve = OutingRequest.query.filter_by(status='대기중').all()
+            else:
+                # 기존 로직
+                requests_to_approve = OutingRequest.query.filter_by(
+                    grade=teacher.grade,
+                    student_class=teacher.teacher_class,
+                    status='대기중'
+                ).all()
 
             if not requests_to_approve:
                 return jsonify({'status': 'no_requests', 'message': '승인할 학생이 없습니다.'}), 200
@@ -466,7 +516,6 @@ def get_users():
         return jsonify(user_list)
 
 
-
 @views_bp.route('/update_user', methods=['POST'])
 def update_user():
     if 'user_id' not in session or session['role'] != 'admin':
@@ -521,3 +570,4 @@ def delete_user():
         return jsonify({'success': True, 'message': '사용자가 삭제되었습니다.'})
     else:
         return jsonify({'success': False, 'message': '사용자를 찾을 수 없습니다.'}), 404
+
