@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='teacher_home.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 교사 페이지</title>
+    <script src="/static/js/blockDevTools.js"></script>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
@@ -52,8 +53,8 @@
         </h1>
         <hr class="application-line">
         <div class="teacher-link-container">
-            <a href="#" class="teacher-commuting-manage" id="openStudentModal">통학생 관리</a>
-            <a href="#" class="teacher-commuting-manage" id="assignExternLink">통학생 지정하기</a>
+            <a href="#" class="teacher-commuting-manage" id="openStudentModal">외박생 관리</a>
+            <a href="#" class="teacher-commuting-manage" id="assignExternLink">외박 학생 지정하기</a>
             <a href="#" class="teacher-commuting-manage" id="bulkApproveLink">외출 일괄 승인하기</a>
         </div>
 
@@ -81,7 +82,7 @@
                         {% endif %}
                         <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">승인</th>
                         <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">거절</th>
-                        <th class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">통학생 지정</th>
+                        <th class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">외박생 지정</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,7 +125,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="close" id="closeStudentModal">&times;</span>
-                <h2>통학생 관리</h2>
+                <h2>외박생 관리</h2>
             </div>
             <div class="modal-body">
                 <div id="externStudentList">
@@ -135,7 +136,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <button id="removeExternBtn">통학생 지정 해제하기</button>
+                <button id="removeExternBtn">외박생 지정 해제하기</button>
             </div>
         </div>
     </div>
@@ -416,7 +417,7 @@
                 event.preventDefault();
                 var checkedBoxes = document.querySelectorAll('.extern-checkbox:checked');
                 if (checkedBoxes.length === 0) {
-                    alert('통학생으로 지정할 학생을 선택해주세요.');
+                    alert('외박으로 지정할 학생을 선택해주세요.');
                     return;
                 }
 
@@ -427,7 +428,7 @@
                     return;
                 }
 
-                showConfirmationDialog('정말로 통학생으로 지정하시겠습니까?', function() {
+                showConfirmationDialog('정말로 외박 학생으로 지정하시겠습니까?', function() {
                     fetch('{{ url_for("views.add_extern") }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -436,15 +437,15 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            alert('통학생이 성공적으로 지정되었습니다.');
+                            alert('외박 학생이 성공적으로 지정되었습니다.');
                             location.reload();
                         } else {
-                            alert('통학생 지정 중 오류가 발생했습니다: ' + data.message);
+                            alert('외박 신청 중 오류가 발생했습니다: ' + data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error during assigning extern:', error);
-                        alert('통학생 지정 중 오류가 발생했습니다.');
+                        alert('외박 신청 중 오류가 발생했습니다.');
                     });
                 });
             };
@@ -454,13 +455,13 @@
                 event.preventDefault();
                 var checkedBoxes = document.querySelectorAll('.manage-extern-checkbox:checked');
                 if (checkedBoxes.length === 0) {
-                    alert('통학생 지정 해제할 학생을 선택해주세요.');
+                    alert('외박 지정 해제할 학생을 선택해주세요.');
                     return;
                 }
 
                 var externIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-extern-id'));
 
-                showConfirmationDialog('정말로 통학생 지정을 해제하시겠습니까?', function() {
+                showConfirmationDialog('정말로 외박생 지정을 해제하시겠습니까?', function() {
                     fetch('{{ url_for("views.add_extern") }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -469,15 +470,15 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            alert('통학생 지정이 해제되었습니다.');
+                            alert('외박생 지정이 해제되었습니다.');
                             location.reload();
                         } else {
-                            alert('통학생 지정 해제 중 오류가 발생했습니다: ' + data.message);
+                            alert('외박생 지정 해제 중 오류가 발생했습니다: ' + data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error during removing extern:', error);
-                        alert('통학생 지정 해제 중 오류가 발생했습니다.');
+                        alert('외박생 지정 해제 중 오류가 발생했습니다.');
                     });
                 });
             };
@@ -564,4 +565,5 @@
     </script>
 </body>
 </html>
+
 

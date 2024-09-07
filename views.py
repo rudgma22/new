@@ -70,7 +70,7 @@ def teacher_home():
     teacher = Teacher.query.get(session['user_id'])
     if teacher:
         new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
-
+        
         # '학년'과 '반'이 모두 '기타'인 경우 모든 학생을 표시
         if teacher.grade == '기타' and teacher.teacher_class == '기타':
             if new_requests_only:
@@ -81,7 +81,7 @@ def teacher_home():
                     'FROM outing_requests o '
                     'JOIN students s ON o.barcode = s.barcode '
                     'WHERE o.status = "대기중" '
-                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
                 )).fetchall()
             else:
                 outing_requests = db.session.execute(text(
@@ -91,7 +91,7 @@ def teacher_home():
                     'FROM students s '
                     'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                     'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
                 )).fetchall()
         else:
             # 기존 로직: 특정 학년/반에 대한 처리
@@ -104,7 +104,7 @@ def teacher_home():
                         'FROM outing_requests o '
                         'JOIN students s ON o.barcode = s.barcode '
                         'WHERE o.status = "대기중" AND s.grade = :grade '
-                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                         {'grade': teacher.grade}).fetchall()
                 else:
                     outing_requests = db.session.execute(text(
@@ -115,7 +115,7 @@ def teacher_home():
                         'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                         'WHERE s.grade = :grade '
                         'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                         {'grade': teacher.grade}).fetchall()
             else:
                 if new_requests_only:
@@ -126,7 +126,7 @@ def teacher_home():
                         'FROM outing_requests o '
                         'JOIN students s ON o.barcode = s.barcode '
                         'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
-                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                         {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
                 else:
                     outing_requests = db.session.execute(text(
@@ -137,7 +137,7 @@ def teacher_home():
                         'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                         'WHERE s.grade = :grade AND s.student_class = :class '
                         'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                         {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
         outing_requests = [row_to_dict(outing_request) for outing_request in outing_requests]
@@ -155,7 +155,7 @@ def teacher_home():
                 'SELECT e.* '
                 'FROM externs e '
                 'JOIN students s ON e.student_id = s.id '
-                'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'
+                'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
             )).fetchall()
         else:
             if teacher.teacher_class == '기타':
@@ -164,7 +164,7 @@ def teacher_home():
                     'FROM externs e '
                     'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade '
-                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                     {'grade': teacher.grade}).fetchall()
             else:
                 externs = db.session.execute(text(
@@ -172,7 +172,7 @@ def teacher_home():
                     'FROM externs e '
                     'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade AND s.student_class = :class '
-                    'ORDER BY s.grade, s.student_class, CAST(s.number AS UNSIGNED)'),
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
                     {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
         externs = [row_to_dict(extern) for extern in externs]
@@ -570,4 +570,5 @@ def delete_user():
         return jsonify({'success': True, 'message': '사용자가 삭제되었습니다.'})
     else:
         return jsonify({'success': False, 'message': '사용자를 찾을 수 없습니다.'}), 404
+
 

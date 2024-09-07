@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>경고 - 개발자 도구 사용 금지</title>
+    <link rel="icon" href="https://www.gimgopass.com/static/favicon.ico" type="image/x-icon"> <!-- HTTPS 사용 -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,25 +46,28 @@
             background-color: #5a1a1c;
         }
         .flash-message {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #f5c6cb;
-            background-color: #f8d7da;
-            color: #721c24;
+            display: none; /* Flash 메시지를 기본적으로 숨깁니다 */
         }
     </style>
+    <script>
+        window.onload = function() {
+            var flashMessages = document.getElementById('flash-messages');
+            if (flashMessages) {
+                var messages = flashMessages.dataset.messages;
+                if (messages) {
+                    alert(messages); // Flash 메시지를 alert로 표시합니다.
+                }
+            }
+        };
+    </script>
 </head>
 <body>
     <div class="warning-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        <div id="flash-messages" data-messages="{% with messages = get_flashed_messages(with_categories=false) %}
             {% if messages %}
-                <div class="flash-message">
-                    {% for category, message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
+                {{ messages[0] }}
             {% endif %}
-        {% endwith %}
+        {% endwith %}"></div>
         <h1>경고: 개발자 도구 사용 금지</h1>
         <p>개발자 도구를 사용하는 것이 감지되었습니다. 이 웹사이트의 정책에 따라 개발자 도구 사용은 금지되어 있습니다.</p>
         <p>웹사이트를 정상적으로 이용하시려면, 개발자 도구를 닫아주세요.</p>
@@ -71,3 +75,4 @@
     </div>
 </body>
 </html>
+

@@ -161,3 +161,4 @@ def get_outing_statistics():
     ).join(OutingRequest, Student.name == OutingRequest.student_name)\
     .filter(OutingRequest.status == '승인됨')\
     .group_by(Student.grade, Student.student_class).all()
+

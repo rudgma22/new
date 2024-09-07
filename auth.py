@@ -1,7 +1,7 @@
 import os
 import random
 import smtplib
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, make_response
 from models import db, add_student, add_teacher, add_admin, Student, Teacher, Admin, OutingRequest, Extern
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -63,6 +63,8 @@ def index():
 
 @auth_bp.route('/warning')
 def warning():
+    session.clear()  # 세션에서 모든 데이터 삭제
+    flash('개발자 도구 사용이 감지되어 로그아웃되었습니다. 개발자 도구를 닫고 다시 로그인하세요.', 'warning')
     response = make_response(render_template('warning.html'))
     # 캐시 무효화 헤더 추가
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
@@ -132,6 +134,11 @@ def logout():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
+    # 사용자가 관리자가 아닌 경우 접근 차단
+    if session.get('role') != 'admin':
+        flash('이 페이지에 접근할 권한이 없습니다.', 'danger')
+        return redirect(url_for('auth.index'))
+
     if request.method == 'POST':
         role = request.form['role']
         username = request.form['username']
@@ -389,19 +396,25 @@ def barcode_scan():
         print(f"입력된 바코드: {barcode}")
 
         extern_student = Extern.query.filter_by(barcode=barcode).first()
-        current_time = datetime.now().time()
-        print(f"현재 시간: {current_time}")
+        now = datetime.now()
+        current_time = now.time()
+        current_weekday = now.weekday()  # 월요일이 0, 일요일이 6
 
-        if extern_student and time(18, 0) <= current_time <= time(19, 10):
-            print(f"통학생 {extern_student.name}님이 통학 시간이므로 자동 승인됩니다.")
+        # 금요일 15시 50분부터 일요일 22시 30분까지 외박 학생 자동 승인
+        if extern_student and (
+            (current_weekday == 4 and time(15, 00) <= current_time) or
+            (current_weekday == 5) or
+            (current_weekday == 6 and current_time <= time(22, 30))
+        ):
+            print(f"통학생 {extern_student.name}님이 외박 시간이므로 자동 승인됩니다.")
             response_data = {
                 'barcode': extern_student.barcode,
                 'student_name': extern_student.name,
-                'outing_time': "통학생입니다.",
+                'outing_time': "외박 학생입니다.",
                 'status': '승인됨',
                 'color': 'green',
                 'sound': url_for('static', filename='Pling Sound.mp3'),
-                'message': f"{extern_student.name}님은 통학이 승인되었습니다. 조심히 다녀오세요!"
+                'message': f"{extern_student.name}님은 외박이 승인되었습니다. 조심히 다녀오세요!"
             }
         else:
             latest_outing_request = OutingRequest.query.filter_by(barcode=barcode).order_by(OutingRequest.start_time.desc()).first()
@@ -439,3 +452,5 @@ def barcode_scan():
                 print("해당 바코드로 외출 요청을 찾을 수 없습니다.")
 
     return render_template('barcode.html', response_data=response_data)
+
+
