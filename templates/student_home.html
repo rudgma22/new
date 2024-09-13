@@ -191,6 +191,12 @@
                                     {{ request['status'] }}
                                 </span>
                             </div>
+
+                            <!-- 상태가 대기중일 때만 취소 버튼을 표시 -->
+                            {% if request['status'] == '대기중' %}
+                                <button class="cancel-button" onclick="cancelLeave({{ request['id'] }})">외출 신청 취소</button>
+                            {% endif %}
+
                             {% if request['status'] == '거절됨' and request['rejection_reason'] %}
                                 <span class="rejection-reason">
                                     거절 사유: {{ request['rejection_reason'] }}
@@ -373,7 +379,30 @@
                 otherReasonInput.style.display = "none";
             }
         }
+
+        function cancelLeave(requestId) {
+            if (confirm('정말로 외출 신청을 취소하시겠습니까?')) {
+                fetch(`/views/cancel_leave/${requestId}`, {  // URL 수정됨
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        location.reload();  // 페이지 새로고침하여 변경 사항 반영
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during leave cancellation:', error);
+                    alert('서버 오류가 발생했습니다. 다시 시도해주세요.');
+                });
+            }
+        }
     </script>
 </body>
 </html>
-

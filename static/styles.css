@@ -277,6 +277,33 @@ button {
     background-color: #f0f0f0;
 }
 
+.cancel-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px; /* 상태와의 간격을 위한 margin 추가 */
+    margin-right: 10px; /* 카드의 경계와 간격을 줌 */
+}
+
+.cancel-button:hover {
+    background-color: #ff1a1a;
+}
+
+.cancel-button::before {
+    content: "\2715";  /* X 모양의 유니코드 */
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+
 /*교사 취소 버튼*/
 .teacher-id-form-button.cancel-button {
     background-color: white;

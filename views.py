@@ -6,8 +6,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash
 
 # 블루프린트 정의
-views_bp = Blueprint('views', __name__)
-
+views_bp = Blueprint('views', __name__, url_prefix='/views')
 
 def row_to_dict(row):
     if isinstance(row, dict):
@@ -346,6 +345,21 @@ def apply_leave():
     else:
         return redirect(url_for('auth.index'))
 
+
+@views_bp.route('/cancel_leave/<int:request_id>', methods=['POST'])
+def cancel_leave(request_id):
+    try:
+        # 외출 신청을 찾고 삭제
+        outing_request = OutingRequest.query.get(request_id)
+        if outing_request and outing_request.status == '대기중':
+            db.session.delete(outing_request)
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': '외출 신청이 취소되었습니다.'}), 200
+        else:
+            return jsonify({'status': 'error', 'message': '취소할 외출 신청을 찾을 수 없습니다.'}), 404
+    except Exception as e:
+        print(f"Error occurred during leave cancellation: {e}")
+        return jsonify({'status': 'error', 'message': '서버 오류가 발생했습니다.'}), 500
 
 @views_bp.route('/reject_leave/<int:request_id>', methods=['POST'])
 def reject_leave(request_id):
