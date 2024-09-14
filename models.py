@@ -1,9 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 import time
+from flask_migrate import Migrate
 
-db = SQLAlchemy()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://gimpass2024:ehdud0116**@211.47.75.102:3306/dbgimpass2024'
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # 데이터베이스 연결이 끊어졌을 때 쿼리를 재시도하는 함수
 def execute_with_retry(session, query, retries=3):
@@ -61,6 +67,7 @@ class OutingRequest(db.Model):
     reason = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(80), default='대기중', nullable=False)
     rejection_reason = db.Column(db.String(200), nullable=True)
+    approver = db.Column(db.String(80), nullable=True)  # 승인한 선생님 저장
 
 class Extern(db.Model):
     __tablename__ = 'externs'
@@ -146,6 +153,7 @@ def approve_outing_request(request_id):
     request = OutingRequest.query.get(request_id)
     if request:
         request.status = '승인됨'
+        request.approver = session['username']  # 로그인된 사용자의 username을 저장
         db.session.commit()
 
 def reject_outing_request(request_id, rejection_reason):

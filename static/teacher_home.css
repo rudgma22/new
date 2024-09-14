@@ -628,7 +628,112 @@ th {
     background-color: #7CB342;
 }
 
-/* 기존 스타일은 유지 */
+#approvedModal .modal-content {
+    max-width: 800px;
+    width: 90%;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#approvedModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+#approvedModal h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+#approvedModal .close {
+    font-size: 28px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#approvedModal .close:hover {
+    color: #000;
+}
+
+#approvedOutingTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#approvedOutingTable th,
+#approvedOutingTable td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+#approvedOutingTable th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    color: #333;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+#approvedOutingTable td {
+    color: #666;
+    font-size: 14px;
+}
+
+#approvedOutingTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#approvedOutingTable tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Approver 칸 스타일링 */
+#approvedOutingTable th.approver,
+#approvedOutingTable td.approver {
+    text-align: center;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#approvedOutingTable td.approver {
+    font-size: 14px;
+    color: #34495e;
+}
+
+/* 스크롤바 스타일 */
+#approvedModal .modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#approvedModal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#approvedModal .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#approvedModal .modal-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#approvedModal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
 
 /* 모바일 화면에 대한 반응형 스타일 */
 @media (max-width: 768px) {
@@ -766,6 +871,21 @@ th {
     #passwordModal .modal-content {
         width: 95%;
         max-width: 320px;
+    }
+
+    #approvedModal .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+
+    #approvedModal h2 {
+        font-size: 20px;
+    }
+
+    #approvedOutingTable th,
+    #approvedOutingTable td {
+        padding: 8px 10px;
+        font-size: 14px;
     }
 }
 

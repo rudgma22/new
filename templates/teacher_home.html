@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='teacher_home.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 교사 페이지</title>
-    <script src="/static/js/blockDevTools.js"></script>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
@@ -56,6 +55,7 @@
             <a href="#" class="teacher-commuting-manage" id="openStudentModal">외박생 관리</a>
             <a href="#" class="teacher-commuting-manage" id="assignExternLink">외박 학생 지정하기</a>
             <a href="#" class="teacher-commuting-manage" id="bulkApproveLink">외출 일괄 승인하기</a>
+            <a href="#" class="teacher-commuting-manage" id="openApprovedModal">외출 승인 내역</a> <!-- 승인 내역 추가 -->
         </div>
 
         <div class="teacher-link-container">
@@ -76,8 +76,8 @@
                         <th>이름</th>
                         <th>외출 통계</th>
                         {% if new_requests_only %}
-                        <th>외출 시작 시간</th> <!-- 추가된 부분 -->
-                        <th>외출 종료 시간</th> <!-- 추가된 부분 -->
+                        <th>외출 시작 시간</th>
+                        <th>외출 종료 시간</th>
                         <th>외출 사유</th>
                         {% endif %}
                         <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">승인</th>
@@ -95,8 +95,8 @@
                             <td>{{ request['student_name'] }}</td>
                             <td>{{ request['outing_count'] }}</td>
                             {% if new_requests_only %}
-                            <td>{{ request['start_time'] }}</td> <!-- 추가된 부분 -->
-                            <td>{{ request['end_time'] }}</td> <!-- 추가된 부분 -->
+                            <td>{{ request['start_time'] }}</td>
+                            <td>{{ request['end_time'] }}</td>
                             <td>{{ request['reason'] }}</td>
                             {% endif %}
                             <td class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">
@@ -117,6 +117,44 @@
                     {% endif %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- 외출 승인 내역 모달 -->
+    <div id="approvedModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeApprovedModal">&times;</span>
+                <h2>외출 승인 내역</h2>
+            </div>
+            <div class="modal-body">
+                <table id="approvedOutingTable">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>학년</th>
+                            <th>반</th>
+                            <th>번호</th>
+                            <th>외출 시작 시간</th>
+                            <th>외출 종료 시간</th>
+                            <th>승인자</th>
+                        </tr>
+                    </thead>
+                <tbody>
+                    {% for request in outing_requests %}
+                    <tr>
+                        <td>{{ request['student_name'] }}</td>
+                        <td>{{ request['grade'] }}</td>
+                        <td>{{ request['student_class'] }}</td>
+                        <td>{{ request['number'] }}</td>
+                        <td>{{ request['start_time'] }}</td>
+                        <td>{{ request['end_time'] }}</td>
+                        <td>{{ request['approver'] }}</td> <!-- 승인자 이름 표시 -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -237,8 +275,50 @@
             var cancelRejectBtn = document.getElementById("cancelReject");
             var confirmRejectBtn = document.getElementById("confirmReject");
 
+            var approvedModal = document.getElementById("approvedModal");
+            var openApprovedModalBtn = document.getElementById("openApprovedModal");
+            var closeApprovedModalSpan = document.getElementById("closeApprovedModal");
+
             var passwordForm = document.getElementById("passwordForm");
             var infoForm = document.getElementById("infoForm");
+
+            // 외출 승인 내역 모달 열기
+            openApprovedModalBtn.onclick = function() {
+                fetch('{{ url_for("views.get_approved_outings") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#approvedOutingTable tbody');
+                    tbody.innerHTML = ''; // 기존 내용을 지웁니다
+                    data.forEach(outing => {
+                        const row = `<tr>
+                                        <td>${outing.name}</td>
+                                        <td>${outing.grade}</td>
+                                        <td>${outing.student_class}</td>
+                                        <td>${outing.number}</td>
+                                        <td>${outing.start_time}</td>
+                                        <td>${outing.end_time}</td>
+                                        <td>${outing.approver}</td>
+                                    </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching approved outings:', error);
+                });
+
+                approvedModal.style.display = "block";
+            };
+
+            // 승인 내역 모달 닫기
+            closeApprovedModalSpan.onclick = function() {
+                approvedModal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target == approvedModal) {
+                    approvedModal.style.display = "none";
+                }
+            };
 
             // 통학생 관리 모달 열기/닫기
             if (openStudentModalBtn) {
@@ -565,5 +645,3 @@
     </script>
 </body>
 </html>
-
-
