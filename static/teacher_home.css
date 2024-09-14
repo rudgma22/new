@@ -664,6 +664,17 @@ th {
     color: #000;
 }
 
+/* 승인된 외출 신청 스타일 */
+.approved {
+    background-color: #e6f7e6; /* 연한 초록색 */
+}
+
+/* 거절된 외출 신청 스타일 */
+.rejected {
+    background-color: #fbe6e6; /* 연한 빨간색 */
+}
+
+/* 테이블 기본 스타일 적용 */
 #approvedOutingTable {
     width: 100%;
     border-collapse: separate;
@@ -690,12 +701,23 @@ th {
     font-size: 14px;
 }
 
-#approvedOutingTable tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
+/* 행을 클릭했을 때 효과 추가 */
 #approvedOutingTable tr:hover {
     background-color: #f0f0f0;
+}
+
+/* 승인 상태에 따라 스타일을 적용 */
+#approvedOutingTable tr.approved {
+    background-color: #e6f7e6; /* 연한 초록색: 승인됨 */
+}
+
+#approvedOutingTable tr.rejected {
+    background-color: #fbe6e6; /* 연한 빨간색: 거절됨 */
+}
+
+
+#approvedOutingTable tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
 
 /* Approver 칸 스타일링 */

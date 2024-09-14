@@ -287,27 +287,6 @@ def bulk_approve():
     else:
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
 
-
-@views_bp.route('/approve_leave/<int:request_id>', methods=['POST'])
-def approve_leave(request_id):
-    if 'user_id' not in session or session['role'] != 'teacher':
-        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
-
-    try:
-        request = OutingRequest.query.get(request_id)
-        if request:
-            request.status = '승인됨'
-            approver_name = Teacher.query.get(session['user_id']).name  # 승인자의 username 가져오기
-            request.approver = approver_name  # 승인자 username 저장
-            db.session.commit()
-            return jsonify({'status': 'success'}), 200
-        else:
-            return jsonify({'status': 'error', 'message': 'Request not found'}), 404
-    except Exception as e:
-        print(f"Error occurred during leave approval: {e}")
-        return jsonify({'status': 'error', 'message': 'Server error'}), 500
-
-
 @views_bp.route('/apply_leave', methods=['POST'])
 def apply_leave():
     if 'user_id' in session and session['role'] == 'student':
@@ -366,6 +345,26 @@ def cancel_leave(request_id):
         print(f"Error occurred during leave cancellation: {e}")
         return jsonify({'status': 'error', 'message': '서버 오류가 발생했습니다.'}), 500
 
+@views_bp.route('/approve_leave/<int:request_id>', methods=['POST'])
+def approve_leave(request_id):
+    if 'user_id' not in session or session['role'] != 'teacher':
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+
+    try:
+        request = OutingRequest.query.get(request_id)
+        if request:
+            request.status = '승인됨'
+            approver_name = Teacher.query.get(session['user_id']).name  # 승인자의 username 가져오기
+            request.approver = approver_name  # 승인자 username 저장
+            db.session.commit()
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'error', 'message': 'Request not found'}), 404
+    except Exception as e:
+        print(f"Error occurred during leave approval: {e}")
+        return jsonify({'status': 'error', 'message': 'Server error'}), 500
+
+
 @views_bp.route('/reject_leave/<int:request_id>', methods=['POST'])
 def reject_leave(request_id):
     json_data = request.get_json()
@@ -375,6 +374,8 @@ def reject_leave(request_id):
         outing_request = OutingRequest.query.get(request_id)
         if outing_request:
             outing_request.status = '거절됨'
+            approver_name = Teacher.query.get(session['user_id']).name
+            outing_request.approver = approver_name
             outing_request.rejection_reason = rejection_reason
             db.session.commit()
             return jsonify({'status': 'success'}), 200
@@ -393,32 +394,30 @@ def get_approved_outings():
     teacher = Teacher.query.get(session['user_id'])
 
     try:
-        # 승인된 외출 신청을 가져옵니다.
-        query = db.session.query(OutingRequest, Student).join(Student, OutingRequest.barcode == Student.barcode).filter(OutingRequest.status == '승인됨')
+        # 승인된 것과 거절된 외출 신청을 모두 가져옴
+        query = db.session.query(OutingRequest, Student).join(Student, OutingRequest.barcode == Student.barcode)\
+            .filter(OutingRequest.status.in_(['승인됨', '거절됨']))
 
-        # 학년과 반이 특정되어 있으면 해당 학년/반의 승인된 외출 신청만 표시
         if teacher.grade != '기타':
             query = query.filter(Student.grade == teacher.grade)
         if teacher.teacher_class != '기타':
             query = query.filter(Student.student_class == teacher.teacher_class)
 
-        # gimgosuperuser가 승인한 외출 요청은 제외
         if teacher.name != '관리용계정':
             query = query.filter(OutingRequest.approver != '관리용계정')
 
-        # 승인된 외출 신청 리스트 가져오기
         approved_outings = query.all()
 
-        # 승인 내역을 JSON으로 반환
         approved_outings_list = [
             {
                 'name': outing_request.student_name,
                 'grade': student.grade,
                 'student_class': student.student_class,
-                'number': student.number,  # 학생 번호 표시
+                'number': student.number,
                 'start_time': outing_request.start_time.strftime('%Y-%m-%d %H:%M'),
                 'end_time': outing_request.end_time.strftime('%Y-%m-%d %H:%M'),
-                'approver': outing_request.approver  # 승인자 표시
+                'status': outing_request.status,  # 상태 포함
+                'approver': outing_request.approver
             } for outing_request, student in approved_outings
         ]
 
@@ -427,7 +426,6 @@ def get_approved_outings():
     except Exception as e:
         print(f"Error fetching approved outings: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
-
 
 @views_bp.route('/validate_password', methods=['POST'])
 def validate_password():

@@ -55,7 +55,7 @@
             <a href="#" class="teacher-commuting-manage" id="openStudentModal">외박생 관리</a>
             <a href="#" class="teacher-commuting-manage" id="assignExternLink">외박 학생 지정하기</a>
             <a href="#" class="teacher-commuting-manage" id="bulkApproveLink">외출 일괄 승인하기</a>
-            <a href="#" class="teacher-commuting-manage" id="openApprovedModal">외출 승인 내역</a> <!-- 승인 내역 추가 -->
+            <a href="#" class="teacher-commuting-manage" id="openApprovedModal">외출 승인/거절 내역</a> <!-- 승인 내역 추가 -->
         </div>
 
         <div class="teacher-link-container">
@@ -125,7 +125,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="close" id="closeApprovedModal">&times;</span>
-                <h2>외출 승인 내역</h2>
+                <h2>외출 승인/거절 내역</h2>
             </div>
             <div class="modal-body">
                 <table id="approvedOutingTable">
@@ -137,18 +137,20 @@
                             <th>번호</th>
                             <th>외출 시작 시간</th>
                             <th>외출 종료 시간</th>
+                            <th>상태</th> <!-- 승인/거절 상태 추가 -->
                             <th>승인자</th>
                         </tr>
                     </thead>
                 <tbody>
                     {% for request in outing_requests %}
-                    <tr>
+                    <tr class="{% if request['status'] == '승인됨' %}approved{% else %}rejected{% endif %}">
                         <td>{{ request['student_name'] }}</td>
                         <td>{{ request['grade'] }}</td>
                         <td>{{ request['student_class'] }}</td>
                         <td>{{ request['number'] }}</td>
                         <td>{{ request['start_time'] }}</td>
                         <td>{{ request['end_time'] }}</td>
+                        <td>{{ request['status'] }}</td> <!-- 상태 표시 (승인됨 or 거절됨) -->
                         <td>{{ request['approver'] }}</td> <!-- 승인자 이름 표시 -->
                     </tr>
                     {% endfor %}
@@ -288,15 +290,17 @@
                 .then(response => response.json())
                 .then(data => {
                     const tbody = document.querySelector('#approvedOutingTable tbody');
-                    tbody.innerHTML = ''; // 기존 내용을 지웁니다
+                    tbody.innerHTML = ''; // 기존 내용을 지움
                     data.forEach(outing => {
-                        const row = `<tr>
+                        const rowClass = outing.status === '승인됨' ? 'approved' : 'rejected';
+                        const row = `<tr class="${rowClass}">
                                         <td>${outing.name}</td>
                                         <td>${outing.grade}</td>
                                         <td>${outing.student_class}</td>
                                         <td>${outing.number}</td>
                                         <td>${outing.start_time}</td>
                                         <td>${outing.end_time}</td>
+                                        <td>${outing.status}</td>
                                         <td>${outing.approver}</td>
                                     </tr>`;
                         tbody.innerHTML += row;
