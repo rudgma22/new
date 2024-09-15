@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from auth import auth_bp  # 인증 관련 블루프린트
 from views import views_bp  # 기타 뷰 관련 블루프린트
 from models import db, Student, Teacher, OutingRequest, execute_with_retry  # 데이터베이스 및 모델들
@@ -55,4 +55,5 @@ def initialize_database():
 if __name__ == '__main__':
     initialize_database()
     app.run(debug=True, host='0.0.0.0', port=8081)
+
 
