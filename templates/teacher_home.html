@@ -646,6 +646,60 @@
                 document.getElementById('modal-flash-messages').innerHTML = '';
             }
         });
+
+        // 알림 권한 요청
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.log("이 브라우저는 알림을 지원하지 않습니다.");
+                return;
+            }
+
+            Notification.requestPermission().then(function (permission) {
+                if (permission === "granted") {
+                    console.log("알림 권한이 허용되었습니다.");
+                }
+            });
+        }
+
+        // 알림 보내기
+        function sendNotification(title, options) {
+            if (!("Notification" in window)) {
+                console.log("이 브라우저는 알림을 지원하지 않습니다.");
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                var notification = new Notification(title, options);
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(function (permission) {
+                    if (permission === "granted") {
+                        var notification = new Notification(title, options);
+                    }
+                });
+            }
+        }
+
+        // 새로운 외출 신청 확인 및 알림
+        function checkNewRequests() {
+            fetch('{{ url_for("views.check_new_requests") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.new_requests) {
+                    sendNotification("새로운 외출 신청", {
+                        body: "새로운 외출 신청이 있습니다. 확인해 주세요.",
+                        icon: "{{ url_for('static', filename='logo_green.png') }}"
+                    });
+                }
+            })
+            .catch(error => console.error('Error checking new requests:', error));
+        }
+
+        // 페이지 로드 시 알림 권한 요청
+        document.addEventListener('DOMContentLoaded', function() {
+            requestNotificationPermission();
+            // 주기적으로 새로운 요청 확인 (예: 5분마다)
+            setInterval(checkNewRequests, 300000);
+        });
     </script>
 </body>
 </html>

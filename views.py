@@ -633,3 +633,25 @@ def delete_user():
         return jsonify({'success': False, 'message': '사용자를 찾을 수 없습니다.'}), 404
 
 
+@views_bp.route('/check_new_requests', methods=['GET'])
+def check_new_requests():
+    if 'user_id' not in session or session['role'] != 'teacher':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    teacher = Teacher.query.get(session['user_id'])
+    if not teacher:
+        return jsonify({'error': 'Teacher not found'}), 404
+
+    if teacher.teacher_class == '기타':
+        new_requests = OutingRequest.query.filter_by(
+            grade=teacher.grade,
+            status='대기중'
+        ).count()
+    else:
+        new_requests = OutingRequest.query.filter_by(
+            grade=teacher.grade,
+            student_class=teacher.teacher_class,
+            status='대기중'
+        ).count()
+
+    return jsonify({'new_requests': new_requests > 0})
