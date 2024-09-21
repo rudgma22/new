@@ -256,8 +256,32 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // socket.io 연결
+            var socket = io('/teacher_notifications');
+
+            socket.on('connect', function () {
+                console.log('Connected to server');
+            });
+
+            socket.on('new_outing_request', function(data) {
+            if (data.grade === '{{ teacher.grade }}' &&
+               (data.class === '{{ teacher.teacher_class }}' || '{{ teacher.teacher_class }}' === '기타')) {
+                sendNotification("새로운 외출 신청", {
+                    body: data.grade + "학년 " + data.class + "반에서 새로운 외출 신청이 있습니다.",
+                    icon: "{{ url_for('static', filename='logo_green.png') }}"
+                });
+
+                // 페이지 내 알림 표시
+                var notificationDiv = document.createElement('div');
+                notificationDiv.className = 'alert alert-info';
+                notificationDiv.textContent = "새로운 외출 신청이 있습니다. 확인해주세요.";
+                document.body.insertBefore(notificationDiv, document.body.firstChild);
+            }
+        });
+
             // 모달 및 버튼 요소 가져오기
             var studentModal = document.getElementById("studentModal");
             var openStudentModalBtn = document.getElementById("openStudentModal");
@@ -679,26 +703,10 @@
             }
         }
 
-        // 새로운 외출 신청 확인 및 알림
-        function checkNewRequests() {
-            fetch('{{ url_for("views.check_new_requests") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.new_requests) {
-                    sendNotification("새로운 외출 신청", {
-                        body: "새로운 외출 신청이 있습니다. 확인해 주세요.",
-                        icon: "{{ url_for('static', filename='logo_green.png') }}"
-                    });
-                }
-            })
-            .catch(error => console.error('Error checking new requests:', error));
-        }
 
         // 페이지 로드 시 알림 권한 요청
         document.addEventListener('DOMContentLoaded', function() {
             requestNotificationPermission();
-            // 주기적으로 새로운 요청 확인 (예: 5분마다)
-            setInterval(checkNewRequests, 300000);
         });
     </script>
 </body>

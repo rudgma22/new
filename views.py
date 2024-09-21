@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response
+from flask_socketio import emit
 from models import db, Student, Extern, OutingRequest, Teacher
 import bcrypt
 from sqlalchemy import text
 from datetime import datetime
 from werkzeug.security import generate_password_hash
+from flask import current_app
 
 # 블루프린트 정의
 views_bp = Blueprint('views', __name__, url_prefix='/views')
@@ -321,6 +323,9 @@ def apply_leave():
 
             db.session.add(new_request)
             db.session.commit()
+
+            notify_teachers(student.grade, student.student_class)
+
             flash('외출 신청이 성공적으로 접수되었습니다.', 'success')
             return redirect(url_for('views.student_home'))
         else:
@@ -328,6 +333,9 @@ def apply_leave():
             return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
+def notify_teachers(grade, student_class):
+    socketio = current_app.extensions['socketio']
+    socketio.emit('new_outing_request', {'grade': grade, 'class': student_class}, namespace='/teachers_notifications')
 
 
 @views_bp.route('/cancel_leave/<int:request_id>', methods=['POST'])

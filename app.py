@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
+from flask_socketio import SocketIO
 from auth import auth_bp  # 인증 관련 블루프린트
 from views import views_bp  # 기타 뷰 관련 블루프린트
 from models import db, Student, Teacher, OutingRequest, execute_with_retry  # 데이터베이스 및 모델들
@@ -25,6 +26,8 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 db.init_app(app)
 migrate = Migrate(app, db)
 
+socektio = SocketIO(app)
+
 # 블루프린트 등록
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(views_bp, url_prefix='/views')
@@ -45,6 +48,15 @@ def index():
 def robots_txt():
     return send_from_directory(app.static_folder, 'robots.txt')
 
+@socektio.on('connet', namespace='/teacher_notifications')
+def handle_connect():
+    print('Teacher connected to notifications')
+
+
+@socektio.on('disconnect', namespace='/teacher_notifications')
+def handle_disconnect():
+    print('Teacher disconnected from notifications')
+
 # 데이터베이스 초기화 함수
 def initialize_database():
     with app.app_context():
@@ -55,4 +67,3 @@ def initialize_database():
 if __name__ == '__main__':
     initialize_database()
     app.run(debug=True, host='0.0.0.0', port=8081)
-
