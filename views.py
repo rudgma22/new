@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response, request
 from flask_socketio import emit
-from models import db, Student, Extern, OutingRequest, Teacher
+from models import db, Student, Extern, OutingRequest, Teacher, Notice
 import bcrypt
 from sqlalchemy import text
 from datetime import datetime
@@ -24,7 +24,6 @@ def row_to_dict(row):
 @views_bp.route('/logout')
 def logout():
     session.clear()  # 세션에서 모든 데이터 삭제
-    flash('성공적으로 로그아웃되었습니다.', 'success')
     response = make_response(redirect(url_for('auth.index')))
     # 캐시 무효화 헤더 추가
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
@@ -32,32 +31,84 @@ def logout():
     response.headers['Expires'] = '-1'
     return response
 
+@views_bp.route('/get_notices', methods=['GET'])
+def get_notices():
+    notices = Notice.query.filter(
+        Notice.post_date <= datetime.now(),
+        Notice.expiration_date >= datetime.now()
+    ).order_by(Notice.post_date.desc()).all()
+
+    notice_list = [
+        {'title': notice.title, 'content': notice.content, 'post_date': notice.post_date.strftime('%Y-%m-%d')}
+        for notice in notices
+    ]
+    return jsonify(notice_list)
+
+
+@views_bp.route('/add_notice')
+def add_notice():
+    # 공지사항 작성 페이지를 렌더링
+    return render_template('add_notice.html')
+
+@views_bp.route('/submit_notice', methods=['POST'])
+def submit_notice():
+    title = request.form.get('title')
+    content = request.form.get('content')
+    post_date = datetime.strptime(request.form.get('post_date'), '%Y-%m-%dT%H:%M')
+    expiration_date = datetime.strptime(request.form.get('expiration_date'), '%Y-%m-%dT%H:%M')
+
+    if title and content:
+        new_notice = Notice(title=title, content=content, post_date=post_date, expiration_date=expiration_date)
+        db.session.add(new_notice)
+        db.session.commit()
+
+        flash('공지사항이 성공적으로 등록되었습니다.', 'success')
+        return redirect(url_for('views.add_notice'))
+    else:
+        flash('모든 필드를 채워주세요.', 'danger')
+        return redirect(url_for('views.add_notice'))
+
 
 @views_bp.route('/student_home')
 def student_home():
+    # 로그인 세션 확인
     if 'user_id' not in session or session['role'] != 'student':
         return redirect(url_for('auth.index'))
 
+    # 현재 로그인된 학생 정보 가져오기
     student = Student.query.get(session['user_id'])
+
+    # 'hide_notice' 쿠키가 없을 경우 공지사항을 가져옴
+    if 'hide_notice' not in request.cookies:
+        notice = Notice.query.filter(
+            Notice.post_date <= datetime.now(),
+            Notice.expiration_date >= datetime.now()
+        ).order_by(Notice.post_date.desc()).first()
+    else:
+        notice = None  # 쿠키가 있으면 공지사항을 표시하지 않음
+
+    # 학생이 있는 경우 외출 요청 목록 가져오기
     if student:
         outing_requests = OutingRequest.query.filter_by(student_name=student.name).all()
-        for request in outing_requests:
-            request.start_time = request.start_time.strftime('%Y-%m-%d %H:%M')
-            request.end_time = request.end_time.strftime('%Y-%m-%d %H:%M')
 
-        if 'password_validated' not in session:
-            session['password_validated'] = False
+        # 외출 요청 시간 형식 변환
+        for req in outing_requests:
+            req.start_time = req.start_time.strftime('%Y-%m-%d %H:%M')
+            req.end_time = req.end_time.strftime('%Y-%m-%d %H:%M')
 
+        # 페이지 렌더링 및 응답 생성
         response = make_response(render_template(
             'student_home.html',
-            student=row_to_dict(student),
-            outing_requests=[row_to_dict(req) for req in outing_requests],
-            password_validated=session.get('password_validated', False)
+            student=row_to_dict(student),  # 학생 정보
+            outing_requests=[row_to_dict(req) for req in outing_requests],  # 외출 요청 목록
+            notice=notice  # 공지사항 (쿠키에 따라 표시될지 결정됨)
         ))
+
         # 캐시 무효화 헤더 추가
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '-1'
+
         return response
     else:
         return redirect(url_for('auth.index'))
@@ -69,9 +120,20 @@ def teacher_home():
         return redirect(url_for('auth.index'))
 
     teacher = Teacher.query.get(session['user_id'])
+
+    # 쿠키를 통해 '하루 동안 보지 않기' 설정 확인
+    if 'hide_notice' not in request.cookies:
+        # 공지사항을 조회, 현재 시간에 유효한 공지사항만 가져옴
+        notice = Notice.query.filter(
+            Notice.post_date <= datetime.now(),
+            Notice.expiration_date >= datetime.now()
+        ).order_by(Notice.post_date.desc()).first()
+    else:
+        notice = None
+
     if teacher:
         new_requests_only = request.args.get('new_requests_only', 'false').lower() == 'true'
-        
+
         # '학년'과 '반'이 모두 '기타'인 경우 모든 학생을 표시
         if teacher.grade == '기타' and teacher.teacher_class == '기타':
             if new_requests_only:
@@ -82,7 +144,7 @@ def teacher_home():
                     'FROM outing_requests o '
                     'JOIN students s ON o.barcode = s.barcode '
                     'WHERE o.status = "대기중" '
-                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'
                 )).fetchall()
             else:
                 outing_requests = db.session.execute(text(
@@ -92,7 +154,7 @@ def teacher_home():
                     'FROM students s '
                     'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                     'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'
                 )).fetchall()
         else:
             # 기존 로직: 특정 학년/반에 대한 처리
@@ -105,7 +167,7 @@ def teacher_home():
                         'FROM outing_requests o '
                         'JOIN students s ON o.barcode = s.barcode '
                         'WHERE o.status = "대기중" AND s.grade = :grade '
-                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                         {'grade': teacher.grade}).fetchall()
                 else:
                     outing_requests = db.session.execute(text(
@@ -116,7 +178,7 @@ def teacher_home():
                         'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                         'WHERE s.grade = :grade '
                         'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                         {'grade': teacher.grade}).fetchall()
             else:
                 if new_requests_only:
@@ -127,7 +189,7 @@ def teacher_home():
                         'FROM outing_requests o '
                         'JOIN students s ON o.barcode = s.barcode '
                         'WHERE o.status = "대기중" AND s.grade = :grade AND s.student_class = :class '
-                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                         {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
                 else:
                     outing_requests = db.session.execute(text(
@@ -138,7 +200,7 @@ def teacher_home():
                         'LEFT JOIN outing_requests o ON s.barcode = o.barcode '
                         'WHERE s.grade = :grade AND s.student_class = :class '
                         'GROUP BY s.id, s.grade, s.student_class, s.number, s.name '
-                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                        'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                         {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
         outing_requests = [row_to_dict(outing_request) for outing_request in outing_requests]
@@ -156,7 +218,7 @@ def teacher_home():
                 'SELECT e.* '
                 'FROM externs e '
                 'JOIN students s ON e.student_id = s.id '
-                'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'  # 수정된 부분
+                'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'
             )).fetchall()
         else:
             if teacher.teacher_class == '기타':
@@ -165,7 +227,7 @@ def teacher_home():
                     'FROM externs e '
                     'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade '
-                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                     {'grade': teacher.grade}).fetchall()
             else:
                 externs = db.session.execute(text(
@@ -173,21 +235,18 @@ def teacher_home():
                     'FROM externs e '
                     'JOIN students s ON e.student_id = s.id '
                     'WHERE s.grade = :grade AND s.student_class = :class '
-                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),  # 수정된 부분
+                    'ORDER BY s.grade, CAST(s.student_class AS UNSIGNED), CAST(s.number AS UNSIGNED)'),
                     {'grade': teacher.grade, 'class': teacher.teacher_class}).fetchall()
 
         externs = [row_to_dict(extern) for extern in externs]
-
-        if 'password_validated' not in session:
-            session['password_validated'] = False
 
         response = make_response(render_template(
             'teacher_home.html',
             teacher=row_to_dict(teacher),
             outing_requests=outing_requests,
             externs=externs,
-            new_requests_only=new_requests_only,
-            password_validated=session.get('password_validated', False)
+            notice=notice,  # 공지사항 추가
+            new_requests_only=new_requests_only
         ))
         # 캐시 무효화 헤더 추가
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
@@ -196,7 +255,6 @@ def teacher_home():
         return response
     else:
         return redirect(url_for('auth.index'))
-
 
 @views_bp.route('/admin_home')
 def admin_home():
@@ -297,8 +355,9 @@ def apply_leave():
         if student is not None:
             existing_request = OutingRequest.query.filter_by(student_name=student.name, status="대기중").first()
 
+            # 이미 대기 중인 외출 신청이 있는 경우
             if existing_request:
-                flash('이미 대기 중인 외출 신청이 있습니다.', 'warning')
+                flash('이미 대기 중인 외출이 있습니다.', 'danger')  # 'danger' 카테고리로 변경
                 return redirect(url_for('views.student_home'))
 
             start_time_str = request.form['start_time']
@@ -333,6 +392,8 @@ def apply_leave():
             return redirect(url_for('views.student_home'))
     else:
         return redirect(url_for('auth.index'))
+
+
 def notify_teachers(grade, student_class):
     socketio = current_app.extensions['socketio']
     socketio.emit('new_outing_request', {'grade': grade, 'class': student_class}, namespace='/teachers_notifications')
@@ -402,20 +463,26 @@ def get_approved_outings():
     teacher = Teacher.query.get(session['user_id'])
 
     try:
-        # 승인된 것과 거절된 외출 신청을 모두 가져옴
-        query = db.session.query(OutingRequest, Student).join(Student, OutingRequest.barcode == Student.barcode)\
-            .filter(OutingRequest.status.in_(['승인됨', '거절됨']))
+        # 기본 쿼리: 승인 또는 거절된 외출 신청
+        query = db.session.query(OutingRequest, Student).join(Student, OutingRequest.barcode == Student.barcode) \
+            .filter(OutingRequest.status.in_(['승인됨', '거절됨'])) \
+            .filter(OutingRequest.approver == teacher.name)  # 현재 로그인한 교사의 승인/거절 내역만 필터링
 
+        # 학년이 기타일 경우 전체 학년, 그렇지 않으면 특정 학년을 필터링
         if teacher.grade != '기타':
             query = query.filter(Student.grade == teacher.grade)
+
+        # 반이 기타일 경우 전체 반, 그렇지 않으면 특정 반을 필터링
         if teacher.teacher_class != '기타':
             query = query.filter(Student.student_class == teacher.teacher_class)
 
+        # 관리용계정은 다른 사용자에게 표시되지 않도록 필터링
         if teacher.name != '관리용계정':
             query = query.filter(OutingRequest.approver != '관리용계정')
 
         approved_outings = query.all()
 
+        # 승인된 외출 내역 리스트 생성
         approved_outings_list = [
             {
                 'name': outing_request.student_name,
@@ -435,12 +502,14 @@ def get_approved_outings():
         print(f"Error fetching approved outings: {e}")
         return jsonify({'status': 'error', 'message': 'Server error'}), 500
 
+
 @views_bp.route('/validate_password', methods=['POST'])
 def validate_password():
     if 'user_id' in session:
         password = request.form.get('password')
         if not password:
-            return jsonify({'status': 'error', 'message': '비밀번호를 입력해주세요.'}), 400
+            flash('비밀번호를 입력해주세요.', 'danger')  # 플래시 메시지로 응답
+            return redirect(url_for('views.student_home'))
 
         role = session['role']
         user = None
@@ -449,13 +518,17 @@ def validate_password():
         elif role == 'teacher':
             user = Teacher.query.get(session['user_id'])
 
+        # 비밀번호 검증
         if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
             session['password_validated'] = True
-            return jsonify({'status': 'success'}), 200
+            return redirect(url_for('views.student_home'))  # 성공 시 리다이렉트만 수행
         else:
-            return jsonify({'status': 'error', 'message': '비밀번호가 일치하지 않습니다.'}), 400
+            flash('비밀번호가 일치하지 않습니다.', 'danger')  # 비밀번호 오류 시 플래시 메시지
+            return redirect(url_for('views.student_home'))  # 필요에 따라 다른 URL로 리다이렉트 가능
     else:
-        return jsonify({'status': 'error', 'message': '인증되지 않은 사용자입니다.'}), 403
+        flash('인증되지 않은 사용자입니다.', 'danger')  # 세션에 user_id가 없을 경우
+        return redirect(url_for('auth.index'))
+
 
 
 @views_bp.route('/reset_password_validation', methods=['POST'])

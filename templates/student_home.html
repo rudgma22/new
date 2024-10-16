@@ -5,63 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='student_home.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
     <title>김천고등학교 외출 신청 - 학생 홈</title>
-    <script src="/static/js/blockDevTools.js"></script>
-    <!-- 브라우저 캐시 방지 메타 태그 보완 -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
+    <style>
+        #flash-messages-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .flash-message {
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.5s ease-out, fadeOut 0.5s 4.5s ease-in forwards;
+        }
+        .flash-message svg {
+            margin-right: 8px;
+        }
+        .flash-message.success {
+            background-color: #4ade80; /* 초록색 */
+        }
+        .flash-message.danger {
+            background-color: #f87171; /* 빨간 주황색 */
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- 세션 확인 및 캐시 무효화를 위한 JavaScript 개선 -->
-    <script>
-        (function() {
-            // 세션 상태 확인
-            if (!{{ 'true' if session.get('user_id') else 'false' }}) {
-                window.location.href = "{{ url_for('auth.index') }}";
-                return;
-            }
-
-            // 페이지 로드 시 항상 서버에서 최신 데이터 요청
-            window.onpageshow = function(event) {
-                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                    window.location.reload(true);
-                }
-            };
-
-            // 뒤로가기 방지
-            history.pushState(null, null, location.href);
-            window.onpopstate = function(event) {
-                history.go(1);
-            };
-        })();
-    </script>
 
     <header>
         <img src="{{ url_for('static', filename='logo_blue.png') }}" alt="김천고등학교 로고" class="logo">
         <nav>
+            <a href="javascript:void(0)" class="header-link" id="openNoticeModal">공지사항</a>
             <a href="javascript:void(0);" class="header-link" id="openInfoModal">내 정보 관리</a>
-            <!-- 로그아웃 링크 수정 -->
             <a href="{{ url_for('views.logout') }}" class="header-link">Log Out</a>
         </nav>
     </header>
 
     <div class="application-container">
         <h1>{{ student['name'] }}님, 환영합니다!</h1>
-
-        <!-- Flash 메시지 표시 (일반 페이지용) -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
         <div class="check-link-container">
             <a href="javascript:void(0);" class="check-link" id="openModal">외출 신청 확인</a>
         </div>
@@ -90,12 +98,45 @@
         </form>
     </div>
 
+    <!-- 플래시 메시지 컨테이너 -->
+    <div id="flash-messages-container"></div>
+
+    <!-- 공지사항 팝업 -->
+    <div id="noticePopup" class="notice-popup">
+        <h2 id="noticeTitle">공지사항 제목</h2>
+        <p id="noticeContent">여기에 공지사항 내용이 들어갑니다.</p>
+        <div class="notice-popup-footer">
+            <label>
+                <input type="checkbox" id="hideForOneDay"> 1일 동안 보지 않기
+            </label>
+            <button id="closeNoticePopup">닫기</button>
+        </div>
+    </div>
+
+    <!-- 공지사항 모달 -->
+    <div id="noticeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeNoticeModal">&times;</span>
+                <h2>공지사항</h2>
+            </div>
+            <div class="modal-body">
+                <ul id="noticeList">
+                    <!-- 서버에서 불러온 공지사항 리스트 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <!-- Password validation modal -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closePasswordModal">&times;</span>
             <h2>내 정보 수정</h2>
             <p>접근하려면 비밀번호를 입력해야합니다.</p>
+
+            <div id="modal-flash-message-container"></div>
+
             <form method="POST" id="passwordForm">
                 <input type="hidden" name="username" value="{{ student['username'] }}">
                 <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
@@ -227,6 +268,79 @@
             var passwordForm = document.getElementById("passwordForm");
             var infoForm = document.getElementById("infoForm");
 
+            // 공지사항 모달 열기
+            const openNoticeModalBtn = document.getElementById('openNoticeModal');
+            const closeNoticeModalBtn = document.getElementById('closeNoticeModal');
+            const noticeModal = document.getElementById('noticeModal');
+            const noticeList = document.getElementById('noticeList');
+
+            openNoticeModalBtn.onclick = function() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        noticeList.innerHTML = ''; // 기존 공지사항을 지움
+                        data.forEach(notice => {
+                            const noticeItem = `<li><strong>${notice.title}</strong>: ${notice.content}</li>`;
+                            noticeList.innerHTML += noticeItem;
+                        });
+                        noticeModal.style.display = "block"; // 모달 열기
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
+            };
+
+            closeNoticeModalBtn.onclick = function() {
+                noticeModal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target == noticeModal) {
+                    noticeModal.style.display = "none";
+                }
+            };
+
+            // 공지사항 팝업 로드
+            function loadNotice() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const latestNotice = data[0];  // 최신 공지사항
+                            const hideNoticeKey = 'hide_notice_' + latestNotice.id;
+                            const hideUntil = localStorage.getItem(hideNoticeKey);
+
+                            if (!hideUntil || new Date() > new Date(hideUntil)) {
+                                document.getElementById('noticeTitle').textContent = latestNotice.title;
+                                document.getElementById('noticeContent').textContent = latestNotice.content;
+                                document.getElementById('noticePopup').style.display = 'flex';
+
+                                // '1일 동안 보지 않기' 클릭 이벤트
+                                document.getElementById('hideForOneDay').addEventListener('change', function() {
+                                    if (this.checked) {
+                                        const now = new Date();
+                                        now.setDate(now.getDate() + 1);  // 1일 추가
+                                        localStorage.setItem(hideNoticeKey, now);
+                                    } else {
+                                        localStorage.removeItem(hideNoticeKey);
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
+            }
+
+            // 공지사항 팝업 닫기
+            document.getElementById('closeNoticePopup').addEventListener('click', function() {
+                document.getElementById('noticePopup').style.display = 'none';
+            });
+
+            // 페이지 로드 시 공지사항 로드
+            loadNotice();
+
             // 초기 상태 저장
             var originalEmail = document.getElementById('email').value;
             var originalPassword = document.getElementById('new_password').value;
@@ -236,6 +350,7 @@
                 openInfoModalBtn.onclick = function () {
                     passwordModal.style.display = "block";
                     document.getElementById('passwordInput').value = ''; // 비밀번호 필드 초기화
+                    clearModalFlashMessages(); // 모달 열 때 플래시 메시지 초기화
                 };
             }
 
@@ -323,9 +438,11 @@
                 .catch(error => console.error('Error during account update:', error));
             };
 
-            function showModalFlashMessage(message) {
-                var flashContainer = document.getElementById('modal-flash-messages');
-                flashContainer.innerHTML = '<div class="flash-message danger">' + message + '</div>';
+            function showModalFlashMessage(message, type) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `flash-message ${type}`;
+                messageElement.innerHTML = `<span>${message}</span>`;
+                modalFlashMessageContainer.appendChild(messageElement);
             }
 
             var checkModal = document.getElementById("checkModal");
@@ -403,6 +520,56 @@
                 });
             }
         }
+
+        function showFlashMessage(message, type = 'success') {
+            const container = document.getElementById('flash-messages-container');
+            const messageElement = document.createElement('div');
+            messageElement.className = `flash-message ${type}`; // 타입에 따라 클래스 적용
+
+            let iconPath;
+            if (type === 'success') {
+                iconPath = 'M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'; // success 아이콘
+            } else if (type === 'danger') {
+                iconPath = 'M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'; // danger 아이콘
+            }
+
+            messageElement.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="${iconPath}"></path>
+                </svg>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(messageElement);
+
+            // 5초 후 메시지 DOM에서 완전히 제거
+            setTimeout(() => {
+                messageElement.remove();
+            }, 5000);
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach((message) => {
+                setTimeout(() => {
+                    message.remove();  // 5초 후 메시지 DOM에서 완전히 제거
+                }, 5000);  // 5초 대기 후 제거
+            });
+        });
+
+
+        // 페이지 로드 시 서버에서 전달된 플래시 메시지 표시
+        document.addEventListener('DOMContentLoaded', function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        showFlashMessage("{{ message }}", "{{ category }}");
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
     </script>
+
 </body>
 </html>

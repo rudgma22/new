@@ -80,6 +80,17 @@ class Extern(db.Model):
     barcode = db.Column(db.String(80), unique=True, nullable=False)
     student = db.relationship('Student', backref='externs')
 
+class Notice(db.Model):
+    __tablename__ = 'notices'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    post_date = db.Column(db.DateTime, nullable=False)
+    expiration_date = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, onupdate=func.now())
+
+
 # 통학생 관리 관련 함수
 def add_extern(student_id):
     student = Student.query.get(student_id)
@@ -169,4 +180,32 @@ def get_outing_statistics():
     ).join(OutingRequest, Student.name == OutingRequest.student_name)\
     .filter(OutingRequest.status == '승인됨')\
     .group_by(Student.grade, Student.student_class).all()
+
+def add_notice(title, content, author):
+    new_notice = Notice(
+        title=title,
+        content=content,
+        author=author
+    )
+    db.session.add(new_notice)
+    db.session.commit()
+
+def get_all_notices():
+    notices = Notice.query.order_by(Notice.created_at.desc()).all()
+    return [{'id': notice.id, 'title': notice.title, 'content': notice.content,
+             'author': notice.author, 'created_at': notice.created_at.strftime('%Y-%m-%d %H:%M:%S')} for notice in notices]
+
+def edit_notice(notice_id, title, content):
+    notice = Notice.query.get(notice_id)
+    if notice:
+        notice.title = title
+        notice.content = content
+        db.session.commit()
+
+def delete_notice(notice_id):
+    notice = Notice.query.get(notice_id)
+    if notice:
+        db.session.delete(notice)
+        db.session.commit()
+
 

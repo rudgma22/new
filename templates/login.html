@@ -6,8 +6,8 @@
     <link rel="icon" href="{{ url_for('static', filename='logo_blue.png') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
-    <script src="/static/js/blockDevTools.js"></script>
     <title>김천고등학교 외출 신청 - 로그인</title>
+    <script src="/static/js/blockDevTools.js"></script>
     <!-- 캐시 제어 메타 태그 추가 -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
@@ -31,9 +31,21 @@
     <img src="{{ url_for('static', filename='gimgologo.png') }}" alt="김천고등학교 로고">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="flash-messages">
+            <div class="notifications-container">
                 {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">{{ message }}</div>
+                    <div class="error-alert">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="error-svg" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 1a9 9 0 100 18 9 9 0 000-18zm1 14H9v-2h2v2zm0-4H9V7h2v4z"></path>
+                                </svg>
+                            </div>
+                            <div class="error-prompt-container">
+                                <div class="error-prompt-heading">{{ category | capitalize }}</div>
+                                <div class="error-prompt-wrap">{{ message }}</div>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}

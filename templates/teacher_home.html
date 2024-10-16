@@ -35,6 +35,7 @@
     <header>
         <img src="{{ url_for('static', filename='logo_green.png') }}" alt="김천고등학교 로고" class="logo">
         <nav>
+            <a href="javascript:void(0)" class="header-link" id="openNoticeModal">공지사항</a>
             <a href="#" class="header-link" id="openInfoModal">내 정보 관리</a>
             <a href="{{ url_for('views.logout') }}" class="header-link">Log Out</a>
         </nav>
@@ -117,6 +118,36 @@
                     {% endif %}
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- 플래시 메시지 컨테이너 -->
+    <div id="flash-messages-container"></div>
+
+   <!-- 공지사항 팝업 -->
+    <div id="noticePopup" class="notice-popup">
+        <h2 id="noticeTitle">공지사항 제목</h2>
+        <p id="noticeContent">여기에 공지사항 내용이 들어갑니다.</p>
+        <div class="notice-popup-footer">
+            <label>
+                <input type="checkbox" id="hideForOneDay"> 1일 동안 보지 않기
+            </label>
+            <button id="closeNoticePopup">닫기</button>
+        </div>
+    </div>
+
+    <!-- 공지사항 모달 -->
+    <div id="noticeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeNoticeModal">&times;</span>
+                <h2>공지사항</h2>
+            </div>
+            <div class="modal-body">
+                <ul id="noticeList">
+                    <!-- 서버에서 불러온 공지사항 리스트 -->
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -256,31 +287,399 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventLis<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='logo_green.png') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='teacher_home.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+    <title>김천고등학교 외출 신청 - 교사 페이지</title>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+</head>
+<body>
+    <script>
+        (function() {
+            if (!{{ 'true' if session.get('user_id') else 'false' }}) {
+                window.location.href = "{{ url_for('auth.index') }}";
+                return;
+            }
+
+            window.onpageshow = function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload(true);
+                }
+            };
+
+            history.pushState(null, null, location.href);
+            window.onpopstate = function(event) {
+                history.go(1);
+            };
+        })();
+    </script>
+
+    <header>
+        <img src="{{ url_for('static', filename='logo_green.png') }}" alt="김천고등학교 로고" class="logo">
+        <nav>
+            <a href="javascript:void(0)" class="header-link" id="openNoticeModal">공지사항</a>
+            <a href="#" class="header-link" id="openInfoModal">내 정보 관리</a>
+            <a href="{{ url_for('views.logout') }}" class="header-link">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="application-container">
+        <h1>
+            {% if teacher.grade == '기타' and teacher.teacher_class == '기타' %}
+                전체 학생 외출 관리
+            {% elif teacher.teacher_class == '기타' %}
+                {{ teacher.grade }} 전체 외출 관리
+            {% else %}
+                {{ teacher.grade }} {{ teacher.teacher_class }} 외출 관리
+            {% endif %}
+        </h1>
+        <hr class="application-line">
+        <div class="teacher-link-container">
+            <a href="#" class="teacher-commuting-manage" id="openStudentModal">외박생 관리</a>
+            <a href="#" class="teacher-commuting-manage" id="assignExternLink">외박 학생 지정하기</a>
+            <a href="#" class="teacher-commuting-manage" id="bulkApproveLink">외출 일괄 승인하기</a>
+            <a href="#" class="teacher-commuting-manage" id="openApprovedModal">외출 승인/거절 내역</a> <!-- 승인 내역 추가 -->
+        </div>
+
+        <div class="teacher-link-container">
+            <span>새로운 외출 신청</span>
+            <label class="switch">
+                <input type="checkbox" id="newRequestToggle" {% if new_requests_only %}checked{% endif %}>
+                <span class="slider round"></span>
+            </label>
+        </div>
+
+        <div class="table-container">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>학년</th>
+                        <th>반</th>
+                        <th>번호</th>
+                        <th>이름</th>
+                        <th>외출 통계</th>
+                        {% if new_requests_only %}
+                        <th>외출 시작 시간</th>
+                        <th>외출 종료 시간</th>
+                        <th>외출 사유</th>
+                        {% endif %}
+                        <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">승인</th>
+                        <th class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">거절</th>
+                        <th class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">외박생 지정</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if outing_requests %}
+                        {% for request in outing_requests %}
+                        <tr>
+                            <td>{{ request['grade'] }}</td>
+                            <td>{{ request['student_class'] }}</td>
+                            <td>{{ request['number'] }}</td>
+                            <td>{{ request['student_name'] }}</td>
+                            <td>{{ request['outing_count'] }}</td>
+                            {% if new_requests_only %}
+                            <td>{{ request['start_time'] }}</td>
+                            <td>{{ request['end_time'] }}</td>
+                            <td>{{ request['reason'] }}</td>
+                            {% endif %}
+                            <td class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">
+                                <button class="approve-btn" data-request-id="{{ request['id'] }}">승인</button>
+                            </td>
+                            <td class="action-column" style="display: {% if new_requests_only %}table-cell{% else %}none{% endif %};">
+                                <button class="reject-btn" data-request-id="{{ request['id'] }}">거절</button>
+                            </td>
+                            <td class="extern-column" style="display: {% if new_requests_only %}none{% else %}table-cell{% endif %};">
+                                <input type="checkbox" class="extern-checkbox" data-student-id="{{ request['student_id'] }}" {% if request['is_extern'] %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: red;">승인할 학생이 없습니다.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 플래시 메시지 컨테이너 -->
+    <div id="flash-messages-container"></div>
+
+   <!-- 공지사항 팝업 -->
+    <div id="noticePopup" class="notice-popup">
+        <h2 id="noticeTitle">공지사항 제목</h2>
+        <p id="noticeContent">여기에 공지사항 내용이 들어갑니다.</p>
+        <div class="notice-popup-footer">
+            <label>
+                <input type="checkbox" id="hideForOneDay"> 1일 동안 보지 않기
+            </label>
+            <button id="closeNoticePopup">닫기</button>
+        </div>
+    </div>
+
+    <!-- 공지사항 모달 -->
+    <div id="noticeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeNoticeModal">&times;</span>
+                <h2>공지사항</h2>
+            </div>
+            <div class="modal-body">
+                <ul id="noticeList">
+                    <!-- 서버에서 불러온 공지사항 리스트 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 외출 승인 내역 모달 -->
+    <div id="approvedModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeApprovedModal">&times;</span>
+                <h2>외출 승인/거절 내역</h2>
+            </div>
+            <div class="modal-body">
+                <table id="approvedOutingTable">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>학년</th>
+                            <th>반</th>
+                            <th>번호</th>
+                            <th>외출 시작 시간</th>
+                            <th>외출 종료 시간</th>
+                            <th>상태</th> <!-- 승인/거절 상태 추가 -->
+                            <th>승인자</th>
+                        </tr>
+                    </thead>
+                <tbody>
+                    {% for request in outing_requests %}
+                    <tr class="{% if request['status'] == '승인됨' %}approved{% else %}rejected{% endif %}">
+                        <td>{{ request['student_name'] }}</td>
+                        <td>{{ request['grade'] }}</td>
+                        <td>{{ request['student_class'] }}</td>
+                        <td>{{ request['number'] }}</td>
+                        <td>{{ request['start_time'] }}</td>
+                        <td>{{ request['end_time'] }}</td>
+                        <td>{{ request['status'] }}</td> <!-- 상태 표시 (승인됨 or 거절됨) -->
+                        <td>{{ request['approver'] }}</td> <!-- 승인자 이름 표시 -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 통학생 관리 모달 -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" id="closeStudentModal">&times;</span>
+                <h2>외박생 관리</h2>
+            </div>
+            <div class="modal-body">
+                <div id="externStudentList">
+                    {% for extern in externs %}
+                    <div>
+                        <input type="checkbox" class="manage-extern-checkbox" data-extern-id="{{ extern['id'] }}">
+                        {{ extern['name'] }} ({{ extern['grade'] }} {{ extern['student_class'] }})
+                    </div>
+                    {% endfor %}
+                </div>
+                <button id="removeExternBtn">외박생 지정 해제하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 입력 모달 -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closePasswordModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <p>접근하려면 비밀번호를 입력해야합니다.</p>
+            <form method="POST" action="{{ url_for('views.validate_password') }}" id="passwordForm">
+                <input type="hidden" name="username" value="{{ teacher['username'] }}">
+                <input type="password" id="passwordInput" name="password" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                <div class="button-group">
+                    <button type="button" id="cancelPassword">취소</button>
+                    <button type="submit" id="confirmPassword">확인</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 정보 수정 모달 -->
+    <div id="infoModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>내 정보 수정</h2>
+            <div id="modal-flash-messages"></div> <!-- 모달 내 플래시 메시지 표시 위치 -->
+            <hr class="modal-line">
+            <form action="{{ url_for('views.update_account') }}" method="POST" id="infoForm">
+                <div>
+                    <label for="name">이름</label>
+                    <div class="readonly-field">{{ teacher['name'] }}</div>
+                </div>
+                <div>
+                    <label for="grade">담당 학년</label>
+                    <div class="readonly-field">{{ teacher['grade'] }}</div>
+                </div>
+                <div>
+                    <label for="class">담당 반</label>
+                    <div class="readonly-field">{{ teacher['teacher_class'] }}</div>
+                </div>
+                <div>
+                    <label for="username">아이디</label>
+                    <div class="readonly-field">{{ teacher['username'] }}</div>
+                </div>
+                <div>
+                    <label for="new_password">비밀번호</label>
+                    <input type="password" name="new_password" placeholder="변경할 비밀번호 입력" autocomplete="new-password" id="new_password">
+                </div>
+                <div>
+                    <label for="confirm_password">비밀번호 재입력</label>
+                    <input type="password" name="confirm_password" placeholder="변경할 비밀번호 재입력" autocomplete="new-password" id="confirm_password">
+                </div>
+                <div>
+                    <label for="email">이메일</label>
+                    <input type="email" name="email" value="{{ teacher['email'] }}" placeholder="변경할 이메일 입력" id="email">
+                </div>
+                <button type="submit" class="save-btn">저장</button>
+                <button type="button" class="cancel-btn" id="cancelModal">취소</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal">
+        <div class="modal-content reject-modal">
+            <div class="modal-header">
+                <h2>거절 사유 입력</h2>
+                <span class="close" id="closeRejectModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="rejectReasonInput" placeholder="거절 사유를 입력해주세요"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelReject" class="btn btn-cancel">취소</button>
+                <button type="button" id="confirmReject" class="btn btn-confirm">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // socket.io 연결
-            var socket = io('/teacher_notifications');
+            // 공지사항 팝업 로드
+            function loadNotice() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const latestNotice = data[0];  // 최신 공지사항
+                            const hideNoticeKey = 'hide_notice_' + latestNotice.id;
+                            const hideUntil = localStorage.getItem(hideNoticeKey);
 
-            socket.on('connect', function () {
-                console.log('Connected to server');
+                            if (!hideUntil || new Date() > new Date(hideUntil)) {
+                                document.getElementById('noticeTitle').textContent = latestNotice.title;
+                                document.getElementById('noticeContent').textContent = latestNotice.content;
+                                document.getElementById('noticePopup').style.display = 'flex';
+
+                                // '1일 동안 보지 않기' 클릭 이벤트
+                                document.getElementById('hideForOneDay').addEventListener('change', function() {
+                                    if (this.checked) {
+                                        const now = new Date();
+                                        now.setDate(now.getDate() + 1);  // 1일 추가
+                                        localStorage.setItem(hideNoticeKey, now);
+                                    } else {
+                                        localStorage.removeItem(hideNoticeKey);
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
+            }
+
+            // 공지사항 팝업 닫기
+            document.getElementById('closeNoticePopup').addEventListener('click', function() {
+                document.getElementById('noticePopup').style.display = 'none';
             });
 
-            socket.on('new_outing_request', function(data) {
-            if (data.grade === '{{ teacher.grade }}' &&
-               (data.class === '{{ teacher.teacher_class }}' || '{{ teacher.teacher_class }}' === '기타')) {
-                sendNotification("새로운 외출 신청", {
-                    body: data.grade + "학년 " + data.class + "반에서 새로운 외출 신청이 있습니다.",
-                    icon: "{{ url_for('static', filename='logo_green.png') }}"
-                });
+            // 페이지 로드 시 공지사항 로드
+            loadNotice();
 
-                // 페이지 내 알림 표시
-                var notificationDiv = document.createElement('div');
-                notificationDiv.className = 'alert alert-info';
-                notificationDiv.textContent = "새로운 외출 신청이 있습니다. 확인해주세요.";
-                document.body.insertBefore(notificationDiv, document.body.firstChild);
+            // 플래시 메시지 표시 함수
+            function showFlashMessage(message, type = 'success') {
+                const container = document.getElementById('flash-messages-container');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'flash-message';
+
+                let iconPath;
+                if (type === 'success') {
+                    iconPath = 'M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'; // Success 아이콘
+                } else if (type === 'danger') {
+                    iconPath = 'M12 8v4m0 4h.01M12 2a10 10 0 110 20 10 10 0 010-20z'; // Danger 아이콘
+                    messageElement.classList.add('danger');  // danger 클래스 추가
+                }
+
+                messageElement.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="${iconPath}"></path>
+                    </svg>
+                    <span>${message}</span>
+                `;
+
+                container.appendChild(messageElement);
+
+                // 5초 후 메시지 DOM에서 제거
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 5000);
             }
-        });
+
+            // 공지사항 모달 열기
+            const openNoticeModalBtn = document.getElementById('openNoticeModal');
+            const closeNoticeModalBtn = document.getElementById('closeNoticeModal');
+            const noticeModal = document.getElementById('noticeModal');
+            const noticeList = document.getElementById('noticeList');
+
+            openNoticeModalBtn.onclick = function() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        noticeList.innerHTML = ''; // 기존 공지사항을 지움
+                        data.forEach(notice => {
+                            const noticeItem = `<li><strong>${notice.title}</strong>: ${notice.content}</li>`;
+                            noticeList.innerHTML += noticeItem;
+                        });
+                        noticeModal.style.display = "block"; // 모달 열기
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
+            };
+
+            closeNoticeModalBtn.onclick = function() {
+                noticeModal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target == noticeModal) {
+                    noticeModal.style.display = "none";
+                }
+            };
 
             // 모달 및 버튼 요소 가져오기
             var studentModal = document.getElementById("studentModal");
@@ -403,7 +802,7 @@
                             passwordModal.style.display = "none";
                             infoModal.style.display = "block";
                         } else {
-                            alert(data.message);  // 서버로부터 전달된 오류 메시지 표시
+                            showFlashMessage(data.message, 'danger');  // 서버로부터 전달된 오류 메시지 플래시 메시지로 표시
                         }
                     })
                     .catch(error => {
@@ -639,7 +1038,7 @@
                             alert(data.message);
                             location.href = "{{ url_for('views.teacher_home') }}";
                         } else {
-                            showModalFlashMessage(data.message);
+                            showFlashMessage(data.message, 'danger');  // 서버 오류 시 플래시 메시지 표시
                         }
                     })
                     .catch(error => console.error('Error during account update:', error));
@@ -669,45 +1068,501 @@
             function clearModalFlashMessages() {
                 document.getElementById('modal-flash-messages').innerHTML = '';
             }
-        });
-
-        // 알림 권한 요청
-        function requestNotificationPermission() {
-            if (!("Notification" in window)) {
-                console.log("이 브라우저는 알림을 지원하지 않습니다.");
-                return;
-            }
-
-            Notification.requestPermission().then(function (permission) {
-                if (permission === "granted") {
-                    console.log("알림 권한이 허용되었습니다.");
-                }
             });
-        }
+    </script>
+</body>
+</html>
+tener('DOMContentLoaded', function () {
+            // 공지사항 팝업 로드
+            function loadNotice() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const latestNotice = data[0];  // 최신 공지사항
+                            const hideNoticeKey = 'hide_notice_' + latestNotice.id;
+                            const hideUntil = localStorage.getItem(hideNoticeKey);
 
-        // 알림 보내기
-        function sendNotification(title, options) {
-            if (!("Notification" in window)) {
-                console.log("이 브라우저는 알림을 지원하지 않습니다.");
-                return;
+                            if (!hideUntil || new Date() > new Date(hideUntil)) {
+                                document.getElementById('noticeTitle').textContent = latestNotice.title;
+                                document.getElementById('noticeContent').textContent = latestNotice.content;
+                                document.getElementById('noticePopup').style.display = 'flex';
+
+                                // '1일 동안 보지 않기' 클릭 이벤트
+                                document.getElementById('hideForOneDay').addEventListener('change', function() {
+                                    if (this.checked) {
+                                        const now = new Date();
+                                        now.setDate(now.getDate() + 1);  // 1일 추가
+                                        localStorage.setItem(hideNoticeKey, now);
+                                    } else {
+                                        localStorage.removeItem(hideNoticeKey);
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
             }
 
-            if (Notification.permission === "granted") {
-                var notification = new Notification(title, options);
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(function (permission) {
-                    if (permission === "granted") {
-                        var notification = new Notification(title, options);
+            // 공지사항 팝업 닫기
+            document.getElementById('closeNoticePopup').addEventListener('click', function() {
+                document.getElementById('noticePopup').style.display = 'none';
+            });
+
+            // 페이지 로드 시 공지사항 로드
+            loadNotice();
+
+            // 플래시 메시지 표시 함수
+            function showFlashMessage(message, type = 'success') {
+                const container = document.getElementById('flash-messages-container');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'flash-message';
+
+                let iconPath;
+                if (type === 'success') {
+                    iconPath = 'M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'; // Success 아이콘
+                } else if (type === 'danger') {
+                    iconPath = 'M12 8v4m0 4h.01M12 2a10 10 0 110 20 10 10 0 010-20z'; // Danger 아이콘
+                    messageElement.classList.add('danger');  // danger 클래스 추가
+                }
+
+                messageElement.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="${iconPath}"></path>
+                    </svg>
+                    <span>${message}</span>
+                `;
+
+                container.appendChild(messageElement);
+
+                // 5초 후 메시지 DOM에서 제거
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 5000);
+            }
+
+            // 공지사항 모달 열기
+            const openNoticeModalBtn = document.getElementById('openNoticeModal');
+            const closeNoticeModalBtn = document.getElementById('closeNoticeModal');
+            const noticeModal = document.getElementById('noticeModal');
+            const noticeList = document.getElementById('noticeList');
+
+            openNoticeModalBtn.onclick = function() {
+                fetch('{{ url_for("views.get_notices") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        noticeList.innerHTML = ''; // 기존 공지사항을 지움
+                        data.forEach(notice => {
+                            const noticeItem = `<li><strong>${notice.title}</strong>: ${notice.content}</li>`;
+                            noticeList.innerHTML += noticeItem;
+                        });
+                        noticeModal.style.display = "block"; // 모달 열기
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notices:', error);
+                    });
+            };
+
+            closeNoticeModalBtn.onclick = function() {
+                noticeModal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target == noticeModal) {
+                    noticeModal.style.display = "none";
+                }
+            };
+
+            // 모달 및 버튼 요소 가져오기
+            var studentModal = document.getElementById("studentModal");
+            var openStudentModalBtn = document.getElementById("openStudentModal");
+            var closeStudentModalSpan = document.getElementById("closeStudentModal");
+
+            var passwordModal = document.getElementById("passwordModal");
+            var openInfoModalBtn = document.getElementById("openInfoModal");
+            var closePasswordModalSpan = document.getElementById("closePasswordModal");
+            var cancelPasswordBtn = document.getElementById("cancelPassword");
+
+            var infoModal = document.getElementById("infoModal");
+            var closeModalSpan = document.getElementById("closeModal");
+            var cancelModalBtn = document.getElementById("cancelModal");
+
+            var rejectModal = document.getElementById("rejectModal");
+            var closeRejectModalSpan = document.getElementById("closeRejectModal");
+            var cancelRejectBtn = document.getElementById("cancelReject");
+            var confirmRejectBtn = document.getElementById("confirmReject");
+
+            var approvedModal = document.getElementById("approvedModal");
+            var openApprovedModalBtn = document.getElementById("openApprovedModal");
+            var closeApprovedModalSpan = document.getElementById("closeApprovedModal");
+
+            var passwordForm = document.getElementById("passwordForm");
+            var infoForm = document.getElementById("infoForm");
+
+            // 외출 승인 내역 모달 열기
+            openApprovedModalBtn.onclick = function() {
+                fetch('{{ url_for("views.get_approved_outings") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#approvedOutingTable tbody');
+                    tbody.innerHTML = ''; // 기존 내용을 지움
+                    data.forEach(outing => {
+                        const rowClass = outing.status === '승인됨' ? 'approved' : 'rejected';
+                        const row = `<tr class="${rowClass}">
+                                        <td>${outing.name}</td>
+                                        <td>${outing.grade}</td>
+                                        <td>${outing.student_class}</td>
+                                        <td>${outing.number}</td>
+                                        <td>${outing.start_time}</td>
+                                        <td>${outing.end_time}</td>
+                                        <td>${outing.status}</td>
+                                        <td>${outing.approver}</td>
+                                    </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching approved outings:', error);
+                });
+
+                approvedModal.style.display = "block";
+            };
+
+            // 승인 내역 모달 닫기
+            closeApprovedModalSpan.onclick = function() {
+                approvedModal.style.display = "none";
+            };
+
+            window.onclick = function(event) {
+                if (event.target == approvedModal) {
+                    approvedModal.style.display = "none";
+                }
+            };
+
+            // 통학생 관리 모달 열기/닫기
+            if (openStudentModalBtn) {
+                openStudentModalBtn.onclick = function() {
+                    studentModal.style.display = "block";
+                };
+            }
+
+            if (closeStudentModalSpan) {
+                closeStudentModalSpan.onclick = function() {
+                    studentModal.style.display = "none";
+                };
+            }
+
+            // 비밀번호 모달 열기/닫기
+            if (openInfoModalBtn) {
+                openInfoModalBtn.onclick = function() {
+                    document.getElementById('passwordInput').value = ''; // 비밀번호 입력 초기화
+                    passwordModal.style.display = "block";
+                };
+            }
+
+            if (closePasswordModalSpan) {
+                closePasswordModalSpan.onclick = function() {
+                    passwordModal.style.display = "none";
+                };
+            }
+
+            if (cancelPasswordBtn) {
+                cancelPasswordBtn.onclick = function() {
+                    passwordModal.style.display = "none";
+                };
+            }
+
+            // 비밀번호 확인 후 정보 수정 모달 열기
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(passwordForm);
+                    const password = formData.get('password');
+
+                    if (!password) {
+                        alert('비밀번호를 입력해주세요.');
+                        return;
                     }
+
+                    fetch('{{ url_for("views.validate_password") }}', {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            passwordModal.style.display = "none";
+                            infoModal.style.display = "block";
+                        } else {
+                            showFlashMessage(data.message, 'danger');  // 서버로부터 전달된 오류 메시지 플래시 메시지로 표시
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during password validation:', error);
+                    });
                 });
             }
-        }
 
+            // 정보 수정 모달 닫기
+            if (closeModalSpan) {
+                closeModalSpan.onclick = function() {
+                    infoModal.style.display = "none";
+                    resetInfoForm();
+                };
+            }
 
-        // 페이지 로드 시 알림 권한 요청
-        document.addEventListener('DOMContentLoaded', function() {
-            requestNotificationPermission();
-        });
+            if (cancelModalBtn) {
+                cancelModalBtn.onclick = function() {
+                    infoModal.style.display = "none";
+                    resetInfoForm();
+                };
+            }
+
+            // 외출 신청 승인 및 거절 처리
+            document.querySelectorAll('.approve-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    var requestId = this.getAttribute('data-request-id');
+                    if (!requestId) {
+                        alert('유효하지 않은 요청 ID입니다.');
+                        return;
+                    }
+
+                    var approveUrl = "{{ url_for('views.approve_leave', request_id=0).replace('0', '') }}" + requestId;
+
+                    fetch(approveUrl, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외출 신청이 승인되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('승인 처리 중 오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => console.error('Error during approval:', error));
+                });
+            });
+
+            // 거절 모달 열기/닫기
+            document.querySelectorAll('.reject-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    var requestId = this.getAttribute('data-request-id');
+                    if (!requestId) {
+                        alert('유효하지 않은 요청 ID입니다.');
+                        return;
+                    }
+                    rejectModal.style.display = "block";
+                    confirmRejectBtn.setAttribute('data-request-id', requestId);
+                });
+            });
+
+            if (closeRejectModalSpan) {
+                closeRejectModalSpan.onclick = function() {
+                    rejectModal.style.display = "none";
+                };
+            }
+
+            if (cancelRejectBtn) {
+                cancelRejectBtn.onclick = function() {
+                    rejectModal.style.display = "none";
+                };
+            }
+
+            if (confirmRejectBtn) {
+                confirmRejectBtn.onclick = function() {
+                    var requestId = this.getAttribute('data-request-id');
+                    var rejectReason = document.getElementById("rejectReasonInput").value;
+                    var rejectUrl = "{{ url_for('views.reject_leave', request_id=0).replace('0', '') }}" + requestId;
+
+                    fetch(rejectUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rejection_reason: rejectReason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외출 신청이 거절되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('거절 처리 중 오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => console.error('Error during leave rejection:', error));
+                };
+            }
+
+            // 스위치 상태에 따른 열 표시 조정
+            document.getElementById('newRequestToggle').addEventListener('change', function() {
+                window.location.href = `{{ url_for('views.teacher_home') }}?new_requests_only=${this.checked}`;
+            });
+
+            // 페이지 로드 시 열 토글
+            toggleColumns();
+
+            function toggleColumns() {
+                const isChecked = document.getElementById('newRequestToggle').checked;
+                document.querySelectorAll('.action-column').forEach(column => {
+                    column.style.display = isChecked ? 'table-cell' : 'none';
+                });
+                document.querySelectorAll('.extern-column').forEach(column => {
+                    column.style.display = isChecked ? 'none' : 'table-cell';
+                });
+            }
+
+            // 통학생 지정 및 지정 해제 처리
+            var assignExternBtn = document.getElementById('assignExternLink');
+            assignExternBtn.onclick = function(event) {
+                event.preventDefault();
+                var checkedBoxes = document.querySelectorAll('.extern-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('외박으로 지정할 학생을 선택해주세요.');
+                    return;
+                }
+
+                var studentIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-student-id')).filter(id => id);
+
+                if (studentIds.length === 0) {
+                    alert('유효한 학생 ID가 없습니다.');
+                    return;
+                }
+
+                showConfirmationDialog('정말로 외박 학생으로 지정하시겠습니까?', function() {
+                    fetch('{{ url_for("views.add_extern") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ externs: studentIds, action: 'add' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외박 학생이 성공적으로 지정되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('외박 신청 중 오류가 발생했습니다: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during assigning extern:', error);
+                        alert('외박 신청 중 오류가 발생했습니다.');
+                    });
+                });
+            };
+
+            var removeExternBtn = document.getElementById('removeExternBtn');
+            removeExternBtn.onclick = function(event) {
+                event.preventDefault();
+                var checkedBoxes = document.querySelectorAll('.manage-extern-checkbox:checked');
+                if (checkedBoxes.length === 0) {
+                    alert('외박 지정 해제할 학생을 선택해주세요.');
+                    return;
+                }
+
+                var externIds = Array.from(checkedBoxes).map(cb => cb.getAttribute('data-extern-id'));
+
+                showConfirmationDialog('정말로 외박생 지정을 해제하시겠습니까?', function() {
+                    fetch('{{ url_for("views.add_extern") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ externs: externIds, action: 'remove' })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외박생 지정이 해제되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('외박생 지정 해제 중 오류가 발생했습니다: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during removing extern:', error);
+                        alert('외박생 지정 해제 중 오류가 발생했습니다.');
+                    });
+                });
+            };
+
+            var bulkApproveLink = document.getElementById('bulkApproveLink');
+            bulkApproveLink.onclick = function(event) {
+                event.preventDefault();
+                var approveUrl = '{{ url_for("views.bulk_approve") }}';
+
+                showConfirmationDialog('정말로 모든 외출 신청을 승인하시겠습니까?', function() {
+                    fetch(approveUrl, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('외출 신청이 성공적으로 일괄 승인되었습니다.');
+                            location.reload();
+                        } else if (data.status === 'no_requests') {
+                            alert('승인할 학생이 없습니다.');
+                        } else {
+                            alert('외출 일괄 승인 중 오류가 발생했습니다: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during bulk approval:', error);
+                        alert('외출 일괄 승인 중 오류가 발생했습니다.');
+                    });
+                });
+            };
+
+            // 경고 메세지 추가 함수
+            function showConfirmationDialog(message, onConfirm) {
+                if (confirm(message)) {
+                    onConfirm();
+                }
+            }
+
+            // 정보 수정 폼 제출 처리
+            if (infoForm) {
+                infoForm.onsubmit = function(event) {
+                    event.preventDefault();
+                    var formData = new FormData(infoForm);
+
+                    fetch('{{ url_for("views.update_account") }}', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert(data.message);
+                            location.href = "{{ url_for('views.teacher_home') }}";
+                        } else {
+                            showFlashMessage(data.message, 'danger');  // 서버 오류 시 플래시 메시지 표시
+                        }
+                    })
+                    .catch(error => console.error('Error during account update:', error));
+                };
+            }
+
+            function resetInfoForm() {
+                const emailInput = document.getElementById('email');
+                const newPasswordInput = document.getElementById('new_password');
+                const confirmPasswordInput = document.getElementById('confirm_password');
+
+                if (emailInput) {
+                    emailInput.value = '{{ teacher['email'] }}';
+                }
+
+                if (newPasswordInput) {
+                    newPasswordInput.value = '';
+                }
+
+                if (confirmPasswordInput) {
+                    confirmPasswordInput.value = '';
+                }
+
+                clearModalFlashMessages(); // 모달 내 플래시 메시지 제거
+            }
+
+            function clearModalFlashMessages() {
+                document.getElementById('modal-flash-messages').innerHTML = '';
+            }
+            });
     </script>
 </body>
 </html>

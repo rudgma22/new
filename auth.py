@@ -102,7 +102,7 @@ def login():
         elif role == 'teacher':
             return redirect(url_for('views.teacher_home'))
     else:
-        flash('아이디 또는 비밀번호가 옳지 않습니다.', 'danger')
+        flash('아이디 또는 비밀번호가 옳지 않습니다.', '경고!')
         return redirect(url_for('auth.index'))
 
 
@@ -124,7 +124,6 @@ def admin_login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()  # 세션에서 모든 데이터 삭제
-    flash('성공적으로 로그아웃되었습니다.', 'success')
     response = make_response(redirect(url_for('auth.index')))
     # 캐시 무효화 헤더 추가
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'

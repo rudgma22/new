@@ -11,7 +11,7 @@
         <header>
             <h1>김천고 외출 시스템 관리 포털</h1>
             <div class="header-buttons">
-                <!-- 회원 가입 버튼 클릭 시 /register 경로로 이동 -->
+                <button id="notice-button" onclick="window.location.href='{{ url_for('views.add_notice') }}'">공지사항 작성</button> <!-- 공지사항 버튼 추가 -->
                 <button id="member-management" onclick="window.location.href='{{ url_for('auth.register') }}'">학생 추가</button>
                 <button id="logout" onclick="window.location.href='{{ url_for('auth.admin_login') }}'">로그아웃</button>
             </div>

@@ -1,0 +1,32 @@
+<!-- add_notice.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 작성</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='notice.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>공지사항 작성</h1>
+        </header>
+        <form method="POST" action="{{ url_for('views.submit_notice') }}">
+            <label for="title">제목</label>
+            <input type="text" name="title" required>
+
+            <label for="content">내용</label>
+            <textarea name="content" rows="10" required></textarea>
+
+            <label for="post_date">게시 시작 날짜 및 시간</label>
+            <input type="datetime-local" name="post_date" required>
+
+            <label for="expiration_date">게시 종료 날짜 및 시간</label>
+            <input type="datetime-local" name="expiration_date" required>
+
+            <button type="submit">공지사항 등록</button>
+        </form>
+    </div>
+</body>
+</html>
